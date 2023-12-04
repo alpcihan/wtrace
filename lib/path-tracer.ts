@@ -1,4 +1,5 @@
-import triangle from './shaders/triangle.wgsl';
+import screen_shader from './shaders/screen_shader.wgsl';
+import pathtracer_compute from './shaders/pathtracer_compute.wgsl';
 
 interface PathTracerSettings {
     canvas: HTMLCanvasElement;
@@ -12,27 +13,40 @@ class PathTracer {
     public async init() {
         await this._initWebGPUDevice();
         this._initContext();
+        this._initAssets();
         this._initPipelines();
     }
 
     public render() {
-        const view = this.m_context.getCurrentTexture().createView();
-        const presentPass: GPURenderPassDescriptor = {
-            colorAttachments: [{
-                view : view,
-                clearValue: { r: 0, g: 0, b: 0, a: 1.0 }, //background color
-                loadOp: 'clear',
-                storeOp: 'store'
-            }]
-        };
+        const cmd: GPUCommandEncoder = this.m_device.createCommandEncoder();
 
-        const cmd = this.m_device.createCommandEncoder({ label: 'our encoder' });
+        // path trace pass
+        {
+            const pathTracerPass: GPUComputePassEncoder = cmd.beginComputePass();
+            pathTracerPass.setPipeline(this.m_pathTracingPipeline);
+            pathTracerPass.setBindGroup(0, this.m_pathTracingPipelineBindGroup);
+            pathTracerPass.dispatchWorkgroups(
+                Math.floor((this.m_canvas.width + 7) / 8),
+                Math.floor((this.m_canvas.height + 7) / 8), 1);
+            pathTracerPass.end();
+        }
 
-        const renderPassEncoder = cmd.beginRenderPass(presentPass);
-        renderPassEncoder.setPipeline(this.m_presentPass);
-        renderPassEncoder.draw(3, 1, 0, 0);
-        renderPassEncoder.end();
+        // screen present pass
+        {
+            const renderpass: GPURenderPassEncoder = cmd.beginRenderPass({
+                colorAttachments: [{
+                    view: this.m_context.getCurrentTexture().createView(),
+                    clearValue: { r: 0.5, g: 0.0, b: 0.25, a: 1.0 },
+                    loadOp: "clear",
+                    storeOp: "store"
+                }]
+            });
+            renderpass.setPipeline(this.m_screenPipeline);
+            renderpass.setBindGroup(0, this.m_screenPipelineBindGroup);
+            renderpass.draw(3, 1, 0, 0);
 
+            renderpass.end();
+        }
         this.m_device.queue.submit([cmd.finish()]);
     }
 
@@ -40,11 +54,22 @@ class PathTracer {
         throw new Error('Function is not implemented.');
     }
 
+    // device/context objects
     private m_device: GPUDevice;
     private m_canvas: HTMLCanvasElement;
     private m_context: GPUCanvasContext;
+    private m_useReadWriteStorageExperimental: boolean = false;
 
-    private m_presentPass: GPURenderPipeline;
+    // passes
+    private m_pathTracingPipeline: GPUComputePipeline;
+    private m_pathTracingPipelineBindGroup: GPUBindGroup;
+    private m_screenPipeline: GPURenderPipeline;
+    private m_screenPipelineBindGroup: GPUBindGroup;
+
+    // assets
+    private m_colorTexture: GPUTexture;
+    private m_colorBufferView: GPUTextureView;
+    private m_sampler: GPUSampler;
 
     private async _initWebGPUDevice() {
         const gpu = navigator.gpu;
@@ -52,6 +77,13 @@ class PathTracer {
 
         const adapter = await gpu.requestAdapter() as GPUAdapter;
         if (!adapter) throw new Error('Adapter is not found on this browser.');
+
+        if(this.m_useReadWriteStorageExperimental) {
+            const feature: GPUFeatureName = "chromium-experimental-read-write-storage-texture" as GPUFeatureName;
+            if (!adapter.features.has(feature)) throw new Error("Read-write storage texture support is not available");
+            this.m_device = await adapter.requestDevice({requiredFeatures: [feature]}) as GPUDevice;
+            return;
+        }
 
         this.m_device = await adapter.requestDevice() as GPUDevice;
     }
@@ -64,27 +96,135 @@ class PathTracer {
         });
     }
 
+    private _initAssets() {
+        this.m_colorTexture = this.m_device.createTexture({
+            size: {
+                width: this.m_canvas.width,
+                height: this.m_canvas.height,
+            },
+            format: "rgba8unorm",
+            usage: GPUTextureUsage.COPY_DST | GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING
+        }
+        );
+        this.m_colorBufferView = this.m_colorTexture.createView();
+
+        const samplerDescriptor: GPUSamplerDescriptor = {
+            addressModeU: "repeat",
+            addressModeV: "repeat",
+            magFilter: "linear",
+            minFilter: "nearest",
+            mipmapFilter: "nearest",
+            maxAnisotropy: 1
+        };
+
+        this.m_sampler = this.m_device.createSampler(samplerDescriptor);
+    }
+
     private _initPipelines() {
-        const vs = this.m_device.createShaderModule({ code: triangle });
-        const fs = this.m_device.createShaderModule({ code: triangle });
-        this.m_presentPass = this.m_device.createRenderPipeline({
-            label: "present pass render pipeline",
-            layout: 'auto',
-            vertex: {
-                module: vs,
-                entryPoint: "vs_main"
-            },
-            fragment: {
-                module: fs,
-                entryPoint: "fs_main",
-                targets: [{
-                    format: 'bgra8unorm' as GPUTextureFormat
-                }]
-            },
-            primitive: {
-                topology: "triangle-list"
-            }
-        });
+        // path tracer pass
+        {
+            const pathTracingBindGroupLayout = this.m_device.createBindGroupLayout({
+                entries: [
+                    {
+                        binding: 0,
+                        visibility: GPUShaderStage.COMPUTE,
+                        storageTexture: {
+                            access: "write-only",
+                            format: "rgba8unorm",
+                            viewDimension: "2d"
+                        }
+                    },
+                ]
+            });
+
+            this.m_pathTracingPipelineBindGroup = this.m_device.createBindGroup({
+                layout: pathTracingBindGroupLayout,
+                entries: [
+                    {
+                        binding: 0,
+                        resource: this.m_colorBufferView
+                    }
+                ]
+            });
+
+            const pathTracingPipelineLayout = this.m_device.createPipelineLayout({
+                bindGroupLayouts: [pathTracingBindGroupLayout]
+            });
+
+            this.m_pathTracingPipeline = this.m_device.createComputePipeline({
+                label: "path tracing compute pipeline",
+                layout: pathTracingPipelineLayout,
+                compute: {
+                    module: this.m_device.createShaderModule({
+                        code: pathtracer_compute,
+                    }),
+                    entryPoint: 'main',
+                },
+            });
+        }
+
+        // screen pass
+        {
+            const screenBindGroupLayout = this.m_device.createBindGroupLayout({
+                entries: [
+                    {
+                        binding: 0,
+                        visibility: GPUShaderStage.FRAGMENT,
+                        sampler: {}
+                    },
+                    {
+                        binding: 1,
+                        visibility: GPUShaderStage.FRAGMENT,
+                        texture: {}
+                    },
+                ]
+            });
+
+            this.m_screenPipelineBindGroup = this.m_device.createBindGroup({
+                layout: screenBindGroupLayout,
+                entries: [
+                    {
+                        binding: 0,
+                        resource: this.m_sampler
+                    },
+                    {
+                        binding: 1,
+                        resource: this.m_colorBufferView
+                    }
+                ]
+            }); 
+
+            const screenPipelineLayout = this.m_device.createPipelineLayout({
+                bindGroupLayouts: [screenBindGroupLayout]
+            });
+
+            this.m_screenPipeline = this.m_device.createRenderPipeline({
+                label: "fullscreen texture presentation render pipeline",
+                layout: screenPipelineLayout,
+                vertex: {
+                    module: this.m_device.createShaderModule({
+                        code: screen_shader,
+                    }),
+                    entryPoint: 'vs_main',
+                },
+
+                fragment: {
+                    module: this.m_device.createShaderModule({
+                        code: screen_shader,
+                    }),
+                    entryPoint: 'fs_main',
+                    targets: [
+                        {
+                            format: "bgra8unorm"
+                        }
+                    ]
+                },
+
+                primitive: {
+                    topology: "triangle-list"
+                }
+            });
+        }
     }
 };
 
