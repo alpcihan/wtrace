@@ -23,26 +23,18 @@ fn main(@builtin(global_invocation_id) globalInvocationID : vec3u) {
 
     let screenSize: vec2i = vec2i(textureDimensions(colorBuffer));
     let texelCoord : vec2i = vec2i(i32(globalInvocationID.x), i32(globalInvocationID.y));
-
     if (texelCoord.x >= screenSize.x || texelCoord.y >= screenSize.y) {
         return;
     }
 
-    let horizontal: f32 = (f32(texelCoord.x) - f32(screenSize.x) / 2) / f32(screenSize.x); // [-1, 1]
-    let vertical: f32 = (f32(texelCoord.y) - f32(screenSize.y) / 2) / f32(screenSize.x);   // [-1, 1]
-    let forward: vec3f = vec3f(1.0, 0.0, 0.0);
-    let right: vec3f = vec3f(0.0, -1.0, 0.0);
-    let up: vec3f = vec3f(0.0, 0.0, 1.0);
+    let uv: vec2f = (vec2f(texelCoord) / vec2f(screenSize)) * 2 - 1;
+    var ray: Ray = createCameraRay(uv, uniforms.view_i, uniforms.projection_i);
 
     var sphere: Sphere;
-    sphere.center = vec3f(3.0, 0.0, 0.0);
+    sphere.center = vec3f(0.0, 0.0, -2.0);
     sphere.radius = 0.5;
 
-    var ray: Ray;
-    ray.direction = normalize(forward + horizontal * right + vertical * up);
-    ray.origin = origin;
-
-    var pixel_color : vec3f = vec3f(1.0, 0.0, 0.0);
+    var pixel_color : vec3f = vec3f(1.0, 0, 0.0);
 
     if (hit(ray, sphere)) {
         pixel_color = vec3f(0.0, 1.0, 0.0);
@@ -50,6 +42,15 @@ fn main(@builtin(global_invocation_id) globalInvocationID : vec3u) {
 
     textureStore(colorBuffer, texelCoord, vec4f(pixel_color, 1.0));
 }
+
+fn createCameraRay(uv: vec2f, view_i: mat4x4f, projection_i: mat4x4f) -> Ray {
+    var ray: Ray;
+
+    ray.direction = normalize((projection_i * vec4f(uv, 0, 1)).xyz);
+    ray.origin = (view_i * vec4f(0,0,0,1)).xyz;
+
+    return ray;
+} 
 
 fn hit(ray: Ray, sphere: Sphere) -> bool {
     
