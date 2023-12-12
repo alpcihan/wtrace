@@ -27,18 +27,21 @@ fn main(@builtin(global_invocation_id) globalInvocationID : vec3u) {
         return;
     }
 
-    let uv: vec2f = (vec2f(texelCoord) / vec2f(screenSize)) * 2 - 1;
-    var ray: Ray = createCameraRay(uv, uniforms.view_i, uniforms.projection_i);
+    // let uv: vec2f = (vec2f(texelCoord) / vec2f(screenSize)) * 2 - 1;
+    // var ray: Ray = createCameraRay(uv, uniforms.view_i, uniforms.projection_i);
 
-    var sphere: Sphere;
-    sphere.center = vec3f(0.0, 0.0, -2.0);
-    sphere.radius = 0.5;
+    // var sphere: Sphere;
+    // sphere.center = vec3f(0.0, 0.0, -2.0);
+    // sphere.radius = 0.5;
 
-    var pixel_color : vec3f = vec3f(1.0, 0, 0.0);
+    // var pixel_color : vec3f = vec3f(1.0, 0, 0.0);
 
-    if (hit(ray, sphere)) {
-        pixel_color = vec3f(0.0, 1.0, 0.0);
-    }
+    // if (hit(ray, sphere)) {
+    //     pixel_color = vec3f(0.0, 1.0, 0.0);
+    // }
+    var seed: u32 = u32(texelCoord.x + texelCoord.y * screenSize.x);
+    var pixel_color: vec3f = vec3f(frand(seed));
+    //var pixel_color: vec3f = vec3f(0.0, 1.0, 0.0);
 
     textureStore(colorBuffer, texelCoord, vec4f(pixel_color, 1.0));
 }
@@ -60,4 +63,24 @@ fn hit(ray: Ray, sphere: Sphere) -> bool {
     let discriminant: f32 = b * b - 4.0 * a * c;
 
     return discriminant > 0;
+}
+
+fn pcg(n: u32) -> u32 {
+    var h = n * 747796405u + 2891336453u;
+    h = ((h >> ((h >> 28u) + 4u)) ^ h) * 277803737u;
+    return (h >> 22u) ^ h;
+}
+
+fn frand(seed: u32) -> f32 {
+    return f32(pcg(seed))/4294967296.0;
+}
+
+fn cosineDirection(seed: u32,nor: vec3f) -> vec3f {
+    var  u: f32 = frand(seed);
+    var  v: f32 = frand(seed);
+
+    var a: f32 = 6.2831853 * u;
+    var b: f32 = 2.0 * u - 1.0;
+    var direction: vec3f = vec3f(sqrt(1.0 - b * b) * vec2f(cos(a),sin(a)),b);
+    return normalize(nor+direction);
 }
