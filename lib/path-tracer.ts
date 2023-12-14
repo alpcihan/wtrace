@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import utils_shader from './shaders/utils.wgsl';
 import screen_shader from './shaders/screen_shader.wgsl';
 import pathtracer_compute from './shaders/pathtracer_compute.wgsl';
 
@@ -185,12 +186,14 @@ class PathTracer {
                 bindGroupLayouts: [pathTracingBindGroupLayout]
             });
 
+            const pathTracingShader = utils_shader + pathtracer_compute;
+
             this.m_pathTracingPipeline = this.m_device.createComputePipeline({
                 label: "path tracing compute pipeline",
                 layout: pathTracingPipelineLayout,
                 compute: {
                     module: this.m_device.createShaderModule({
-                        code: pathtracer_compute,
+                        code: pathTracingShader,
                     }),
                     entryPoint: 'main',
                 },
