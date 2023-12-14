@@ -1,8 +1,10 @@
-name: Dev
+name: Development Build
 
 on:
   push:
     branches: [ "build-test" ]
+  pull_request:
+    branches: [ "build-test"]
 
 jobs:
   build:
