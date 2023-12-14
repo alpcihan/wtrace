@@ -52,6 +52,7 @@ class PathTracer {
         }
 
         this.m_device.queue.submit([cmd.finish()]);
+        this.m_frameIndex++;
     }
 
     public terminate() {
@@ -77,6 +78,8 @@ class PathTracer {
     private m_colorTexture: GPUTexture;
     private m_colorBufferView: GPUTextureView;
     private m_sampler: GPUSampler;
+
+    private m_frameIndex: number = 0;
 
     private async _initWebGPUDevice() {
         const gpu = navigator.gpu;
@@ -108,7 +111,8 @@ class PathTracer {
         {
             const uniformBufferSize = 
                 4 * 4 * 4 + // view
-                4 * 4 * 4   // projection
+                4 * 4 * 4 + // projection
+                4 * 4       // frame index with padding (for random number generator) - Umut: Why do we need padding(having an error while there is no padding)? 
             ;
 
             this.m_uniformCPU = new Float32Array(uniformBufferSize / 4);
@@ -260,6 +264,7 @@ class PathTracer {
     private _updateUniforms(camera: THREE.PerspectiveCamera) {
         this.m_uniformCPU.set(camera.modelViewMatrix.invert().toArray(), 0);
         this.m_uniformCPU.set(camera.projectionMatrixInverse.toArray(), 4*4);
+        this.m_uniformCPU.set([this.m_frameIndex], 4);
 
         this.m_device.queue.writeBuffer(this.m_uniformBuffer, 0, this.m_uniformCPU);
     }
