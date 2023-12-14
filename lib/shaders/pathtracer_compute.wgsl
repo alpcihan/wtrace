@@ -42,7 +42,8 @@ fn main(@builtin(global_invocation_id) globalInvocationID : vec3u) {
     let uv: vec2f = (vec2f(texelCoord) / vec2f(screenSize)) * 2 - 1;
     var ray: Ray = createCameraRay(uv, uniforms.view_i, uniforms.projection_i);
 
-    var pixel_color : vec3f = traceRay(ray);
+    var seed: u32 = pcg(u32(texelCoord.x + texelCoord.y * screenSize.x));
+    var pixel_color : vec3f = traceRay(ray,seed);
 
     textureStore(colorBuffer, texelCoord, vec4f(pixel_color, 1.0));
 }
@@ -56,9 +57,29 @@ fn createCameraRay(uv: vec2f, view_i: mat4x4f, projection_i: mat4x4f) -> Ray {
     return ray;
 } 
 
-fn traceRay(ray: Ray) -> vec3f {
-    var hitInfo: HitInfo = hitWorld(ray);
-    return hitInfo.color;
+fn traceRay(ray: Ray, seed: u32) -> vec3f {
+    var hitInfo: HitInfo;
+    var r: Ray = ray;
+
+    var incomingLight: vec3f = vec3f(0.0, 0.0, 0.0);
+    var attenuation: vec3f = vec3f(1.0, 1.0, 1.0);
+
+    for(var i: u32 = 0; i < 4; i++) {
+        hitInfo = hitWorld(r);
+        if (hitInfo.t > 0.0) {
+
+            attenuation *= 0.5;
+            incomingLight *= attenuation;//hitInfo.color;
+
+            r.origin = rayAt(r, hitInfo.t);
+            r.direction = cosineDirection(pcg(seed+i), hitInfo.normal);
+        } else {
+            incomingLight += attenuation * backgroundAt(r);
+            break;
+        }
+    }
+
+    return incomingLight;
 }
 fn hitWorld(ray: Ray) -> HitInfo{
 
@@ -98,7 +119,7 @@ fn intersectSpheres(ray: Ray, hitInfo: HitInfo) -> HitInfo {
     if (t > 0.0 && (t < hitInfo.t || hitInfo.t < 0.0)) {
         newHitInfo.t = t;
         newHitInfo.normal = normalize(rayAt(ray, t) - sphere.center);
-        newHitInfo.color = newHitInfo.normal * 0.5 + 0.5;
+        newHitInfo.color = vec3f(1.0, 0.0, 0.0);
     }
 
     return newHitInfo;
@@ -163,7 +184,7 @@ fn cosineDirection(seed: u32,nor: vec3f) -> vec3f {
     var  u: f32 = frand(seed);
     var  v: f32 = frand(seed);
 
-    var a: f32 = 6.2831853 * u;
+    var a: f32 = 6.2831853 * v;
     var b: f32 = 2.0 * u - 1.0;
     var direction: vec3f = vec3f(sqrt(1.0 - b * b) * vec2f(cos(a),sin(a)),b);
     return normalize(nor+direction);
