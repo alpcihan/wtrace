@@ -9,7 +9,7 @@ const main = async () => {
     await pathTracer.init();
 
     (function applicationLoop() {       
-        pathTracer.render(camer2);
+        pathTracer.render(camera);
         requestAnimationFrame(() => applicationLoop());
     })();
 }
