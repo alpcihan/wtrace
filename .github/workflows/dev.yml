@@ -1,0 +1,15 @@
+name: Dev
+
+on:
+  push:
+    branches: [ "build-test" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: install_dependencies
+      run: yarn install
+    - name: build_dev
+      run: yarn dev
