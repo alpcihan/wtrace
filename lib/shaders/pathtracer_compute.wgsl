@@ -42,8 +42,11 @@ fn main(@builtin(global_invocation_id) globalInvocationID : vec3u) {
 
     let uv: vec2f = (vec2f(texelCoord) / vec2f(screenSize)) * 2 - 1;
     var ray: Ray = createCameraRay(uv, uniforms.view_i, uniforms.projection_i);
+    
+    var seed_i1: u32 = u32(texelCoord.x + texelCoord.y * screenSize.x);
+    var seed_i2: u32 = u32(uniforms.frameIdx_i);
+    var seed: u32 = pcg(&seed_i1)+ pcg(&seed_i2);
 
-    var seed: u32 = pcg(u32(texelCoord.x + texelCoord.y * screenSize.x))+ pcg(uniforms.frameIdx_i);
     var pixel_color : vec3f = traceRay(ray,seed);
 
     textureStore(colorBuffer, texelCoord, vec4f(pixel_color, 1.0));
@@ -61,6 +64,7 @@ fn createCameraRay(uv: vec2f, view_i: mat4x4f, projection_i: mat4x4f) -> Ray {
 fn traceRay(ray: Ray, seed: u32) -> vec3f {
     var hitInfo: HitInfo;
     var r: Ray = ray;
+    var s: u32 = seed;
 
     var incomingLight: vec3f = vec3f(0.0, 0.0, 0.0);
     var attenuation: vec3f = vec3f(1.0, 1.0, 1.0);
@@ -72,8 +76,8 @@ fn traceRay(ray: Ray, seed: u32) -> vec3f {
             attenuation *= 0.5;
             incomingLight *= attenuation;//hitInfo.color;
 
-            r.origin = rayAt(r, hitInfo.t);
-            r.direction = cosineDirection(seed+i, hitInfo.normal);
+            r.origin = rayAt(r, hitInfo.t)+ hitInfo.normal*0.001;
+            r.direction = cosineDirection(&s, hitInfo.normal);
         } else {
             incomingLight += attenuation * backgroundAt(r);
             break;
@@ -171,17 +175,18 @@ fn rayAt(ray: Ray, t: f32) -> vec3f {
 
 /************************Utils**********************/
 
-fn pcg(n: u32) -> u32 {
-    var h = n * 747796405u + 2891336453u;
+fn pcg(n: ptr<function,u32>) -> u32 {
+    var h = (*n) * 747796405u + 2891336453u;
+    *n = h;
     h = ((h >> ((h >> 28u) + 4u)) ^ h) * 277803737u;
     return (h >> 22u) ^ h;
 }
 
-fn frand(seed: u32) -> f32 {
+fn frand(seed: ptr<function,u32>) -> f32 {
     return f32(pcg(seed))/4294967296.0;
 }
 
-fn cosineDirection(seed: u32,nor: vec3f) -> vec3f {
+fn cosineDirection(seed: ptr<function,u32>, nor: vec3f) -> vec3f {
     var  u: f32 = frand(seed);
     var  v: f32 = frand(seed);
 
