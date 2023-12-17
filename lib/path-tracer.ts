@@ -267,7 +267,7 @@ class PathTracer {
     private _updateUniforms(camera: THREE.PerspectiveCamera) {
         this.m_uniformCPU.set(camera.modelViewMatrix.invert().toArray(), 0);
         this.m_uniformCPU.set(camera.projectionMatrixInverse.toArray(), 4*4);
-        this.m_uniformCPU.set([this.m_frameIndex], 4);
+        this.m_uniformCPU.set([this.m_frameIndex], 4*4*2);
 
         this.m_device.queue.writeBuffer(this.m_uniformBuffer, 0, this.m_uniformCPU);
     }
