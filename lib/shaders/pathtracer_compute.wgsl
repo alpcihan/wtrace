@@ -73,7 +73,7 @@ fn traceRay(ray: Ray, seed: u32) -> vec3f {
         hitInfo = hitWorld(r);
         if (hitInfo.t > 0.0) {
 
-            attenuation *= 0.5;
+            attenuation *= hitInfo.color;
             incomingLight *= attenuation;//hitInfo.color;
 
             r.origin = rayAt(r, hitInfo.t)+ hitInfo.normal*0.001;
@@ -173,7 +173,7 @@ fn rayAt(ray: Ray, t: f32) -> vec3f {
     return ray.origin + ray.direction * t;
 }
 
-/************************Utils**********************/
+///************************Utils**********************/
 
 fn pcg(n: ptr<function,u32>) -> u32 {
     var h = (*n) * 747796405u + 2891336453u;
