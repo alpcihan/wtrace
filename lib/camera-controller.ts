@@ -34,10 +34,10 @@ class CameraController {
 
 		if(InputSystem.isKeyPressed(this.forwardInput)) 	{ this.m_camera.translateZ(deltaSpeed); this.m_isUpdated = true; }
 		if(InputSystem.isKeyPressed(this.backwardInput)) 	{ this.m_camera.translateZ(-deltaSpeed); this.m_isUpdated = true; }
-		if(InputSystem.isKeyPressed(this.upInput)) 			{ this.m_camera.position.y += deltaSpeed; this.m_isUpdated = true; }
-		if(InputSystem.isKeyPressed(this.downInput)) 		{ this.m_camera.position.y -= deltaSpeed; this.m_isUpdated = true; }
-		if(InputSystem.isKeyPressed(this.rightInput)) 		{ this.m_camera.position.x -= deltaSpeed; this.m_isUpdated = true; }
-		if(InputSystem.isKeyPressed(this.leftInput)) 		{ this.m_camera.position.x += deltaSpeed; this.m_isUpdated = true; }
+		if(InputSystem.isKeyPressed(this.upInput)) 			{ this.m_camera.translateY(deltaSpeed); this.m_isUpdated = true; }
+		if(InputSystem.isKeyPressed(this.downInput)) 		{ this.m_camera.translateY(-deltaSpeed); this.m_isUpdated = true; }
+		if(InputSystem.isKeyPressed(this.rightInput)) 		{ this.m_camera.translateX(-deltaSpeed); this.m_isUpdated = true; }
+		if(InputSystem.isKeyPressed(this.leftInput)) 		{ this.m_camera.translateX(deltaSpeed); this.m_isUpdated = true; }
 
 		if(!this.m_isUpdated) return;
 
