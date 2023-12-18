@@ -4,18 +4,19 @@
 //---------------------------------------
 
 //https://www.reedbeta.com/blog/hash-functions-for-gpu-rendering/
-fn pcg(n: u32) -> u32 {
-    var h = n * 747796405u + 2891336453u;
+fn pcg(n: ptr<function,u32>) -> u32 {
+    var h = (*n) * 747796405u + 2891336453u;
+    *n = h;
     h = ((h >> ((h >> 28u) + 4u)) ^ h) * 277803737u;
     return (h >> 22u) ^ h;
 }
 
-fn frand(seed: u32) -> f32 {
+fn frand(seed: ptr<function,u32>) -> f32 {
     return f32(pcg(seed))/4294967296.0;
 }
 
 //https://www.shadertoy.com/view/lssfD7
-fn cosineDirection(seed: u32,nor: vec3f) -> vec3f {
+fn cosineDirection(seed: ptr<function,u32>, nor: vec3f) -> vec3f {
     var  u: f32 = frand(seed);
     var  v: f32 = frand(seed);
 
