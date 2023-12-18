@@ -4,26 +4,23 @@ import rng_shader from './shaders/rng.wgsl';
 import screen_shader from './shaders/screen_shader.wgsl';
 import pathtracer_compute from './shaders/pathtracer_compute.wgsl';
 
-interface PathTracerSettings {
-    canvas: HTMLCanvasElement;
-}
-
 class PathTracer {
-    constructor(settings: PathTracerSettings) {
-        this.m_canvas = settings.canvas;
-    }
+    constructor(canvas: HTMLCanvasElement) {
+        this.m_canvas = canvas;
 
-    public async init() {
-        await this._initWebGPUDevice();
         this._initContext();
         this._initAssets();
         this._initPipelines();
     }
 
+    public static init(device: GPUDevice) {
+        PathTracer.m_device = device;
+    }
+
     public render(camera: THREE.PerspectiveCamera) {
         this._updateUniforms(camera);
 
-        const cmd: GPUCommandEncoder = this.m_device.createCommandEncoder();
+        const cmd: GPUCommandEncoder = PathTracer.m_device.createCommandEncoder();
 
         // path trace pass
         {
@@ -53,7 +50,7 @@ class PathTracer {
             renderpass.end();
         }
 
-        this.m_device.queue.submit([cmd.finish()]);
+        PathTracer.m_device.queue.submit([cmd.finish()]);
         this.m_frameIndex++;
     }
 
@@ -62,10 +59,9 @@ class PathTracer {
     }
 
     // device/context objects
-    private m_device: GPUDevice;
+    private static m_device: GPUDevice;
     private m_canvas: HTMLCanvasElement;
     private m_context: GPUCanvasContext;
-    private m_useReadWriteStorageExperimental: boolean = false;
 
     // passes
     private m_pathTracingPipeline: GPUComputePipeline;
@@ -83,27 +79,10 @@ class PathTracer {
 
     private m_frameIndex: number = 0;
 
-    private async _initWebGPUDevice() {
-        const gpu = navigator.gpu;
-        if (!gpu) throw new Error('GPU is not found on this browser.');
-
-        const adapter = await gpu.requestAdapter() as GPUAdapter;
-        if (!adapter) throw new Error('Adapter is not found on this browser.');
-
-        if (this.m_useReadWriteStorageExperimental) {
-            const feature: GPUFeatureName = "chromium-experimental-read-write-storage-texture" as GPUFeatureName;
-            if (!adapter.features.has(feature)) throw new Error("Read-write storage texture support is not available");
-            this.m_device = await adapter.requestDevice({ requiredFeatures: [feature] }) as GPUDevice;
-            return;
-        }
-
-        this.m_device = await adapter.requestDevice() as GPUDevice;
-    }
-
     private _initContext() {
         this.m_context = this.m_canvas.getContext('webgpu') as GPUCanvasContext;
         this.m_context.configure({
-            device: this.m_device,
+            device: PathTracer.m_device,
             format: 'bgra8unorm' as GPUTextureFormat
         });
     }
@@ -119,7 +98,7 @@ class PathTracer {
 
             this.m_uniformCPU = new Float32Array(uniformBufferSize / 4);
 
-            this.m_uniformBuffer = this.m_device.createBuffer({
+            this.m_uniformBuffer = PathTracer.m_device.createBuffer({
                 size: uniformBufferSize,
                 usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
             });
@@ -127,7 +106,7 @@ class PathTracer {
 
         // color buffer + texture
         {
-            this.m_colorTexture = this.m_device.createTexture({
+            this.m_colorTexture = PathTracer.m_device.createTexture({
                 size: {
                     width: this.m_canvas.width,
                     height: this.m_canvas.height,
@@ -136,7 +115,7 @@ class PathTracer {
                 usage: GPUTextureUsage.COPY_DST | GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING
             });
             this.m_colorBufferView = this.m_colorTexture.createView();
-            this.m_sampler = this.m_device.createSampler({
+            this.m_sampler = PathTracer.m_device.createSampler({
                 addressModeU: "repeat",
                 addressModeV: "repeat",
                 magFilter: "linear",
@@ -150,7 +129,7 @@ class PathTracer {
     private _initPipelines() {
         // path tracer pass
         {
-            const pathTracingBindGroupLayout = this.m_device.createBindGroupLayout({
+            const pathTracingBindGroupLayout = PathTracer.m_device.createBindGroupLayout({
                 entries: [
                     {
                         binding: 0,
@@ -169,7 +148,7 @@ class PathTracer {
                 ]
             });
 
-            this.m_pathTracingPipelineBindGroup = this.m_device.createBindGroup({
+            this.m_pathTracingPipelineBindGroup = PathTracer.m_device.createBindGroup({
                 layout: pathTracingBindGroupLayout,
                 entries: [
                     {
@@ -183,16 +162,16 @@ class PathTracer {
                 ]
             });
 
-            const pathTracingPipelineLayout = this.m_device.createPipelineLayout({
+            const pathTracingPipelineLayout = PathTracer.m_device.createPipelineLayout({
                 bindGroupLayouts: [pathTracingBindGroupLayout]
             });
 
             const pathTracingShader = rng_shader + pathtracer_compute;
-            this.m_pathTracingPipeline = this.m_device.createComputePipeline({
+            this.m_pathTracingPipeline = PathTracer.m_device.createComputePipeline({
                 label: "path tracing compute pipeline",
                 layout: pathTracingPipelineLayout,
                 compute: {
-                    module: this.m_device.createShaderModule({
+                    module: PathTracer.m_device.createShaderModule({
                         code: pathTracingShader,
                     }),
                     entryPoint: 'main',
@@ -202,7 +181,7 @@ class PathTracer {
 
         // screen pass
         {
-            const screenBindGroupLayout = this.m_device.createBindGroupLayout({
+            const screenBindGroupLayout = PathTracer.m_device.createBindGroupLayout({
                 entries: [
                     {
                         binding: 0,
@@ -217,7 +196,7 @@ class PathTracer {
                 ]
             });
 
-            this.m_screenPipelineBindGroup = this.m_device.createBindGroup({
+            this.m_screenPipelineBindGroup = PathTracer.m_device.createBindGroup({
                 layout: screenBindGroupLayout,
                 entries: [
                     {
@@ -231,22 +210,22 @@ class PathTracer {
                 ]
             });
 
-            const screenPipelineLayout = this.m_device.createPipelineLayout({
+            const screenPipelineLayout = PathTracer.m_device.createPipelineLayout({
                 bindGroupLayouts: [screenBindGroupLayout]
             });
 
-            this.m_screenPipeline = this.m_device.createRenderPipeline({
+            this.m_screenPipeline = PathTracer.m_device.createRenderPipeline({
                 label: "fullscreen texture presentation render pipeline",
                 layout: screenPipelineLayout,
                 vertex: {
-                    module: this.m_device.createShaderModule({
+                    module: PathTracer.m_device.createShaderModule({
                         code: screen_shader,
                     }),
                     entryPoint: 'vs_main',
                 },
 
                 fragment: {
-                    module: this.m_device.createShaderModule({
+                    module: PathTracer.m_device.createShaderModule({
                         code: screen_shader,
                     }),
                     entryPoint: 'fs_main',
@@ -269,7 +248,7 @@ class PathTracer {
         this.m_uniformCPU.set(camera.projectionMatrixInverse.toArray(), 4*4);
         this.m_uniformCPU.set([this.m_frameIndex], 4*4*2);
 
-        this.m_device.queue.writeBuffer(this.m_uniformBuffer, 0, this.m_uniformCPU);
+        PathTracer.m_device.queue.writeBuffer(this.m_uniformBuffer, 0, this.m_uniformCPU);
     }
 };
 
