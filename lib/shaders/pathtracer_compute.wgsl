@@ -14,6 +14,11 @@ struct Floor{
     color: vec3f,
 };
 
+struct SphereLight{
+    sphere: Sphere,
+    color: vec3f,
+};
+
 struct Ray {
     direction: vec3f,
     origin: vec3f,
@@ -23,6 +28,7 @@ struct HitInfo {
     t: f32,
     normal: vec3f,
     color: vec3f,
+    emissiveColor: vec3f,
 };
 
 struct Uniforms {
@@ -42,8 +48,11 @@ fn main(@builtin(global_invocation_id) globalInvocationID : vec3u) {
 
     let uv: vec2f = (vec2f(texelCoord) / vec2f(screenSize)) * 2 - 1;
     var ray: Ray = createCameraRay(uv, uniforms.view_i, uniforms.projection_i);
+    
+    var seed_i1: u32 = u32(texelCoord.x + texelCoord.y * screenSize.x);
+    var seed_i2: u32 = u32(uniforms.frameIdx_i);
+    var seed: u32 = pcg(&seed_i1)+ pcg(&seed_i2);
 
-    var seed: u32 = pcg(u32(texelCoord.x + texelCoord.y * screenSize.x))+ pcg(uniforms.frameIdx_i);
     var pixel_color : vec3f = traceRay(ray,seed);
 
     textureStore(colorBuffer, texelCoord, vec4f(pixel_color, 1.0));
@@ -61,6 +70,7 @@ fn createCameraRay(uv: vec2f, view_i: mat4x4f, projection_i: mat4x4f) -> Ray {
 fn traceRay(ray: Ray, seed: u32) -> vec3f {
     var hitInfo: HitInfo;
     var r: Ray = ray;
+    var s: u32 = seed;
 
     var incomingLight: vec3f = vec3f(0.0, 0.0, 0.0);
     var attenuation: vec3f = vec3f(1.0, 1.0, 1.0);
@@ -69,13 +79,13 @@ fn traceRay(ray: Ray, seed: u32) -> vec3f {
         hitInfo = hitWorld(r);
         if (hitInfo.t > 0.0) {
 
-            attenuation *= 0.5;
-            incomingLight *= attenuation;//hitInfo.color;
+            attenuation *= hitInfo.color;
+            incomingLight += attenuation * hitInfo.emissiveColor;
 
-            r.origin = rayAt(r, hitInfo.t);
-            r.direction = cosineDirection(seed+i, hitInfo.normal);
+            r.origin = rayAt(r, hitInfo.t)+ hitInfo.normal*0.001;
+            r.direction = cosineDirection(&s, hitInfo.normal);
         } else {
-            incomingLight += attenuation * backgroundAt(r);
+            incomingLight += attenuation * vec3(0.1);//backgroundAt(r);
             break;
         }
     }
@@ -87,6 +97,7 @@ fn hitWorld(ray: Ray) -> HitInfo{
     var bestHit: HitInfo = createHitInfo();
     bestHit.color = backgroundAt(ray);
 
+    bestHit = intersectSphereLights(ray, bestHit);
     bestHit = intersectFloor(ray, bestHit);
     bestHit = intersectSpheres(ray, bestHit);
 
@@ -105,6 +116,25 @@ fn intersectFloor(ray: Ray, hitInfo: HitInfo) -> HitInfo {
         newHitInfo.t = t;
         newHitInfo.normal = floor.normal;
         newHitInfo.color = floor.color;
+        newHitInfo.emissiveColor = vec3f(0.0, 0.0, 0.0);
+    }
+
+    return newHitInfo;
+}
+
+fn intersectSphereLights(ray: Ray, hitInfo: HitInfo) -> HitInfo {
+    var newHitInfo: HitInfo = hitInfo;
+    var sphereLight: SphereLight;
+    sphereLight.sphere.radius = 1.5;
+    sphereLight.sphere.center = vec3f(2.0, 2.0, -2.0);
+    sphereLight.color = vec3f(15.0);
+
+    var t: f32 = hitSphere(ray, sphereLight.sphere);
+    if (t > 0.0 && (t < hitInfo.t || hitInfo.t < 0.0)) {
+        newHitInfo.t = t;
+        newHitInfo.normal = normalize(rayAt(ray, t) - sphereLight.sphere.center);
+        newHitInfo.color = sphereLight.color;
+        newHitInfo.emissiveColor = sphereLight.color;
     }
 
     return newHitInfo;
@@ -121,6 +151,7 @@ fn intersectSpheres(ray: Ray, hitInfo: HitInfo) -> HitInfo {
         newHitInfo.t = t;
         newHitInfo.normal = normalize(rayAt(ray, t) - sphere.center);
         newHitInfo.color = vec3f(1.0, 0.0, 0.0);
+        newHitInfo.emissiveColor = vec3f(0.0, 0.0, 0.0);
     }
 
     return newHitInfo;
@@ -156,6 +187,7 @@ fn createHitInfo() -> HitInfo{
     hitInfo.t = -1.0;
     hitInfo.normal = vec3f(0.0, 0.0, 0.0);
     hitInfo.color = vec3f(0.0, 0.0, 0.0);
+    hitInfo.emissiveColor = vec3f(0.0, 0.0, 0.0);
     return hitInfo;
 }
 
