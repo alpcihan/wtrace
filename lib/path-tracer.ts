@@ -23,15 +23,6 @@ class PathTracer {
     public render(camera: THREE.PerspectiveCamera) {
         this._updateUniforms(camera);
 
-        this.m_frameCount++;
-        const timeElapsed = performance.now()-this.m_lastFrameTime;
-        if(timeElapsed> 1000) {
-            const fpsElement = document.getElementById("wt_fps");
-            fpsElement!.innerText = `FPS: ${this.m_frameCount}`;
-            this.m_frameCount = 0;
-            this.m_lastFrameTime = performance.now();
-        }
-        
         const cmd: GPUCommandEncoder = this.m_device.createCommandEncoder();
 
         // path trace pass
@@ -91,8 +82,6 @@ class PathTracer {
     private m_sampler: GPUSampler;
 
     private m_frameIndex: number = 0;
-    private m_lastFrameTime: number = 0;
-    private m_frameCount: number = 0;
 
     private async _initWebGPUDevice() {
         const gpu = navigator.gpu;
