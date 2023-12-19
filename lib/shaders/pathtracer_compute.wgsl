@@ -1,9 +1,9 @@
 // enable chromium_experimental_read_write_storage_texture;
 
+// @group(0) @binding(-) var colorBuffer: texture_storage_2d<rgba8unorm, write>; // Example usage: textureStore(colorBuffer, texelCoord, vec4f(pixel_color, 1.0));
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
-@group(0) @binding(1) var colorBuffer: texture_storage_2d<rgba8unorm, write>;
-@group(0) @binding(2) var<storage, read> vertices: array<f32>;
-@group(0) @binding(3) var<storage, read_write> frameInfo: array<vec4f>;
+@group(0) @binding(1) var<storage, read> vertices: array<f32>;
+@group(0) @binding(2) var<storage, read_write> frameInfo: array<vec4f>;
 
 struct Sphere {
     center: vec3f,
@@ -36,35 +36,35 @@ struct HitInfo {
 struct Uniforms {
     view_i: mat4x4f,
     projection_i: mat4x4f,
-    frameIdx_i: u32, //Umut: would it cause a problem? 
+    resolution: vec2f, // TODO: pass as uint
+    frameIdx: u32
 };
 
-@compute @workgroup_size(8,8,1)
+@compute @workgroup_size(16,16,1)
 fn main(@builtin(global_invocation_id) globalInvocationID : vec3u) {
 
-    let screenSize: vec2i = vec2i(textureDimensions(colorBuffer));
+    var resolution: vec2i = vec2i(uniforms.resolution);
+
     let texelCoord : vec2i = vec2i(i32(globalInvocationID.x), i32(globalInvocationID.y));
-    if (texelCoord.x >= screenSize.x || texelCoord.y >= screenSize.y) {
+    if (texelCoord.x >= resolution.x || texelCoord.y >= resolution.y) {
         return;
     }
 
-    let uv: vec2f = (vec2f(texelCoord) / vec2f(screenSize)) * 2 - 1;
+    let uv: vec2f = (vec2f(texelCoord) / vec2f(resolution)) * 2 - 1;
     var ray: Ray = createCameraRay(uv, uniforms.view_i, uniforms.projection_i);
     
-    var seed_i1: u32 = u32(texelCoord.x + texelCoord.y * screenSize.x);
-    var seed_i2: u32 = u32(uniforms.frameIdx_i);
+    var seed_i1: u32 = u32(texelCoord.x + texelCoord.y * resolution.x);
+    var seed_i2: u32 = u32(uniforms.frameIdx);
     var seed: u32 = pcg(&seed_i1)+ pcg(&seed_i2);
 
-    var pixel_color : vec3f = traceRay(ray,seed);
+    var pixel_color: vec3f = traceRay(ray,seed);
 
-    textureStore(colorBuffer, texelCoord, vec4f(pixel_color, 1.0));
-
-    var state: vec4f = frameInfo[texelCoord.y * screenSize.x + texelCoord.x];
-
+    var state: vec4f = frameInfo[texelCoord.y * resolution.x + texelCoord.x];
     var weight: f32 = 1.0 / (state.a + 1);
     var finalColor: vec3f = state.xyz * (1-weight) + pixel_color * weight;
 
-    frameInfo[texelCoord.y * screenSize.x + texelCoord.x] = vec4f(finalColor, state.a + 1);
+    frameInfo[texelCoord.y * resolution.x + texelCoord.x] = vec4f(finalColor, state.a + 1);
+    //textureStore(colorBuffer, texelCoord, vec4f(pixel_color, 1.0));
 }
 
 fn createCameraRay(uv: vec2f, view_i: mat4x4f, projection_i: mat4x4f) -> Ray {

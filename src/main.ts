@@ -1,5 +1,6 @@
-import * as THREE from 'three';
-import * as wt from '../lib/wtrace';
+import * as THREE from "three";
+import * as wt from "../lib/wtrace";
+import "./main.css";
 
 var canvas: HTMLCanvasElement;
 var fpsElement: HTMLTextAreaElement;
@@ -10,48 +11,46 @@ var pathTracer: wt.PathTracer;
 var objLoader: wt.OBJLoader;
 
 const onUpdate = () => {
-	// update camera
-	cameraController.update(wt.Application.getDeltaTime());
+  // update camera
+  cameraController.update(wt.Application.getDeltaTime());
 
-	// render
-	pathTracer.render(camera);
+  // render
+  pathTracer.render(camera);
 
-	if(cameraController.isUpdated()) {
-		pathTracer.reset();
-		console.log("reset");
-	}
+  if (cameraController.isUpdated()) {
+    pathTracer.reset();
+  }
 
-	if(fpsDisplayTimer > 0.1) {
-		fpsElement!.innerText = `FPS: ${Math.floor(1/wt.Application.getDeltaTime())}`;
-		fpsDisplayTimer = 0;
-	}
-	
-	fpsDisplayTimer += wt.Application.getDeltaTime();
-}
+  if (fpsDisplayTimer > 0.1) {
+    fpsElement!.innerText = `FPS: ${Math.floor(1 / wt.Application.getDeltaTime())}`;
+    fpsDisplayTimer = 0;
+  }
+
+  fpsDisplayTimer += wt.Application.getDeltaTime();
+};
 
 const main = async () => {
-	await wt.Application.init();
+  await wt.Application.init();
 
-    canvas = document.getElementById('wt_canvas-webgpu') as HTMLCanvasElement;  
-	
-    camera = new THREE.PerspectiveCamera(45, canvas.width / canvas.height, 0.01, 1000);
-	cameraController = new wt.CameraController({camera: camera});
-	
-	fpsElement = document.getElementById('wt_fps') as HTMLTextAreaElement;
-	fpsDisplayTimer = 0;
+  canvas = document.getElementById("wt_canvas-webgpu") as HTMLCanvasElement;
 
-	objLoader = new wt.OBJLoader;
-	const vertices: Float32Array | undefined = await objLoader.load("suzanne.obj");
+  camera = new THREE.PerspectiveCamera(45, canvas.width / canvas.height, 0.01, 1000);
+  cameraController = new wt.CameraController({ camera: camera });
 
-	if(vertices === undefined) {
-		console.error("No valid obj provided, vertex buffer is empty. Terminating...");
-		return;
-	}
+  fpsElement = document.getElementById("wt_fps") as HTMLTextAreaElement;
+  fpsDisplayTimer = 0;
 
-	pathTracer = new wt.PathTracer(canvas, vertices);
-	console.log(canvas.width, canvas.height);
+  objLoader = new wt.OBJLoader();
+  const vertices: Float32Array | undefined = await objLoader.load("assets/suzanne.obj");
 
-	wt.Application.run(onUpdate);
-}
+  if (vertices === undefined) {
+    console.error("No valid obj provided, vertex buffer is empty. Terminating...");
+    return;
+  }
+
+  pathTracer = new wt.PathTracer(canvas, vertices);
+
+  wt.Application.run(onUpdate);
+};
 
 main();
