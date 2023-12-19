@@ -20,7 +20,7 @@ class PathTracer {
 
   public reset(): void {
     const frameInfo = new Float32Array(this.m_canvas.height * this.m_canvas.width * 4).fill(0);
-    PathTracer.m_device.queue.writeBuffer(this.m_frameInfoBuffer, 0, frameInfo);
+    PathTracer.m_device.queue.writeBuffer(this.m_accumulationBuffer, 0, frameInfo);
   }
 
   public setScene(triangleVertices: Float32Array): void {
@@ -93,12 +93,7 @@ class PathTracer {
   private m_uniformCPU: Float32Array; // do not change it (TODO: create a separate class for uniforms and make it readonly)
   private m_triangleVertexBuffer: GPUBuffer;
 
-  private m_colorTexture: GPUTexture;
-  private m_colorBufferView: GPUTextureView;
-  private m_sampler: GPUSampler;
-
-  private m_frameInfoBuffer: GPUBuffer;
-
+  private m_accumulationBuffer: GPUBuffer;
   private m_frameIndex: number = 0;
 
   private _initContext() {
@@ -126,30 +121,9 @@ class PathTracer {
       });
     }
 
-    // color buffer + texture
+    // accumulation buffer
     {
-      this.m_colorTexture = PathTracer.m_device.createTexture({
-        size: {
-          width: this.m_canvas.width,
-          height: this.m_canvas.height,
-        },
-        format: "rgba8unorm",
-        usage:
-          GPUTextureUsage.COPY_DST |
-          GPUTextureUsage.STORAGE_BINDING |
-          GPUTextureUsage.TEXTURE_BINDING,
-      });
-      this.m_colorBufferView = this.m_colorTexture.createView();
-      this.m_sampler = PathTracer.m_device.createSampler({
-        addressModeU: "repeat",
-        addressModeV: "repeat",
-        magFilter: "linear",
-        minFilter: "nearest",
-        mipmapFilter: "nearest",
-        maxAnisotropy: 1,
-      });
-
-      this.m_frameInfoBuffer = PathTracer.m_device.createBuffer({
+      this.m_accumulationBuffer = PathTracer.m_device.createBuffer({
         size: this.m_canvas.width * this.m_canvas.height * 4 * 4,
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
       });
@@ -201,7 +175,7 @@ class PathTracer {
           },
           {
             binding: 2,
-            resource: { buffer: this.m_frameInfoBuffer },
+            resource: { buffer: this.m_accumulationBuffer },
           },
         ],
       });
@@ -255,7 +229,7 @@ class PathTracer {
           },
           {
             binding: 1,
-            resource: { buffer: this.m_frameInfoBuffer },
+            resource: { buffer: this.m_accumulationBuffer },
           },
         ],
       });

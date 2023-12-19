@@ -3,7 +3,7 @@
 // @group(0) @binding(-) var colorBuffer: texture_storage_2d<rgba8unorm, write>; // Example usage: textureStore(colorBuffer, texelCoord, vec4f(pixel_color, 1.0));
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var<storage, read> vertices: array<f32>;
-@group(0) @binding(2) var<storage, read_write> frameInfo: array<vec4f>;
+@group(0) @binding(2) var<storage, read_write> accumulationInfo: array<vec4f>;
 
 struct Sphere {
     center: vec3f,
@@ -59,11 +59,11 @@ fn main(@builtin(global_invocation_id) globalInvocationID : vec3u) {
 
     var pixel_color: vec3f = traceRay(ray,seed);
 
-    var state: vec4f = frameInfo[texelCoord.y * resolution.x + texelCoord.x];
+    var state: vec4f = accumulationInfo[texelCoord.y * resolution.x + texelCoord.x];
     var weight: f32 = 1.0 / (state.a + 1);
     var finalColor: vec3f = state.xyz * (1-weight) + pixel_color * weight;
 
-    frameInfo[texelCoord.y * resolution.x + texelCoord.x] = vec4f(finalColor, state.a + 1);
+    accumulationInfo[texelCoord.y * resolution.x + texelCoord.x] = vec4f(finalColor, state.a + 1);
     //textureStore(colorBuffer, texelCoord, vec4f(pixel_color, 1.0));
 }
 

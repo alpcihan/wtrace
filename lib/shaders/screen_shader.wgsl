@@ -1,7 +1,7 @@
 //@group(0) @binding(-) var screenSampler : sampler;
 //@group(0) @binding(-) var colorBuffer : texture_2d<f32>;
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
-@group(0) @binding(1) var<storage, read> frameInfo: array<vec4f>;
+@group(0) @binding(1) var<storage, read> accumulationInfo: array<vec4f>;
 
 struct Uniforms {
     view_i: mat4x4f,
@@ -29,6 +29,6 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
     var resolution: vec2i = vec2i(uniforms.resolution);
     var texelCoord: vec2i = vec2i(uv * vec2f(resolution));
 
-    return vec4f(frameInfo[texelCoord.y * resolution.x + texelCoord.x].xyz, 1);
+    return vec4f(accumulationInfo[texelCoord.y * resolution.x + texelCoord.x].xyz, 1);
     //return textureSample(colorBuffer, screenSampler, uv);
 }
