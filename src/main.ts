@@ -7,6 +7,7 @@ var fpsDisplayTimer: number;
 var camera: THREE.PerspectiveCamera;
 var cameraController: wt.CameraController;
 var pathTracer: wt.PathTracer;
+var objLoader: wt.OBJLoader;
 
 const onUpdate = () => {
 	// update camera
@@ -14,6 +15,11 @@ const onUpdate = () => {
 
 	// render
 	pathTracer.render(camera);
+
+	if(cameraController.isUpdated()) {
+		pathTracer.reset();
+		console.log("reset");
+	}
 
 	if(fpsDisplayTimer > 0.1) {
 		fpsElement!.innerText = `FPS: ${Math.floor(1/wt.Application.getDeltaTime())}`;
@@ -27,13 +33,23 @@ const main = async () => {
 	await wt.Application.init();
 
     canvas = document.getElementById('wt_canvas-webgpu') as HTMLCanvasElement;  
-	pathTracer = new wt.PathTracer(canvas);
-
+	
     camera = new THREE.PerspectiveCamera(45, canvas.width / canvas.height, 0.01, 1000);
 	cameraController = new wt.CameraController({camera: camera});
 	
 	fpsElement = document.getElementById('wt_fps') as HTMLTextAreaElement;
 	fpsDisplayTimer = 0;
+
+	objLoader = new wt.OBJLoader;
+	const vertices: Float32Array | undefined = await objLoader.load("suzanne.obj");
+
+	if(vertices === undefined) {
+		console.error("No valid obj provided, vertex buffer is empty. Terminating...");
+		return;
+	}
+
+	pathTracer = new wt.PathTracer(canvas, vertices);
+	console.log(canvas.width, canvas.height);
 
 	wt.Application.run(onUpdate);
 }

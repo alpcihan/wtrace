@@ -5,19 +5,34 @@ import screen_shader from './shaders/screen_shader.wgsl';
 import pathtracer_compute from './shaders/pathtracer_compute.wgsl';
 
 class PathTracer {
-    constructor(canvas: HTMLCanvasElement) {
+    constructor(canvas: HTMLCanvasElement, triangleVertices: Float32Array) {
         this.m_canvas = canvas;
-
+        
         this._initContext();
         this._initAssets();
+        this.setScene(triangleVertices);
         this._initPipelines();
     }
 
-    public static init(device: GPUDevice) {
+    public static init(device: GPUDevice): void {
         PathTracer.m_device = device;
     }
 
-    public render(camera: THREE.PerspectiveCamera) {
+    public reset(): void {
+        const frameInfo = new Float32Array(this.m_canvas.height*this.m_canvas.width*4).fill(0);
+        PathTracer.m_device.queue.writeBuffer(this.m_frameInfoBuffer, 0, frameInfo);
+    }
+
+    public setScene(triangleVertices: Float32Array): void {
+        this.m_triangleVertexBuffer = PathTracer.m_device.createBuffer({
+            size: triangleVertices.byteLength,
+            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+        });
+        
+        PathTracer.m_device.queue.writeBuffer(this.m_triangleVertexBuffer, 0, triangleVertices);
+    }
+
+    public render(camera: THREE.PerspectiveCamera): void {
         this._updateUniforms(camera);
 
         const cmd: GPUCommandEncoder = PathTracer.m_device.createCommandEncoder();
@@ -54,7 +69,7 @@ class PathTracer {
         this.m_frameIndex++;
     }
 
-    public terminate() {
+    public terminate(): void {
         throw new Error('Function is not implemented.');
     }
 
@@ -72,10 +87,13 @@ class PathTracer {
     // assets
     private m_uniformBuffer: GPUBuffer;
     private m_uniformCPU: Float32Array; // do not change it (TODO: create a separate class for uniforms and make it readonly)
+    private m_triangleVertexBuffer: GPUBuffer;
 
     private m_colorTexture: GPUTexture;
     private m_colorBufferView: GPUTextureView;
     private m_sampler: GPUSampler;
+
+    private m_frameInfoBuffer: GPUBuffer;
 
     private m_frameIndex: number = 0;
 
@@ -123,6 +141,11 @@ class PathTracer {
                 mipmapFilter: "nearest",
                 maxAnisotropy: 1
             });
+            
+            this.m_frameInfoBuffer = PathTracer.m_device.createBuffer({
+                size: this.m_canvas.width * this.m_canvas.height * 4 * 4,
+                usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+            });
         }
     }
 
@@ -131,18 +154,34 @@ class PathTracer {
         {
             const pathTracingBindGroupLayout = PathTracer.m_device.createBindGroupLayout({
                 entries: [
-                    {
+                    {   // uniform
                         binding: 0,
                         visibility: GPUShaderStage.COMPUTE,
-                        buffer: {}
+                        buffer: {
+                            type: "uniform"
+                        }
                     },
-                    {
+                    {   // render image
                         binding: 1,
                         visibility: GPUShaderStage.COMPUTE,
                         storageTexture: {
                             access: "write-only",
                             format: "rgba8unorm",
                             viewDimension: "2d"
+                        }
+                    },
+                    {   // triangle vertices
+                        binding: 2,
+                        visibility: GPUShaderStage.COMPUTE,
+                        buffer: {
+                            type: "read-only-storage"
+                        }
+                    },
+                    {   // render image (as storage buffer)
+                        binding: 3,
+                        visibility: GPUShaderStage.COMPUTE,
+                        buffer: {
+                            type: "storage"
                         }
                     },
                 ]
@@ -158,6 +197,14 @@ class PathTracer {
                     {
                         binding: 1,
                         resource: this.m_colorBufferView
+                    },
+                    {
+                        binding: 2,
+                        resource: {buffer: this.m_triangleVertexBuffer}
+                    },
+                    {
+                        binding: 3,
+                        resource: {buffer: this.m_frameInfoBuffer}
                     }
                 ]
             });
@@ -193,6 +240,13 @@ class PathTracer {
                         visibility: GPUShaderStage.FRAGMENT,
                         texture: {}
                     },
+                    {   // render image (as storage buffer)
+                        binding: 2,
+                        visibility: GPUShaderStage.FRAGMENT,
+                        buffer: {
+                            type: "read-only-storage"
+                        }
+                    },
                 ]
             });
 
@@ -206,6 +260,10 @@ class PathTracer {
                     {
                         binding: 1,
                         resource: this.m_colorBufferView
+                    },
+                    {
+                        binding: 2,
+                        resource: {buffer: this.m_frameInfoBuffer}
                     }
                 ]
             });
