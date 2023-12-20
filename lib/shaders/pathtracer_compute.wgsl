@@ -5,6 +5,8 @@
 @group(0) @binding(1) var<storage, read> vertices: array<f32>;
 @group(0) @binding(2) var<storage, read_write> accumulationInfo: array<vec4f>; // TODO: replace with storage texture
 
+const MAX_FLOAT32: f32 = 3.402823466e+38;
+
 struct Uniforms {
     view_i: mat4x4f,
     projection_i: mat4x4f,
@@ -82,8 +84,6 @@ fn traceRay(ray: Ray, seed: u32) -> vec3f {
     var attenuation: vec3f = vec3f(1.0, 1.0, 1.0);
 
     for(var i: u32 = 0; i < 4; i++) {
-
-        var hitInfo: HitInfo;
         createHitInfo(&hitInfo);
         hitWorld(r, &hitInfo);
 
@@ -117,24 +117,25 @@ fn intersectXZPlane(
     y: f32,
     material: ptr<function, Material>,
     ray: Ray,
-    hitInfo: ptr<function, HitInfo>) {
+    bestHit: ptr<function, HitInfo>) {
 
     var xzPlane: XZPlane;
     xzPlane.normal = vec3f(0.0, 1.0, 0.0);
     xzPlane.distance = -y;
 
     let t: f32 = -(dot(ray.origin, xzPlane.normal) + xzPlane.distance) / dot(ray.direction, xzPlane.normal);
-    if (t > 0.0 && (t < (*hitInfo).t || (*hitInfo).t < 0.0)) {
-        (*hitInfo).t = t;
-        (*hitInfo).normal = vec3f(0.0, 1.0, 0.0);
-        (*hitInfo).material = *(material); // TODO: reference directly or use index
+    if (t > 0.0 && t < (*bestHit).t) {
+        (*bestHit).t = t;
+        (*bestHit).normal = vec3f(0.0, 1.0, 0.0);
+        (*bestHit).material = *(material); // TODO: reference directly or use index
     }
 }
 
 fn intersectSphere(
     sphere: ptr<function, Sphere>,
     material: ptr<function, Material>,
-    ray: Ray, hitInfo: ptr<function, HitInfo>) {
+    ray: Ray,
+    bestHit: ptr<function, HitInfo>) {
 
     let a: f32 = dot(ray.direction, ray.direction);
     let b: f32 = 2.0 * dot(ray.direction, ray.origin - (*sphere).center);
@@ -148,75 +149,71 @@ fn intersectSphere(
     let t0: f32 = (-b - sqrt(discriminant)) / (2.0 * a);
     let t1: f32 = (-b + sqrt(discriminant)) / (2.0 * a);
 
-    let t: f32 =  min(t0, t1);
+    let t: f32 = min(t0, t1);
 
-    if (t > 0.0 && (t < (*hitInfo).t || (*hitInfo).t < 0.0)) {
-        (*hitInfo).t = t;
-        (*hitInfo).normal = normalize(rayAt(ray, t) - (*sphere).center);
-        (*hitInfo).material = (*material); // TODO: reference directly or use index
+    if (t > 0.0 && t < (*bestHit).t) {
+        (*bestHit).t = t;
+        (*bestHit).normal = normalize(rayAt(ray, t) - (*sphere).center);
+        (*bestHit).material = (*material); // TODO: reference directly or use index
     }
 }
 
-fn intersectTriangles(ray: Ray, hitInfo: ptr<function, HitInfo>) {
+fn intersectTriangles(ray: Ray, bestHit: ptr<function, HitInfo>) {
     for(var i: u32 = 0; i < 8712; i+=9) { // TODO: pass triangle count as uniform 
+
         var v0: vec3f = vec3f(vertices[i], vertices[i+1], vertices[i+2]);
         var v1: vec3f = vec3f(vertices[i+3], vertices[i+4], vertices[i+5]);
         var v2: vec3f = vec3f(vertices[i+6], vertices[i+7], vertices[i+8]);
 
-        var t: f32 = hitTriangle(ray, v0, v1, v2);
-        if (t > 0.0 && (t < (*hitInfo).t || (*hitInfo).t < 0.0)) {
+        const EPSILON: f32 = 0.0000001;
+    
+        var vertex0: vec3f = v0;
+        var vertex1: vec3f = v1;
+        var vertex2: vec3f = v2;
+
+        var edge1: vec3f = vertex1 - vertex0;
+        var edge2: vec3f = vertex2 - vertex0;
+        var rayVecXe2: vec3f = cross(ray.direction, edge2);
+
+        var det: f32 = dot(edge1, rayVecXe2);
+
+        if (det > -EPSILON && det < EPSILON) { // This ray is parallel to this triangle.
+            return; 
+        }
+
+        var invDet: f32 = 1.0 / det;
+        var s: vec3f = ray.origin - vertex0;
+        var u: f32 = invDet * dot(s, rayVecXe2);
+
+        if (u < 0.0 || u > 1.0) {
+            return;
+        }
+
+        var sXe1: vec3f = cross(s, edge1);
+        var v: f32 = invDet * dot(ray.direction, sXe1);
+
+        if (v < 0.0 || u + v > 1.0) {
+            return;
+        }
+
+        var t: f32 = invDet * dot(edge2, sXe1);
+
+        if (t < (*bestHit).t && t > EPSILON ) {
             // Calculate the normal using the cross product of the edge vectors
             var edge1: vec3f = v1 - v0;
             var edge2: vec3f = v2 - v0;
             var normal: vec3f = normalize(cross(edge1, edge2));
             
-            (*hitInfo).t = t;
-            (*hitInfo).normal = normal;
-            (*hitInfo).material.color = vec3f(1.0, 1.0, 1.0);
-            (*hitInfo).material.emissiveColor = vec3f(0.0, 0.0, 0.0);
+            (*bestHit).t = t;
+            (*bestHit).normal = normal;
+            (*bestHit).material.color = vec3f(1.0, 1.0, 1.0);
+            (*bestHit).material.emissiveColor = vec3f(0.0, 0.0, 0.0);
         }
     }
 }
 
-fn hitTriangle(ray: Ray, v0: vec3f, v1: vec3f, v2: vec3f) -> f32 {
-    const EPSILON: f32 = 0.0000001;
-    
-    var vertex0: vec3f = v0;
-    var vertex1: vec3f = v1;
-    var vertex2: vec3f = v2;
-
-    var edge1: vec3f = vertex1 - vertex0;
-    var edge2: vec3f = vertex2 - vertex0;
-    var rayVecXe2: vec3f = cross(ray.direction, edge2);
-
-    var det: f32 = dot(edge1, rayVecXe2);
-
-    if (det > -EPSILON && det < EPSILON) {
-        return -1; // This ray is parallel to this triangle.
-    }
-
-    var invDet: f32 = 1.0 / det;
-    var s: vec3f = ray.origin - vertex0;
-    var u: f32 = invDet * dot(s, rayVecXe2);
-
-    if (u < 0.0 || u > 1.0) {
-        return -1;
-    }
-
-    var sXe1: vec3f = cross(s, edge1);
-    var v: f32 = invDet * dot(ray.direction, sXe1);
-
-    if (v < 0.0 || u + v > 1.0) {
-        return -1;
-    }
-
-    var t: f32 = invDet * dot(edge2, sXe1);
-
-    return t;
-}
-
 fn createHitInfo(hitInfo: ptr<function, HitInfo>){
-    (*hitInfo).t = -1.0;
+    (*hitInfo).t = MAX_FLOAT32;
     (*hitInfo).normal = vec3f(0.0, 0.0, 0.0);
     (*hitInfo).material.color = vec3f(0.0, 0.0, 0.0);
     (*hitInfo).material.emissiveColor = vec3f(0.0, 0.0, 0.0);
