@@ -1,7 +1,7 @@
 //@group(0) @binding(-) var screenSampler : sampler;
 //@group(0) @binding(-) var colorBuffer : texture_2d<f32>;
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
-@group(0) @binding(1) var<storage, read> accumulationInfo: array<vec4f>;
+@group(0) @binding(1) var<storage, read> accumulationInfo: array<vec4f>; // TODO: replace with storage texture
 
 struct Uniforms {
     view_i: mat4x4f,
