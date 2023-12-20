@@ -9,7 +9,7 @@ class PathTracer {
     PathTracer.m_device = device;
   }
 
-  constructor(canvas: HTMLCanvasElement, triangleVertices: Float32Array) {
+  constructor(canvas: HTMLCanvasElement, triangleVertices: Float32Array) { // TODO: create a scene loader + model system, instead of passing raw vertices in constructor
     this.m_canvas = canvas;
 
     this._initContext();

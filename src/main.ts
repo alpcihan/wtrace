@@ -48,7 +48,7 @@ const main = async () => {
     return;
   }
 
-  pathTracer = new wt.PathTracer(canvas, vertices);
+  pathTracer = new wt.PathTracer(canvas, vertices); // TODO: create a scene loader + model system, instead of passing raw vertices in constructor
 
   wt.Application.run(onUpdate);
 };
