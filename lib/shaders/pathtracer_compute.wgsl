@@ -30,7 +30,7 @@ struct Ray {
 struct HitInfo {
     t: f32,
     normal: vec3f,
-    material: Material // TODO: use material or mesh index instead
+    material: Material // TODO: use material index or model index instead
 };
 
 struct Material {
