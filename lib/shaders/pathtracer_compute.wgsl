@@ -159,14 +159,13 @@ fn intersectSphere(
 }
 
 fn intersectTriangles(ray: Ray, bestHit: ptr<function, HitInfo>) {
-    for(var i: u32 = 0; i < 8712; i+=9) { // TODO: pass triangle count as uniform 
+    const EPSILON: f32 = 0.0000001;
+    for(var i: u32 = 0; i < arrayLength(&vertices); i+=9) { // TODO: pass triangle count as uniform 
 
         var v0: vec3f = vec3f(vertices[i], vertices[i+1], vertices[i+2]);
         var v1: vec3f = vec3f(vertices[i+3], vertices[i+4], vertices[i+5]);
         var v2: vec3f = vec3f(vertices[i+6], vertices[i+7], vertices[i+8]);
 
-        const EPSILON: f32 = 0.0000001;
-    
         var vertex0: vec3f = v0;
         var vertex1: vec3f = v1;
         var vertex2: vec3f = v2;
@@ -178,7 +177,7 @@ fn intersectTriangles(ray: Ray, bestHit: ptr<function, HitInfo>) {
         var det: f32 = dot(edge1, rayVecXe2);
 
         if (det > -EPSILON && det < EPSILON) { // This ray is parallel to this triangle.
-            return; 
+            continue;
         }
 
         var invDet: f32 = 1.0 / det;
@@ -186,14 +185,14 @@ fn intersectTriangles(ray: Ray, bestHit: ptr<function, HitInfo>) {
         var u: f32 = invDet * dot(s, rayVecXe2);
 
         if (u < 0.0 || u > 1.0) {
-            return;
+            continue;
         }
 
         var sXe1: vec3f = cross(s, edge1);
         var v: f32 = invDet * dot(ray.direction, sXe1);
 
         if (v < 0.0 || u + v > 1.0) {
-            return;
+            continue;
         }
 
         var t: f32 = invDet * dot(edge2, sXe1);
