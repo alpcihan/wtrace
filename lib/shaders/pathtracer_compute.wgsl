@@ -160,7 +160,8 @@ fn intersectSphere(
 
 fn intersectTriangles(ray: Ray, bestHit: ptr<function, HitInfo>) {
     const EPSILON: f32 = 0.0000001;
-    for(var i: u32 = 0; i < arrayLength(&vertices); i+=9) { // TODO: pass triangle count as uniform 
+    var verticesCount : u32 = arrayLength(&vertices);
+    for(var i: u32 = 0; i < verticesCount ; i+=9) {
 
         var v0: vec3f = vec3f(vertices[i], vertices[i+1], vertices[i+2]);
         var v1: vec3f = vec3f(vertices[i+3], vertices[i+4], vertices[i+5]);
@@ -205,7 +206,7 @@ fn intersectTriangles(ray: Ray, bestHit: ptr<function, HitInfo>) {
             
             (*bestHit).t = t;
             (*bestHit).normal = normal;
-            (*bestHit).material.color = vec3f(1.0, 1.0, 1.0);
+            (*bestHit).material.color = vec3f(1.0, 0.0, 0.0);
             (*bestHit).material.emissiveColor = vec3f(0.0, 0.0, 0.0);
         }
     }
