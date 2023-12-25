@@ -160,49 +160,49 @@ fn intersectSphere(
 
 fn intersectTriangles(ray: Ray, bestHit: ptr<function, HitInfo>) {
     const EPSILON: f32 = 0.0000001;
-    var verticesCount : u32 = arrayLength(&vertices);
-    for(var i: u32 = 0; i < verticesCount ; i+=9) {
+    let vertexCount : u32 = arrayLength(&vertices);
+    for(var i: u32 = 0; i < vertexCount ; i+=9) {
 
-        var v0: vec3f = vec3f(vertices[i], vertices[i+1], vertices[i+2]);
-        var v1: vec3f = vec3f(vertices[i+3], vertices[i+4], vertices[i+5]);
-        var v2: vec3f = vec3f(vertices[i+6], vertices[i+7], vertices[i+8]);
+        let v0: vec3f = vec3f(vertices[i], vertices[i+1], vertices[i+2]);
+        let v1: vec3f = vec3f(vertices[i+3], vertices[i+4], vertices[i+5]);
+        let v2: vec3f = vec3f(vertices[i+6], vertices[i+7], vertices[i+8]);
 
-        var vertex0: vec3f = v0;
-        var vertex1: vec3f = v1;
-        var vertex2: vec3f = v2;
+        let vertex0: vec3f = v0;
+        let vertex1: vec3f = v1;
+        let vertex2: vec3f = v2;
 
-        var edge1: vec3f = vertex1 - vertex0;
-        var edge2: vec3f = vertex2 - vertex0;
-        var rayVecXe2: vec3f = cross(ray.direction, edge2);
+        let edge1: vec3f = vertex1 - vertex0;
+        let edge2: vec3f = vertex2 - vertex0;
+        let rayVecXe2: vec3f = cross(ray.direction, edge2);
 
-        var det: f32 = dot(edge1, rayVecXe2);
+        let det: f32 = dot(edge1, rayVecXe2);
 
         if (det > -EPSILON && det < EPSILON) { // This ray is parallel to this triangle.
             continue;
         }
 
-        var invDet: f32 = 1.0 / det;
-        var s: vec3f = ray.origin - vertex0;
-        var u: f32 = invDet * dot(s, rayVecXe2);
+        let invDet: f32 = 1.0 / det;
+        let s: vec3f = ray.origin - vertex0;
+        let u: f32 = invDet * dot(s, rayVecXe2);
 
         if (u < 0.0 || u > 1.0) {
             continue;
         }
 
-        var sXe1: vec3f = cross(s, edge1);
-        var v: f32 = invDet * dot(ray.direction, sXe1);
+        let sXe1: vec3f = cross(s, edge1);
+        let v: f32 = invDet * dot(ray.direction, sXe1);
 
         if (v < 0.0 || u + v > 1.0) {
             continue;
         }
 
-        var t: f32 = invDet * dot(edge2, sXe1);
+        let t: f32 = invDet * dot(edge2, sXe1);
 
         if (t < (*bestHit).t && t > EPSILON ) {
             // Calculate the normal using the cross product of the edge vectors
-            var edge1: vec3f = v1 - v0;
-            var edge2: vec3f = v2 - v0;
-            var normal: vec3f = normalize(cross(edge1, edge2));
+            let edge1: vec3f = v1 - v0;
+            let edge2: vec3f = v2 - v0;
+            let normal: vec3f = normalize(cross(edge1, edge2));
             
             (*bestHit).t = t;
             (*bestHit).normal = normal;
