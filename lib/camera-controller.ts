@@ -20,6 +20,8 @@ interface CameraControllerInputs {
 	yawnCounterClockwiseInput: Key;
 }
 
+const CAMERA_CONTROLLER_PITCH_LIMIT: number = 89 * THREE.MathUtils.DEG2RAD;
+
 class CameraController {
 	constructor(props: CameraControllerProps) {
 		this.m_camera = props.camera;
@@ -86,9 +88,9 @@ class CameraController {
 			isUpdated = true;
 		}
 
-		const pitchLimit: number = 89 * THREE.MathUtils.DEG2RAD;
-		this.m_euler.x = clamp(this.m_euler.x, -pitchLimit, pitchLimit);
+		this.m_euler.x = clamp(this.m_euler.x, -CAMERA_CONTROLLER_PITCH_LIMIT, CAMERA_CONTROLLER_PITCH_LIMIT);
 		
+		// TODO: read the initial direction vectors from the camera instance
 		let forward: THREE.Vector3 = new THREE.Vector3(0,0,-1);
 		let right: THREE.Vector3 = new THREE.Vector3(1,0,0);
 		let up: THREE.Vector3 = new THREE.Vector3(0,1,0);
