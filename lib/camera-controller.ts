@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { Key } from "./input-system-types";
 import { InputSystem } from "./input-system";
+import { clamp } from "three/src/math/MathUtils";
 
 interface CameraControllerProps {
 	camera: THREE.PerspectiveCamera;
@@ -24,9 +25,7 @@ class CameraController {
 		this.m_camera = props.camera;
 
 		// TODO: read rest from the camera
-		this.m_euler = new THREE.Euler(0,0,0); 
-		this.m_front = new THREE.Vector3(0,0,-1);
-		this.m_up = new THREE.Vector3(0,1,0);
+		this.m_euler = new THREE.Vector3(0,0,0); 
 	}
 
 	public inputs: CameraControllerInputs = {
@@ -42,7 +41,7 @@ class CameraController {
 		yawnCounterClockwiseInput: Key.KeyArrowLeft,
 	};
 
-	public speed: number = 1;
+	public speed: number = 2;
 	public rotationSpeed: number = 90;
 
 	public update(deltaTime: number) {
@@ -61,9 +60,7 @@ class CameraController {
 	
 	private m_camera: THREE.PerspectiveCamera;
 	private m_isUpdated: boolean;
-	private m_euler: THREE.Euler;
-	private m_front: THREE.Vector3;
-	private m_up: THREE.Vector3;
+	private m_euler: THREE.Vector3;
 
 	private _processInputs(deltaTime: number): boolean {
 		const deltaSpeed = this.speed * deltaTime;
@@ -88,20 +85,25 @@ class CameraController {
 			this.m_euler.x -= deltaRotationSpeed;
 			isUpdated = true;
 		}
-		
-		let q: THREE.Quaternion = new THREE.Quaternion();
-		q.setFromEuler(this.m_euler);
 
-		const lookAt: THREE.Vector3 = this.m_front.clone().applyQuaternion(q);
-		const right: THREE.Vector3 = this.m_front.clone().cross(this.m_up);
+		const pitchLimit: number = 89 * THREE.MathUtils.DEG2RAD;
+		this.m_euler.x = clamp(this.m_euler.x, -pitchLimit, pitchLimit);
+		
+		let forward: THREE.Vector3 = new THREE.Vector3(0,0,-1);
+		let right: THREE.Vector3 = new THREE.Vector3(1,0,0);
+		let up: THREE.Vector3 = new THREE.Vector3(0,1,0);
+
+		forward.applyAxisAngle(up, this.m_euler.y);
+		right.applyAxisAngle(up, this.m_euler.y);
+		forward.applyAxisAngle(right, this.m_euler.x);
 
 		// translation inputs
 		if (InputSystem.isKeyPressed(this.inputs.forwardInput)) {
-			this.m_camera.position.add(lookAt.clone().multiplyScalar(deltaSpeed));
+			this.m_camera.position.add(forward.clone().multiplyScalar(deltaSpeed));
 			isUpdated = true;
 		}
 		if (InputSystem.isKeyPressed(this.inputs.backwardInput)) {
-			this.m_camera.position.add(lookAt.clone().multiplyScalar(-deltaSpeed));
+			this.m_camera.position.add(forward.clone().multiplyScalar(-deltaSpeed));
 			isUpdated = true;
 		}
 		if (InputSystem.isKeyPressed(this.inputs.rightInput)) {
@@ -113,15 +115,15 @@ class CameraController {
 			isUpdated = true;
 		}
 		if (InputSystem.isKeyPressed(this.inputs.upInput)) {
-			this.m_camera.position.add(this.m_up.clone().multiplyScalar(deltaSpeed));
+			this.m_camera.position.add(up.clone().multiplyScalar(deltaSpeed));
 			isUpdated = true;
 		}
 		if (InputSystem.isKeyPressed(this.inputs.downInput)) {
-			this.m_camera.position.add(this.m_up.clone().multiplyScalar(-deltaSpeed));
+			this.m_camera.position.add(up.clone().multiplyScalar(-deltaSpeed));
 			isUpdated = true;
 		}
 
-		this.m_camera.lookAt(this.m_camera.position.clone().add(lookAt));
+		this.m_camera.lookAt(this.m_camera.position.clone().add(forward));
 
 		return isUpdated;
 	}
