@@ -47,8 +47,6 @@ class CameraController {
 	public rotationSpeed: number = 90;
 
 	public update(deltaTime: number) {
-		this.m_isUpdated = false;
-
 		this.m_isUpdated = this._processInputs(deltaTime);
 		
 		if (!this.m_isUpdated) return;
