@@ -3,6 +3,8 @@ import { Key } from "./input-system-types";
 import { InputSystem } from "./input-system";
 import { clamp } from "three/src/math/MathUtils";
 
+const CAMERA_CONTROLLER_PITCH_LIMIT: number = 89.9 * THREE.MathUtils.DEG2RAD;
+
 interface CameraControllerProps {
 	camera: THREE.PerspectiveCamera;
 }
@@ -19,8 +21,6 @@ interface CameraControllerInputs {
 	pitchCounterClockwiseInput: Key;
 	yawnCounterClockwiseInput: Key;
 }
-
-const CAMERA_CONTROLLER_PITCH_LIMIT: number = 89 * THREE.MathUtils.DEG2RAD;
 
 class CameraController {
 	constructor(props: CameraControllerProps) {
