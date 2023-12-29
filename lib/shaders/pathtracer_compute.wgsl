@@ -49,16 +49,21 @@ fn main(@builtin(global_invocation_id) globalInvocationID : vec3u) {
     if (texelCoord.x >= resolution.x || texelCoord.y >= resolution.y) {
         return;
     }
-
-    let uv: vec2f = (vec2f(texelCoord) / vec2f(resolution)) * 2 - 1;
-    var ray: Ray = createCameraRay(uv, uniforms.view_i, uniforms.projection_i);
     
+    // rng
     var seed_i1: u32 = u32(texelCoord.x + texelCoord.y * resolution.x);
     var seed_i2: u32 = u32(uniforms.frameIdx);
-    var seed: u32 = pcg(&seed_i1)+ pcg(&seed_i2);
+    var seed: u32 = pcg(&seed_i1) + pcg(&seed_i2);
 
+    // ray 
+    let texelCoordSampled: vec2f = vec2f(texelCoord) + vec2f(frand(&seed_i2), frand(&seed_i2)) * 2 - 1;
+    let uv: vec2f = (texelCoordSampled / vec2f(resolution)) * 2 - 1;
+    var ray: Ray = createCameraRay(uv, uniforms.view_i, uniforms.projection_i);
+
+    // color
     var pixel_color: vec3f = traceRay(ray,seed);
 
+    // accumulation
     var state: vec4f = accumulationInfo[texelCoord.y * resolution.x + texelCoord.x];
     var weight: f32 = 1.0 / (state.a + 1);
     var finalColor: vec3f = state.xyz * (1-weight) + pixel_color * weight;
@@ -87,7 +92,7 @@ fn traceRay(ray: Ray, seed: u32) -> vec3f {
         createHitInfo(&hitInfo);
         hitWorld(r, &hitInfo);
 
-        if (hitInfo.t > 0.0) {
+        if (hitInfo.t < MAX_FLOAT32) {
             attenuation *= hitInfo.material.color;
             incomingLight += attenuation * hitInfo.material.emissiveColor;
 
