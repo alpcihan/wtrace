@@ -270,7 +270,7 @@ class PathTracer {
   private _updateUniforms(camera: THREE.PerspectiveCamera) {
     // TODO: calculate the offsets automatically
     let offset = 0;
-    this.m_uniformCPU.set(camera.matrixWorldInverse.toArray(), offset); offset += 4 * 4;
+    this.m_uniformCPU.set(camera.matrixWorld.toArray(), offset); offset += 4 * 4;
     this.m_uniformCPU.set(camera.projectionMatrixInverse.toArray(), offset); offset += 4 * 4;
     this.m_uniformCPU.set([this.m_canvas.width, this.m_canvas.height], offset); offset += 2;
     this.m_uniformCPU.set([this.m_frameIndex], offset); offset += 1;

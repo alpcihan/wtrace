@@ -69,8 +69,13 @@ fn main(@builtin(global_invocation_id) globalInvocationID : vec3u) {
 fn createCameraRay(uv: vec2f, view_i: mat4x4f, projection_i: mat4x4f) -> Ray {
     var ray: Ray;
 
-    ray.direction = normalize((projection_i * vec4f(uv, 0, 1)).xyz);
+    // origin
     ray.origin = (view_i * vec4f(0,0,0,1)).xyz;
+
+    // direction
+    ray.direction = normalize(projection_i * vec4f(uv, 0, 1)).xyz;
+    ray.direction = (view_i * vec4f(ray.direction, 0)).xyz;
+    ray.direction = normalize(ray.direction);
 
     return ray;
 } 
