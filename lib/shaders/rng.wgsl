@@ -3,7 +3,10 @@
 //  random number generator
 //---------------------------------------
 
+const INV_FMAX = 1.0 / f32(0xffffffff);
+
 //https://www.reedbeta.com/blog/hash-functions-for-gpu-rendering/
+//Generate random number between 0 and 2^32 - 1
 fn pcg(n: ptr<function,u32>) -> u32 {
     var h = (*n) * 747796405u + 2891336453u;
     *n = h;
@@ -11,8 +14,9 @@ fn pcg(n: ptr<function,u32>) -> u32 {
     return (h >> 22u) ^ h;
 }
 
+//Generate random number between 0 and 1
 fn frand(seed: ptr<function,u32>) -> f32 {
-    return f32(pcg(seed))/4294967296.0;
+    return f32(pcg(seed)) * INV_FMAX;
 }
 
 //https://www.shadertoy.com/view/lssfD7
@@ -22,6 +26,6 @@ fn cosineDirection(seed: ptr<function,u32>, nor: vec3f) -> vec3f {
 
     var a: f32 = 6.2831853 * v;
     var b: f32 = 2.0 * u - 1.0;
-    var direction: vec3f = vec3f(sqrt(1.0 - b * b) * vec2f(cos(a),sin(a)),b);
-    return normalize(nor+direction);
+    var direction: vec3f = vec3f(sqrt(1.0 - b * b) * vec2f(cos(a), sin(a)), b);
+    return normalize(nor + direction);
 }
