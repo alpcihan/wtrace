@@ -1,6 +1,6 @@
 import * as THREE from "three";
-import { Key } from "../core/input-system-types";
-import { InputSystem } from "../core/input-system";
+import { Key } from "../input/input-system-types";
+import { InputSystem } from "../input/input-system";
 import { clamp } from "three/src/math/MathUtils";
 
 const CAMERA_CONTROLLER_PITCH_LIMIT: number = 89 * THREE.MathUtils.DEG2RAD;

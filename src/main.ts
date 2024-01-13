@@ -6,7 +6,6 @@ var fpsElement: HTMLTextAreaElement;
 var fpsDisplayTimer: number;
 
 const onUpdate = () => {
-
   if (fpsDisplayTimer > 0.1) {
     fpsElement!.innerText = `FPS: ${Math.floor(1 / wt.Application.getDeltaTime())}`;
     fpsDisplayTimer = 0;

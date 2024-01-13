@@ -1,6 +1,6 @@
 import * as THREE from "three";
-import { CameraController } from "../renderer/camera-controller";
-import { InputSystem } from "./input-system";
+import { CameraController } from "../camera/camera-controller";
+import { InputSystem } from "../input/input-system";
 import { PathTracer } from "../renderer/path-tracer";
 import { IGPU } from "../renderer/igpu";
 
@@ -25,7 +25,7 @@ class Application {
       Application.m_deltaTime = (performance.now() - this.m_time) * 0.001;
       this.m_time = performance.now();
 
-      // call client callback
+      // client callback
       onUpdate();
 
       // update camera controller
