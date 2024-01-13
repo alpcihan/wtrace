@@ -1,14 +1,12 @@
 import * as THREE from "three";
 
-import rng_shader from "./shaders/rng.wgsl";
-import screen_shader from "./shaders/screen_shader.wgsl";
-import pathtracer_compute from "./shaders/pathtracer_compute.wgsl";
+import rng_shader from "../shaders/rng.wgsl";
+import screen_shader from "../shaders/screen_shader.wgsl";
+import pathtracer_compute from "../shaders/pathtracer_compute.wgsl";
+
+import { IGPU } from "./igpu";
 
 class PathTracer {
-  public static init(device: GPUDevice): void {
-    PathTracer.m_device = device;
-  }
-
   constructor(canvas: HTMLCanvasElement, triangleVertices: Float32Array) { // TODO: create a scene loader + model system, instead of passing raw vertices in constructor
     this.m_canvas = canvas;
 
@@ -20,22 +18,22 @@ class PathTracer {
 
   public reset(): void {
     const frameInfo = new Float32Array(this.m_canvas.height * this.m_canvas.width * 4).fill(0);
-    PathTracer.m_device.queue.writeBuffer(this.m_accumulationBuffer, 0, frameInfo);
+    IGPU.get().queue.writeBuffer(this.m_accumulationBuffer, 0, frameInfo);
   }
 
   public setScene(triangleVertices: Float32Array): void {
-    this.m_triangleVertexBuffer = PathTracer.m_device.createBuffer({
+    this.m_triangleVertexBuffer = IGPU.get().createBuffer({
       size: triangleVertices.byteLength,
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
     });
 
-    PathTracer.m_device.queue.writeBuffer(this.m_triangleVertexBuffer, 0, triangleVertices);
+    IGPU.get().queue.writeBuffer(this.m_triangleVertexBuffer, 0, triangleVertices);
   }
 
   public render(camera: THREE.PerspectiveCamera): void {
     this._updateUniforms(camera);
 
-    const cmd: GPUCommandEncoder = PathTracer.m_device.createCommandEncoder();
+    const cmd: GPUCommandEncoder = IGPU.get().createCommandEncoder();
 
     // path trace pass
     {
@@ -69,7 +67,7 @@ class PathTracer {
       renderpass.end();
     }
 
-    PathTracer.m_device.queue.submit([cmd.finish()]);
+    IGPU.get().queue.submit([cmd.finish()]);
     this.m_frameIndex++;
   }
 
@@ -99,7 +97,7 @@ class PathTracer {
   private _initContext() {
     this.m_context = this.m_canvas.getContext("webgpu") as GPUCanvasContext;
     this.m_context.configure({
-      device: PathTracer.m_device,
+      device: IGPU.get(),
       format: "bgra8unorm" as GPUTextureFormat,
     });
   }
@@ -115,7 +113,7 @@ class PathTracer {
         4;          // padding
       this.m_uniformCPU = new Float32Array(uniformBufferSize / 4);
 
-      this.m_uniformBuffer = PathTracer.m_device.createBuffer({
+      this.m_uniformBuffer = IGPU.get().createBuffer({
         size: uniformBufferSize,
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
       });
@@ -123,7 +121,7 @@ class PathTracer {
 
     // accumulation buffer
     {
-      this.m_accumulationBuffer = PathTracer.m_device.createBuffer({
+      this.m_accumulationBuffer = IGPU.get().createBuffer({
         size: this.m_canvas.width * this.m_canvas.height * 4 * 4,
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
       });
@@ -133,7 +131,7 @@ class PathTracer {
   private _initPipelines() {
     // path tracer pass
     {
-      const pathTracingBindGroupLayout = PathTracer.m_device.createBindGroupLayout({
+      const pathTracingBindGroupLayout = IGPU.get().createBindGroupLayout({
         entries: [
           {
             // uniform
@@ -162,7 +160,7 @@ class PathTracer {
         ],
       });
 
-      this.m_pathTracingPipelineBindGroup = PathTracer.m_device.createBindGroup({
+      this.m_pathTracingPipelineBindGroup = IGPU.get().createBindGroup({
         layout: pathTracingBindGroupLayout,
         entries: [
           {
@@ -180,16 +178,16 @@ class PathTracer {
         ],
       });
 
-      const pathTracingPipelineLayout = PathTracer.m_device.createPipelineLayout({
+      const pathTracingPipelineLayout = IGPU.get().createPipelineLayout({
         bindGroupLayouts: [pathTracingBindGroupLayout],
       });
 
       const pathTracingShader = rng_shader + pathtracer_compute;
-      this.m_pathTracingPipeline = PathTracer.m_device.createComputePipeline({
+      this.m_pathTracingPipeline = IGPU.get().createComputePipeline({
         label: "path tracing compute pipeline",
         layout: pathTracingPipelineLayout,
         compute: {
-          module: PathTracer.m_device.createShaderModule({
+          module: IGPU.get().createShaderModule({
             code: pathTracingShader,
           }),
           entryPoint: "main",
@@ -199,7 +197,7 @@ class PathTracer {
 
     // screen pass
     {
-      const screenBindGroupLayout = PathTracer.m_device.createBindGroupLayout({
+      const screenBindGroupLayout = IGPU.get().createBindGroupLayout({
         entries: [
           {
             // uniform
@@ -220,7 +218,7 @@ class PathTracer {
         ],
       });
 
-      this.m_screenPipelineBindGroup = PathTracer.m_device.createBindGroup({
+      this.m_screenPipelineBindGroup = IGPU.get().createBindGroup({
         layout: screenBindGroupLayout,
         entries: [
           {
@@ -234,22 +232,22 @@ class PathTracer {
         ],
       });
 
-      const screenPipelineLayout = PathTracer.m_device.createPipelineLayout({
+      const screenPipelineLayout = IGPU.get().createPipelineLayout({
         bindGroupLayouts: [screenBindGroupLayout],
       });
 
-      this.m_screenPipeline = PathTracer.m_device.createRenderPipeline({
+      this.m_screenPipeline = IGPU.get().createRenderPipeline({
         label: "fullscreen texture presentation render pipeline",
         layout: screenPipelineLayout,
         vertex: {
-          module: PathTracer.m_device.createShaderModule({
+          module: IGPU.get().createShaderModule({
             code: screen_shader,
           }),
           entryPoint: "vs_main",
         },
 
         fragment: {
-          module: PathTracer.m_device.createShaderModule({
+          module: IGPU.get().createShaderModule({
             code: screen_shader,
           }),
           entryPoint: "fs_main",
@@ -275,7 +273,7 @@ class PathTracer {
     this.m_uniformCPU.set([this.m_canvas.width, this.m_canvas.height], offset); offset += 2;
     this.m_uniformCPU.set([this.m_frameIndex], offset); offset += 1;
 
-    PathTracer.m_device.queue.writeBuffer(this.m_uniformBuffer, 0, this.m_uniformCPU);
+    IGPU.get().queue.writeBuffer(this.m_uniformBuffer, 0, this.m_uniformCPU);
   }
 }
 

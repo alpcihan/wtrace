@@ -1,11 +1,9 @@
 import * as THREEOBJLoader from "three/examples/jsm/loaders/OBJLoader";
 
 class OBJLoader {
-  constructor() {
-    this.m_loader = new THREEOBJLoader.OBJLoader();
-  }
+  public static async load(path: string): Promise<Float32Array | undefined> {
+    if(this.m_loader === undefined) this.m_loader = new THREEOBJLoader.OBJLoader();
 
-  public async load(path: string): Promise<Float32Array | undefined> {
     var triangleVertices: Float32Array | undefined = undefined;
 
     var object = await this.m_loader.loadAsync(path); // TODO: do not block
@@ -20,7 +18,9 @@ class OBJLoader {
     return triangleVertices;
   }
 
-  private m_loader: THREEOBJLoader.OBJLoader;
+  private static m_loader: THREEOBJLoader.OBJLoader;
+
+  private constructor() {}
 }
 
 export { OBJLoader };
