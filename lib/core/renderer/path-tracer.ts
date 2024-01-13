@@ -1,8 +1,8 @@
 import * as THREE from "three";
 
-import rng_shader from "../shaders/rng.wgsl";
-import screen_shader from "../shaders/screen_shader.wgsl";
-import pathtracer_compute from "../shaders/pathtracer_compute.wgsl";
+import rng_shader from "../../shaders/rng.wgsl";
+import screen_shader from "../../shaders/screen_shader.wgsl";
+import pathtracer_compute from "../../shaders/pathtracer_compute.wgsl";
 
 import { IGPU } from "./igpu";
 
