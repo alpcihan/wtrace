@@ -79,6 +79,7 @@ class PathTracer {
     private m_screenPipelineBindGroup: GPUBindGroup;
 
     // assets
+    private m_uniformElementCount: Float32Array;
     private m_uniformBuffer: GPUBuffer;
     private m_uniformCPU: Float32Array; // do not change it (TODO: create a separate class for uniforms and make it readonly)
 
@@ -96,12 +97,16 @@ class PathTracer {
     private _initAssets() {
         // uniform buffer
         {
-            const uniformBufferSize =
-                4 * 4 * 4 + // view
-                4 * 4 * 4 + // projection
-                4 * 2 + // image resolution
-                4 + // frame index with padding (for random number generator)
-                4; // padding
+            //Holds the size of each element in the uniform buffer (in floats)
+            this.m_uniformElementCount = new Float32Array([
+                4 * 4, // view
+                4 * 4, // projection
+                2,     // image resolution
+                1,     // frame index with padding (for random number generator)
+                1      // padding
+            ]);
+            const uniformBufferSize = this.m_uniformElementCount.reduce((a, b) => a + b, 0) * 4; //uniformBufferSize in bytes
+                
             this.m_uniformCPU = new Float32Array(uniformBufferSize / 4);
 
             this.m_uniformBuffer = IGPU.get().createBuffer({
@@ -260,13 +265,13 @@ class PathTracer {
         // TODO: calculate the offsets automatically
         let offset = 0;
         this.m_uniformCPU.set(camera.matrixWorld.toArray(), offset);
-        offset += 4 * 4;
+        offset += this.m_uniformElementCount[0];
         this.m_uniformCPU.set(camera.projectionMatrixInverse.toArray(), offset);
-        offset += 4 * 4;
+        offset += this.m_uniformElementCount[1];
         this.m_uniformCPU.set([this.m_canvas.width, this.m_canvas.height], offset);
-        offset += 2;
+        offset += this.m_uniformElementCount[2];
         this.m_uniformCPU.set([this.m_frameIndex], offset);
-        offset += 1;
+        offset += this.m_uniformElementCount[3];
 
         IGPU.get().queue.writeBuffer(this.m_uniformBuffer, 0, this.m_uniformCPU);
     }
