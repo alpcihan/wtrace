@@ -3,3 +3,8 @@ export { PathTracer } from "./core/renderer/path-tracer";
 export { InputSystem } from "./core/input/input-system";
 export { CameraController } from "./core/camera/camera-controller";
 export { OBJLoader } from "./loaders/obj-loader";
+export { MeshLoader } from "./loaders/mesh-loader";
+export { MeshModel } from "./core/objects/model/mesh-model";
+export { Mesh } from "./core/objects/model/mesh";
+export { Scene } from "./core/scene/scene";
+export { SceneManager } from "./core/scene/scene-manager";

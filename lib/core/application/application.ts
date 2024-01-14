@@ -5,54 +5,59 @@ import { PathTracer } from "../renderer/path-tracer";
 import { IGPU } from "../renderer/igpu";
 
 class Application {
-  public static async init(canvas: HTMLCanvasElement, vertices: Float32Array) {
-    // context
-    await IGPU.init();
+    public static async init(canvas: HTMLCanvasElement) {
+        this.m_canvas = canvas;
 
-    // input system
-    InputSystem.init();
+        // context
+        await IGPU.init();
 
-    // camera
-    this.m_camera = new THREE.PerspectiveCamera(45, canvas.width / canvas.height, 0.01, 1000);
-    this.m_cameraController = new CameraController({ camera: this.m_camera });
+        // input system
+        InputSystem.init();
 
-    // path tracer
-    this.m_pathTracer = new PathTracer(canvas, vertices);
-  }
+        // camera
+        this.m_camera = new THREE.PerspectiveCamera(45, canvas.width / canvas.height, 0.01, 1000);
+        this.m_cameraController = new CameraController({ camera: this.m_camera });
+    }
 
-  public static run(onUpdate: () => void) {
-    const applicationLoop = (): void => {
-      Application.m_deltaTime = (performance.now() - this.m_time) * 0.001;
-      this.m_time = performance.now();
+    public static run(onUpdate: () => void) {
+        // path tracer
+        this.m_pathTracer = new PathTracer(this.m_canvas);
 
-      // client callback
-      onUpdate();
+        const applicationLoop = (): void => {
+            Application.m_deltaTime = (performance.now() - this.m_time) * 0.001;
+            this.m_time = performance.now();
 
-      // update camera controller
-      this.m_cameraController.update(this.m_deltaTime);
-      
-      // update path tracer
-      if (this.m_cameraController.isUpdated()) { this.m_pathTracer.reset(); }
-      this.m_pathTracer.render(this.m_camera);
+            // client callback
+            onUpdate();
 
-      requestAnimationFrame(applicationLoop);
-    };
+            // update camera controller
+            this.m_cameraController.update(this.m_deltaTime);
 
-    applicationLoop();
-  }
+            // update path tracer
+            if (this.m_cameraController.isUpdated()) {
+                this.m_pathTracer.reset();
+            }
+            this.m_pathTracer.render(this.m_camera);
 
-  public static getDeltaTime(): number {
-    return Application.m_deltaTime;
-  }
+            requestAnimationFrame(applicationLoop);
+        };
 
-  private static m_time: number = 0;
-  private static m_deltaTime: number;
+        applicationLoop();
+    }
 
-  private static m_camera: THREE.PerspectiveCamera;
-  private static m_cameraController: CameraController;
-  private static m_pathTracer: PathTracer;
+    public static getDeltaTime(): number {
+        return Application.m_deltaTime;
+    }
 
-  private constructor() {}
+    private static m_time: number = 0;
+    private static m_deltaTime: number;
+    
+    private static m_canvas: HTMLCanvasElement;
+    private static m_camera: THREE.PerspectiveCamera;
+    private static m_cameraController: CameraController;
+    private static m_pathTracer: PathTracer;
+
+    private constructor() {}
 }
 
 export { Application };
