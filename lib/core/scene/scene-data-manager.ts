@@ -6,11 +6,13 @@ class SceneDataManager {
     public constructor() {
         this.m_vertices = new Float32Array();
         this._updateVertexBuffer();
+        this.m_bvh = new BVH();
     }
 
     public addModel(model: MeshModel): void {
         this.m_vertices = new Float32Array([...this.m_vertices, ...model.mesh.vertices]);
         this._updateVertexBuffer();
+        this._updateBVH();
     }
 
     public get vertexBuffer(): GPUBuffer {
@@ -19,7 +21,7 @@ class SceneDataManager {
 
     private m_vertices: Float32Array;
     private m_vertexBuffer: GPUBuffer;
-    private m_bvhNodes: BVH;
+    private m_bvh: BVH;
     private m_bvhNodeBuffer: GPUBuffer;
     private m_triangleIdxBuffer: GPUBuffer;
 
@@ -32,10 +34,8 @@ class SceneDataManager {
         IGPU.get().queue.writeBuffer(this.m_vertexBuffer, 0, this.m_vertices);
     }
     private _updateBVH(): void {
-        // const bvh = new BVH();
-        // bvh.build(this.m_vertices);
-        // this.m_bvhNodes = bvh.nodes;
-        // this._updateBVHBuffers();
+        this.m_bvh.build(this.m_vertices);
+        this._updateBVHBuffers();
     }
     
     private _updateBVHBuffers(): void {
