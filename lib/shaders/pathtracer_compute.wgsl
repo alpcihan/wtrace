@@ -15,15 +15,15 @@ struct Uniforms {
 };
 
 struct BVHNode{
-
     leftFirst: f32, //if triCount == 0 represents leftChild, if triCount > 0 represents first triangleIdx
+    triangleIdx: f32, //not used TODO: remove
     triangleCount: f32,
     aabbMins: vec3f, //can be vec3?
     aabbMaxs: vec3f, //can be vec3?
 };
 
-@group(0) @binding(3) var<storage, read> triIdxInfo: array<u32>;
-@group(0) @binding(4) var<storage, read> bvhNodes: array<BVHNode>; //TODO: How to pass this from CPU ????
+//@group(0) @binding(3) var<storage, read> triIdxInfo: array<u32>;
+//@group(0) @binding(4) var<storage, read> bvhNodes: array<BVHNode>; //TODO: How to pass this from CPU ????
 
 struct Sphere {
     center: vec3f,
@@ -126,8 +126,8 @@ fn hitWorld(ray: Ray, bestHit: ptr<function, HitInfo>) {
 
     intersectSphere(&sphere, &lightMaterial, ray, bestHit);
     intersectXZPlane(floorY, &floorMaterial, ray, bestHit);
-    //intersectTriangles(ray, bestHit);
-    intersectBVH(ray, bestHit);
+    intersectTriangles(ray, bestHit);
+    //intersectBVH(ray, bestHit);
 }
 
 fn intersectXZPlane(
@@ -280,60 +280,60 @@ fn hitTriangle(ray: Ray, v0: vec3<f32>, v1: vec3<f32>, v2: vec3<f32>) -> f32 {
     return t;
 }
 
-fn intersectAABB(ray: Ray, aabbMin: vec3<f32>, aabbMax: vec3<f32>) -> bool {
-    let invDirection: vec3<f32> = 1.0 / ray.direction;
-    let t1: vec3<f32> = (aabbMin - ray.origin) * invDirection;
-    let t2: vec3<f32> = (aabbMax - ray.origin) * invDirection;
+// fn intersectAABB(ray: Ray, aabbMin: vec3<f32>, aabbMax: vec3<f32>) -> bool {
+//     let invDirection: vec3<f32> = 1.0 / ray.direction;
+//     let t1: vec3<f32> = (aabbMin - ray.origin) * invDirection;
+//     let t2: vec3<f32> = (aabbMax - ray.origin) * invDirection;
 
-    let tmin: vec3<f32> = min(t1, t2);
-    let tmax: vec3<f32> = max(t1, t2);
+//     let tmin: vec3<f32> = min(t1, t2);
+//     let tmax: vec3<f32> = max(t1, t2);
 
-    let tenter: f32 = max(max(tmin.x, tmin.y), tmin.z);
-    let texit: f32 = min(min(tmax.x, tmax.y), tmax.z);
+//     let tenter: f32 = max(max(tmin.x, tmin.y), tmin.z);
+//     let texit: f32 = min(min(tmax.x, tmax.y), tmax.z);
 
-    return tenter < texit && texit > 0.0;
-}
+//     return tenter < texit && texit > 0.0;
+// }
 
-fn intersectBVH(r: Ray, hit_info: ptr<function, HitRecord>) {
-    var stack: array<u32, 64>;
-    var stackPtr: i32 = 0;
-    let rootIdx: i32 = 0;
+// fn intersectBVH(r: Ray, hit_info: ptr<function, HitRecord>) {
+//     var stack: array<u32, 64>;
+//     var stackPtr: i32 = 0;
+//     let rootIdx: i32 = 0;
 
-    stack[stackPtr] = u32(rootIdx);
-    stackPtr = stackPtr + 1;
+//     stack[stackPtr] = u32(rootIdx);
+//     stackPtr = stackPtr + 1;
 
-    while(stackPtr > 0) {
-        let nodeIdx: u32 = stack[stackPtr - 1];
-        stackPtr = stackPtr - 1; //pop node from stack
-        let node: BVHNode = bvhNodes[nodeIdx];
-        let aabbMin: vec3<f32> = vec3<f32>(node.aabbMin.x, node.aabbMin.y, node.aabbMin.z);
-        let aabbMax: vec3<f32> = vec3<f32>(node.aabbMax.x, node.aabbMax.y, node.aabbMax.z);
+//     while(stackPtr > 0) {
+//         let nodeIdx: u32 = stack[stackPtr - 1];
+//         stackPtr = stackPtr - 1; //pop node from stack
+//         let node: BVHNode = bvhNodes[nodeIdx];
+//         let aabbMin: vec3<f32> = vec3<f32>(node.aabbMin.x, node.aabbMin.y, node.aabbMin.z);
+//         let aabbMax: vec3<f32> = vec3<f32>(node.aabbMax.x, node.aabbMax.y, node.aabbMax.z);
 
-        if(intersectAABB(r, aabbMin, aabbMax)) {
-            if(node.triangleCount > 0) { // if triangle count > 0 means leaf node (leftFirst gives first triangleIdx)
-                for(var i: i32 = 0; i < node.triangleCount; i = i + 1) {
-                    let idx: u32 = triIdxInfo[node.leftFirst + i];
+//         if(intersectAABB(r, aabbMin, aabbMax)) {
+//             if(node.triangleCount > 0) { // if triangle count > 0 means leaf node (leftFirst gives first triangleIdx)
+//                 for(var i: i32 = 0; i < node.triangleCount; i = i + 1) {
+//                     let idx: u32 = triIdxInfo[node.leftFirst + i];
                     
-                    //Do triangle intersection
-                    let v0: vec3<f32> = vec3<f32>(vertices[idx*9+0], vertices[idx*9+1], vertices[idx*9+2]);
-                    let v1: vec3<f32> = vec3<f32>(vertices[idx*9+3], vertices[idx*9+4], vertices[idx*9+5]);
-                    let v2: vec3<f32> = vec3<f32>(vertices[idx*9+6], vertices[idx*9+7], vertices[idx*9+8]);
+//                     //Do triangle intersection
+//                     let v0: vec3<f32> = vec3<f32>(vertices[idx*9+0], vertices[idx*9+1], vertices[idx*9+2]);
+//                     let v1: vec3<f32> = vec3<f32>(vertices[idx*9+3], vertices[idx*9+4], vertices[idx*9+5]);
+//                     let v2: vec3<f32> = vec3<f32>(vertices[idx*9+6], vertices[idx*9+7], vertices[idx*9+8]);
 
-                    let res: f32 = hitTriangle(r, v0, v1, v2);
-                    if(res < (*hit_info).t && res > 0.0) {
-                        (*hit_info).t = res;
-                        (*hit_info).normal = normalize(cross(v1 - v0, v2 - v0));
-                        (*hit_info).material.color = vec3<f32>(1.0, 0.0, 0.0);
-                        (*hit_info).material.emissiveColor = vec3<f32>(0.0, 0.0, 0.0);
-                    }                   
-                }
-            } else { // If triangle count = 0 not leaf node (leftFirst gives leftChild node)
-                stack[stackPtr] = node.leftFirst;
-                stackPtr = stackPtr + 1;
-                stack[stackPtr] = node.leftFirst + 1; //right child is always left+1
-                stackPtr = stackPtr + 1;
-            }
-        }
-    }
-    //end stack, return
-}
+//                     let res: f32 = hitTriangle(r, v0, v1, v2);
+//                     if(res < (*hit_info).t && res > 0.0) {
+//                         (*hit_info).t = res;
+//                         (*hit_info).normal = normalize(cross(v1 - v0, v2 - v0));
+//                         (*hit_info).material.color = vec3<f32>(1.0, 0.0, 0.0);
+//                         (*hit_info).material.emissiveColor = vec3<f32>(0.0, 0.0, 0.0);
+//                     }                   
+//                 }
+//             } else { // If triangle count = 0 not leaf node (leftFirst gives leftChild node)
+//                 stack[stackPtr] = node.leftFirst;
+//                 stackPtr = stackPtr + 1;
+//                 stack[stackPtr] = node.leftFirst + 1; //right child is always left+1
+//                 stackPtr = stackPtr + 1;
+//             }
+//         }
+//     }
+//     //end stack, return
+// }

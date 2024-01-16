@@ -40,11 +40,25 @@ class SceneDataManager {
     
     private _updateBVHBuffers(): void {
         // this.m_bvhNodeBuffer = IGPU.get().createBuffer({
-        //     size: this.m_bvhNodes.byteLength,
+        //     size: this.m_bvh.getBVHBufferSize(),
         //     usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
         // });
 
-        // IGPU.get().queue.writeBuffer(this.m_bvhNodeBuffer, 0, this.m_bvhNodes);
+        // this.m_triangleIdxBuffer = IGPU.get().createBuffer({
+        //     size: this.m_bvh.getTriangleIdxBufferSize(),
+        //     usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+        // });
+
+        // const bvhNodeViews = new ArrayBuffer(this.m_bvh.getBVHBufferSize()*this.m_bvh.getBVHNodeBuffer().length);
+        // for(let i = 0; i < this.m_bvh.getBVHNodeBuffer().length; i++) {
+        //     let node = this.m_bvh.getBVHNodeBuffer()[i];
+        //     let view = {
+                
+        //     }
+            
+        // }
+
+        // const bvhNodeValues = new ArrayBuffer(this.m_bvh.getBVHBufferSize());
     }
 }
 

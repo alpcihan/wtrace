@@ -35,17 +35,19 @@ import * as THREE from "three";
 //    public padding: number;
 //}
 //
+
+const BVHNodeSize = (1+1+3+3)*4; //leftChild + triangleCount + AABBMins + AABBMaxs = 32 bytes
 interface BVHNode {
     leftChild: number;
     triangleIndex: number;
     triangleCount: number;
-    AABBMins: THREE.Vector4; //float3 + padding
-    AABBMaxs: THREE.Vector4; //float3 + padding
+    AABBMins: THREE.Vector3; //float3 + padding
+    AABBMaxs: THREE.Vector3; //float3 + padding
 }
 
-const FLT_MAX = Number.MAX_VALUE;
+const FLT_MAX = 3.402823466e+38;
 
-class BVH { 
+class BVH {
     
     public constructor() {
     }
@@ -55,39 +57,55 @@ class BVH {
         let N = vertices.length / 9; //triangle count
         console.log(N);
         this.m_BVHNodes = new Array<BVHNode>(N*2-1);
-        this.m_centroids = new Array<THREE.Vector4>(N);
+        this.m_centroids = new Array<THREE.Vector3>(N);
         this.m_triangleIdx = new Array<number>(N);
         this._buildBVH();
     }
 
-    private minVec4(a: THREE.Vector4, b: THREE.Vector4): THREE.Vector4 {
-        return new THREE.Vector4(Math.min(a.x, b.x), Math.min(a.y, b.y), Math.min(a.z, b.z), 0);
+    public getBVHNodeBuffer(): BVHNode[] {
+        return this.m_BVHNodes;
     }
 
-    private maxVec4(a: THREE.Vector4, b: THREE.Vector4): THREE.Vector4 {
-        return new THREE.Vector4(Math.max(a.x, b.x), Math.max(a.y, b.y), Math.max(a.z, b.z), 0);
+    public getBVHBufferSize(): number {
+        return this.m_BVHNodes.length * BVHNodeSize; //TODO: fix this
+    }
+
+    public getTriangleIdxBuffer(): number[] {
+        return this.m_triangleIdx;
+    }
+
+    public getTriangleIdxBufferSize(): number {
+        return this.m_triangleIdx.length * 4; //TODO: fix this
+    }
+
+    private minVec3(a: THREE.Vector3, b: THREE.Vector3): THREE.Vector3 {
+        return new THREE.Vector3(Math.min(a.x, b.x), Math.min(a.y, b.y), Math.min(a.z, b.z));
+    }
+
+    private maxVec3(a: THREE.Vector3, b: THREE.Vector3): THREE.Vector3 {
+        return new THREE.Vector3(Math.max(a.x, b.x), Math.max(a.y, b.y), Math.max(a.z, b.z));
     }
 
     private _updateAABBs(nodeIdx: number): void {
 
         let node = this.m_BVHNodes[nodeIdx];
-        node.AABBMins = new THREE.Vector4(FLT_MAX);
-        node.AABBMaxs = new THREE.Vector4(-FLT_MAX);
+        node.AABBMins = new THREE.Vector3(FLT_MAX);
+        node.AABBMaxs = new THREE.Vector3(-FLT_MAX);
 
         for(let i = node.triangleIndex; i < node.triangleIndex + node.triangleCount; i++) {
             let triIdx = this.m_triangleIdx[i];
 
-            let V0 = new THREE.Vector4(this.m_triangles[triIdx*9+0], this.m_triangles[triIdx*9+1], this.m_triangles[triIdx*9+2], 0);
-            let V1 = new THREE.Vector4(this.m_triangles[triIdx*9+3], this.m_triangles[triIdx*9+4], this.m_triangles[triIdx*9+5], 0);
-            let V2 = new THREE.Vector4(this.m_triangles[triIdx*9+6], this.m_triangles[triIdx*9+7], this.m_triangles[triIdx*9+8], 0);
+            let V0 = new THREE.Vector3(this.m_triangles[triIdx*9+0], this.m_triangles[triIdx*9+1], this.m_triangles[triIdx*9+2]);
+            let V1 = new THREE.Vector3(this.m_triangles[triIdx*9+3], this.m_triangles[triIdx*9+4], this.m_triangles[triIdx*9+5]);
+            let V2 = new THREE.Vector3(this.m_triangles[triIdx*9+6], this.m_triangles[triIdx*9+7], this.m_triangles[triIdx*9+8]);
 
-            node.AABBMins = this.minVec4(node.AABBMins, V0);
-            node.AABBMins = this.minVec4(node.AABBMins, V1);
-            node.AABBMins = this.minVec4(node.AABBMins, V2);
+            node.AABBMins = this.minVec3(node.AABBMins, V0);
+            node.AABBMins = this.minVec3(node.AABBMins, V1);
+            node.AABBMins = this.minVec3(node.AABBMins, V2);
 
-            node.AABBMaxs = this.maxVec4(node.AABBMaxs, V0);
-            node.AABBMaxs = this.maxVec4(node.AABBMaxs, V1);
-            node.AABBMaxs = this.maxVec4(node.AABBMaxs, V2);
+            node.AABBMaxs = this.maxVec3(node.AABBMaxs, V0);
+            node.AABBMaxs = this.maxVec3(node.AABBMaxs, V1);
+            node.AABBMaxs = this.maxVec3(node.AABBMaxs, V2);
         }
         
         this.m_BVHNodes[nodeIdx] = node;
@@ -148,15 +166,15 @@ class BVH {
             leftChild: 0,
             triangleIndex: node.triangleIndex,
             triangleCount: leftCount,
-            AABBMins: new THREE.Vector4(),
-            AABBMaxs: new THREE.Vector4()
+            AABBMins: new THREE.Vector3(),
+            AABBMaxs: new THREE.Vector3()
         };
         this.m_BVHNodes[rightChildIdx] = {
             leftChild: 0,
             triangleIndex: i,
             triangleCount: node.triangleCount - leftCount,
-            AABBMins: new THREE.Vector4(),
-            AABBMaxs: new THREE.Vector4()
+            AABBMins: new THREE.Vector3(),
+            AABBMaxs: new THREE.Vector3()
         };
 
         node.leftChild = leftChildIdx;
@@ -179,17 +197,16 @@ class BVH {
         }
 
         for(let i = 0; i < this.m_centroids.length; i++) {
-            this.m_centroids[i] = new THREE.Vector4();
+            this.m_centroids[i] = new THREE.Vector3();
         }
 
         //set centroids
         for(let i = 0; i < this.m_centroids.length; i++) {
-            let centroid_x = (this.m_triangles[i*9+0] + this.m_triangles[i*9+3] + this.m_triangles[i*9+6]) * 0.333333333;
-            let centroid_y = (this.m_triangles[i*9+1] + this.m_triangles[i*9+4] + this.m_triangles[i*9+7]) * 0.333333333;
-            let centroid_z = (this.m_triangles[i*9+2] + this.m_triangles[i*9+5] + this.m_triangles[i*9+8]) * 0.333333333;
-            this.m_centroids[i].x = centroid_x;
-            this.m_centroids[i].y = centroid_y;
-            this.m_centroids[i].z = centroid_z;
+            let v0 = new THREE.Vector3(this.m_triangles[i*9+0], this.m_triangles[i*9+1], this.m_triangles[i*9+2]);
+            let v1 = new THREE.Vector3(this.m_triangles[i*9+3], this.m_triangles[i*9+4], this.m_triangles[i*9+5]);
+            let v2 = new THREE.Vector3(this.m_triangles[i*9+6], this.m_triangles[i*9+7], this.m_triangles[i*9+8]);
+
+            this.m_centroids[i] = v0.add(v1).add(v2).divideScalar(3);
         }
 
         console.log("triangleCount: " + this.m_triangleIdx.length);
@@ -197,8 +214,8 @@ class BVH {
             leftChild: 0,
             triangleIndex: 0,
             triangleCount: this.m_triangleIdx.length,
-            AABBMins: new THREE.Vector4(),
-            AABBMaxs: new THREE.Vector4()
+            AABBMins: new THREE.Vector3(),
+            AABBMaxs: new THREE.Vector3()
         };
 
         this.m_BVHNodes[this.m_rootNodeIdx] = rootNode;
@@ -208,8 +225,8 @@ class BVH {
     }
 
     private m_triangles: Float32Array;
-    private m_BVHNodes: BVHNode[];
-    private m_centroids: THREE.Vector4[];
+    private m_BVHNodes: Array<BVHNode>;
+    private m_centroids: THREE.Vector3[];
     private m_rootNodeIdx: number = 0;
     private m_nodeCount: number = 1;
     private m_triangleIdx: number[];
