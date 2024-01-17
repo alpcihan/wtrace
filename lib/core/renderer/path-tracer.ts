@@ -153,6 +153,23 @@ class PathTracer {
                             type: "storage",
                         },
                     },
+                    {
+                        // bvh nodes
+                        binding: 3,
+                        visibility: GPUShaderStage.COMPUTE,
+                        buffer: {
+                            type: "read-only-storage",
+                        },
+                    },
+                    {
+                        // triangle indices
+                        binding: 4,
+                        visibility: GPUShaderStage.COMPUTE,
+                        buffer: {
+                            type: "read-only-storage",
+                        },
+                    },
+
                 ],
             });
 
@@ -170,6 +187,14 @@ class PathTracer {
                     {
                         binding: 2,
                         resource: { buffer: this.m_accumulationBuffer },
+                    },
+                    {
+                        binding: 3,
+                        resource: { buffer: SceneManager.scene.sceneDataManager.bvhNodeBuffer },
+                    },
+                    {
+                        binding: 4,
+                        resource: { buffer: SceneManager.scene.sceneDataManager.triangleIdxBuffer },
                     },
                 ],
             });

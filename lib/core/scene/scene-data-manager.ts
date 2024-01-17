@@ -19,6 +19,14 @@ class SceneDataManager {
         return this.m_vertexBuffer;
     }
 
+    public get bvhNodeBuffer(): GPUBuffer {
+        return this.m_bvhNodeBuffer;
+    }
+
+    public get triangleIdxBuffer(): GPUBuffer {
+        return this.m_triangleIdxBuffer;
+    }
+
     private m_vertices: Float32Array;
     private m_vertexBuffer: GPUBuffer;
     private m_bvh: BVH;
@@ -39,26 +47,22 @@ class SceneDataManager {
     }
     
     private _updateBVHBuffers(): void {
-        // this.m_bvhNodeBuffer = IGPU.get().createBuffer({
-        //     size: this.m_bvh.getBVHBufferSize(),
-        //     usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-        // });
 
-        // this.m_triangleIdxBuffer = IGPU.get().createBuffer({
-        //     size: this.m_bvh.getTriangleIdxBufferSize(),
-        //     usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-        // });
+        let bvhNodeBuffer = this.m_bvh.getBVHNodeBuffer();
+        let triangleIdxBuffer = this.m_bvh.getTriangleIdxBuffer();
 
-        // const bvhNodeViews = new ArrayBuffer(this.m_bvh.getBVHBufferSize()*this.m_bvh.getBVHNodeBuffer().length);
-        // for(let i = 0; i < this.m_bvh.getBVHNodeBuffer().length; i++) {
-        //     let node = this.m_bvh.getBVHNodeBuffer()[i];
-        //     let view = {
-                
-        //     }
-            
-        // }
+        this.m_bvhNodeBuffer = IGPU.get().createBuffer({
+            size: bvhNodeBuffer.byteLength,
+            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+        });
 
-        // const bvhNodeValues = new ArrayBuffer(this.m_bvh.getBVHBufferSize());
+        this.m_triangleIdxBuffer = IGPU.get().createBuffer({
+            size: triangleIdxBuffer.byteLength,
+            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+        });
+
+        IGPU.get().queue.writeBuffer(this.m_bvhNodeBuffer, 0, bvhNodeBuffer);
+        IGPU.get().queue.writeBuffer(this.m_triangleIdxBuffer, 0, triangleIdxBuffer);
     }
 }
 

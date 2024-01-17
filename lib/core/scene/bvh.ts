@@ -36,13 +36,13 @@ import * as THREE from "three";
 //}
 //
 
-const BVHNodeSize = (1+1+3+3)*4; //leftChild + triangleCount + AABBMins + AABBMaxs = 32 bytes
+const BVHNodeSize = 4+4+12+12; //leftChild + triangleCount + AABBMins + AABBMaxs = 32 bytes
 interface BVHNode {
-    leftChild: number;
-    triangleIndex: number;
-    triangleCount: number;
-    AABBMins: THREE.Vector3; //float3 + padding
-    AABBMaxs: THREE.Vector3; //float3 + padding
+    leftChild: number;          //4 bytes
+    triangleIndex: number;      //not used
+    triangleCount: number;      //4 bytes
+    AABBMins: THREE.Vector3;    //12 bytes
+    AABBMaxs: THREE.Vector3;    //12 bytes
 }
 
 const FLT_MAX = 3.402823466e+38;
@@ -62,20 +62,27 @@ class BVH {
         this._buildBVH();
     }
 
-    public getBVHNodeBuffer(): BVHNode[] {
-        return this.m_BVHNodes;
+    public getBVHNodeBuffer(): ArrayBuffer {
+        let buffer = new ArrayBuffer(this.m_nodeCount * BVHNodeSize);
+        let view = new DataView(buffer);
+
+        for(let i = 0; i < this.m_nodeCount; i++) {
+            let node = this.m_BVHNodes[i];
+            view.setUint32(i*BVHNodeSize + 0, node.leftChild, true);
+            view.setUint32(i*BVHNodeSize + 4, node.triangleCount, true);
+            view.setFloat32(i*BVHNodeSize + 8, node.AABBMins.x, true);
+            view.setFloat32(i*BVHNodeSize + 12, node.AABBMins.y, true);
+            view.setFloat32(i*BVHNodeSize + 16, node.AABBMins.z, true);
+            view.setFloat32(i*BVHNodeSize + 20, node.AABBMaxs.x, true);
+            view.setFloat32(i*BVHNodeSize + 24, node.AABBMaxs.y, true);
+            view.setFloat32(i*BVHNodeSize + 28, node.AABBMaxs.z, true);
+        }
+
+        return buffer;
     }
 
-    public getBVHBufferSize(): number {
-        return this.m_BVHNodes.length * BVHNodeSize; //TODO: fix this
-    }
-
-    public getTriangleIdxBuffer(): number[] {
-        return this.m_triangleIdx;
-    }
-
-    public getTriangleIdxBufferSize(): number {
-        return this.m_triangleIdx.length * 4; //TODO: fix this
+    public getTriangleIdxBuffer(): Uint32Array {
+        return new Uint32Array(this.m_triangleIdx);
     }
 
     private minVec3(a: THREE.Vector3, b: THREE.Vector3): THREE.Vector3 {
