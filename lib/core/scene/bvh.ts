@@ -50,39 +50,49 @@ const FLT_MAX = 3.402823466e+38;
 class BVH {
     
     public constructor() {
+        this.m_BVHNodes = new Array<BVHNode>();
+        this.m_triangleIdx = new Uint32Array();
+
     }
     public build(vertices: Float32Array): void {
         this.m_triangles = vertices;
 
         let N = vertices.length / 9; //triangle count
         console.log(N);
-        this.m_BVHNodes = new Array<BVHNode>(N*2-1);
+        this.m_BVHNodes = new Array<BVHNode>((N*2-1));
         this.m_centroids = new Array<THREE.Vector3>(N);
-        this.m_triangleIdx = new Array<number>(N);
+        this.m_triangleIdx = new Uint32Array(N);
+        this.m_nodeCount = 1;
         this._buildBVH();
     }
 
     public getBVHNodeBuffer(): ArrayBuffer {
+        console.log("\nNode count: " + this.m_nodeCount);
         let buffer = new ArrayBuffer(this.m_nodeCount * BVHNodeSize);
         let view = new DataView(buffer);
 
-        for(let i = 0; i < this.m_nodeCount; i++) {
-            let node = this.m_BVHNodes[i];
-            view.setUint32(i*BVHNodeSize + 0, node.leftChild, true);
-            view.setUint32(i*BVHNodeSize + 4, node.triangleCount, true);
-            view.setFloat32(i*BVHNodeSize + 8, node.AABBMins.x, true);
-            view.setFloat32(i*BVHNodeSize + 12, node.AABBMins.y, true);
-            view.setFloat32(i*BVHNodeSize + 16, node.AABBMins.z, true);
-            view.setFloat32(i*BVHNodeSize + 20, node.AABBMaxs.x, true);
-            view.setFloat32(i*BVHNodeSize + 24, node.AABBMaxs.y, true);
-            view.setFloat32(i*BVHNodeSize + 28, node.AABBMaxs.z, true);
-        }
+       for(let i = 0; i < this.m_nodeCount; i++) {
+          let node = this.m_BVHNodes[i];
+          view.setUint32(i*BVHNodeSize + 0, node.leftChild, true);
+          view.setUint32(i*BVHNodeSize + 4, node.triangleCount, true);
+          view.setFloat32(i*BVHNodeSize + 8, node.AABBMins.x, true);
+          view.setFloat32(i*BVHNodeSize + 12, node.AABBMins.y, true);
+          view.setFloat32(i*BVHNodeSize + 16, node.AABBMins.z, true);
+          view.setFloat32(i*BVHNodeSize + 20, node.AABBMaxs.x, true);
+          view.setFloat32(i*BVHNodeSize + 24, node.AABBMaxs.y, true);
+          view.setFloat32(i*BVHNodeSize + 28, node.AABBMaxs.z, true);
+       }
 
         return buffer;
     }
 
+    public getBVHNodeBufferSize(): number {
+        return this.m_BVHNodes.length * BVHNodeSize;
+    }
+        
+
     public getTriangleIdxBuffer(): Uint32Array {
-        return new Uint32Array(this.m_triangleIdx);
+        return this.m_triangleIdx;
     }
 
     private minVec3(a: THREE.Vector3, b: THREE.Vector3): THREE.Vector3 {
@@ -228,15 +238,15 @@ class BVH {
         this.m_BVHNodes[this.m_rootNodeIdx] = rootNode;
         this._updateAABBs(this.m_rootNodeIdx);
         this._subdivideNode(this.m_rootNodeIdx);
-        console.log(this.m_nodeCount);
+        console.log("\nbuild BVH done");
     }
 
     private m_triangles: Float32Array;
     private m_BVHNodes: Array<BVHNode>;
     private m_centroids: THREE.Vector3[];
     private m_rootNodeIdx: number = 0;
-    private m_nodeCount: number = 1;
-    private m_triangleIdx: number[];
+    private m_nodeCount: number = 0;
+    private m_triangleIdx: Uint32Array;
 }
 
 export { BVH };
