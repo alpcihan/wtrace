@@ -106,8 +106,8 @@ class BVH {
     private _updateAABBs(nodeIdx: number): void {
 
         let node = this.m_BVHNodes[nodeIdx];
-        node.AABBMins = new THREE.Vector3(FLT_MAX);
-        node.AABBMaxs = new THREE.Vector3(-FLT_MAX);
+        node.AABBMins = new THREE.Vector3(FLT_MAX,FLT_MAX,FLT_MAX);
+        node.AABBMaxs = new THREE.Vector3(-FLT_MAX,-FLT_MAX,-FLT_MAX);
 
         for(let i = node.triangleIndex; i < node.triangleIndex + node.triangleCount; i++) {
             let triIdx = this.m_triangleIdx[i];
