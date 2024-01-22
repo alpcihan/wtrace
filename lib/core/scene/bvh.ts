@@ -1,45 +1,8 @@
 import * as THREE from "three";
 
-//class float3{
-//    public constructor(x?: number, y?: number, z?: number) {
-//        this.x = x ?? 0;
-//        this.y = y ?? 0;
-//        this.z = z ?? 0;
-//        this.padding = 0;
-//    }
-//
-//    public data(): Float32Array {
-//        return new Float32Array([this.x, this.y, this.z, this.padding]);
-//    }
-//
-//    public static min(a: float3, b: float3): float3 {
-//        return new float3(Math.min(a.x, b.x), Math.min(a.y, b.y), Math.min(a.z, b.z));
-//    }
-//
-//    public static max(a: float3, b: float3): float3 {
-//        return new float3(Math.max(a.x, b.x), Math.max(a.y, b.y), Math.max(a.z, b.z));
-//    }
-//
-//    public static sub(a: float3, b: float3): float3 {
-//        return new float3(a.x - b.x, a.y - b.y, a.z - b.z);
-//    }
-//
-//    public static add(a: float3, b: float3): float3 {  
-//        Vector3
-//        return new float3(a.x + b.x, a.y + b.y, a.z + b.z);
-//    }
-//
-//    public x: number;
-//    public y: number;
-//    public z: number;
-//    public padding: number;
-//}
-//
-
 const BVHNodeSize = 4+4+12+12; //leftChild + triangleCount + AABBMins + AABBMaxs = 32 bytes
 interface BVHNode {
-    leftChild: number;          //4 bytes
-    triangleIndex: number;      //not used
+    leftFirst: number;          //4 bytes
     triangleCount: number;      //4 bytes
     AABBMins: THREE.Vector3;    //12 bytes
     AABBMaxs: THREE.Vector3;    //12 bytes
@@ -73,7 +36,7 @@ class BVH {
 
        for(let i = 0; i < this.m_nodeCount; i++) {
           let node = this.m_BVHNodes[i];
-          view.setUint32(i*BVHNodeSize + 0, node.leftChild, true);
+          view.setUint32(i*BVHNodeSize + 0, node.leftFirst, true);
           view.setUint32(i*BVHNodeSize + 4, node.triangleCount, true);
           view.setFloat32(i*BVHNodeSize + 8, node.AABBMins.x, true);
           view.setFloat32(i*BVHNodeSize + 12, node.AABBMins.y, true);
@@ -109,8 +72,8 @@ class BVH {
         node.AABBMins = new THREE.Vector3(FLT_MAX,FLT_MAX,FLT_MAX);
         node.AABBMaxs = new THREE.Vector3(-FLT_MAX,-FLT_MAX,-FLT_MAX);
 
-        for(let i = node.triangleIndex; i < node.triangleIndex + node.triangleCount; i++) {
-            let triIdx = this.m_triangleIdx[i];
+        for(let first = node.leftFirst, i=0; i < node.triangleCount; i++) {
+            let triIdx = this.m_triangleIdx[first+i];
 
             let V0 = new THREE.Vector3(this.m_triangles[triIdx*9+0], this.m_triangles[triIdx*9+1], this.m_triangles[triIdx*9+2]);
             let V1 = new THREE.Vector3(this.m_triangles[triIdx*9+3], this.m_triangles[triIdx*9+4], this.m_triangles[triIdx*9+5]);
@@ -149,7 +112,7 @@ class BVH {
         let splitPos = node.AABBMins.getComponent(axis) + extent.getComponent(axis) / 2;
         console.log("\n\t splitPos: " + splitPos + "\n\t axis: " + axis + "\n\t extent: " + extent.x + ", " + extent.y + ", " + extent.z);
         //Quicksort triangles based on split axis
-        let i = node.triangleIndex;
+        let i = node.leftFirst;
         let j = i + node.triangleCount - 1;
 
         while(i<=j) {
@@ -167,7 +130,7 @@ class BVH {
         }
 
         //abort if one side is empty
-        let leftCount = i - node.triangleIndex;
+        let leftCount = i - node.leftFirst;
         if(leftCount == 0 || leftCount == node.triangleCount) {
             console.log("\n\t leftCount: " + leftCount + "rightCount: " + (node.triangleCount - leftCount));
             return;
@@ -180,21 +143,19 @@ class BVH {
         this.m_nodeCount++;
 
         this.m_BVHNodes[leftChildIdx] = {
-            leftChild: 0,
-            triangleIndex: node.triangleIndex,
+            leftFirst: node.leftFirst,
             triangleCount: leftCount,
             AABBMins: new THREE.Vector3(),
             AABBMaxs: new THREE.Vector3()
         };
         this.m_BVHNodes[rightChildIdx] = {
-            leftChild: 0,
-            triangleIndex: i,
+            leftFirst: i,
             triangleCount: node.triangleCount - leftCount,
             AABBMins: new THREE.Vector3(),
             AABBMaxs: new THREE.Vector3()
         };
 
-        node.leftChild = leftChildIdx;
+        node.leftFirst = leftChildIdx;
         node.triangleCount = 0;
         this.m_BVHNodes[nodeIdx] = node;
 
@@ -228,8 +189,7 @@ class BVH {
 
         console.log("triangleCount: " + this.m_triangleIdx.length);
         let rootNode: BVHNode = {
-            leftChild: 0,
-            triangleIndex: 0,
+            leftFirst: 0,
             triangleCount: this.m_triangleIdx.length,
             AABBMins: new THREE.Vector3(),
             AABBMaxs: new THREE.Vector3()
