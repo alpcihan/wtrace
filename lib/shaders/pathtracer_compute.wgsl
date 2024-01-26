@@ -298,6 +298,11 @@ fn intersectBVH(r: Ray, hit_info: ptr<function, HitInfo>)-> vec3f {
     _stackPtr = _stackPtr + 1;
     var color: vec3f = vec3f(0.0, 0.0, 0.0);
 
+    //True outer bounding box
+    if(intersectAABB(r , vec3f(-1.3671879768371582, -0.984375, -0.8515629768371582),vec3f(2.7343759536743164, 1.96875, 1.7031259536743164))!=MAX_FLOAT32) {
+        color = color + vec3(0.0, 0.0, 0.5);
+    }
+
     while(_stackPtr > 0) {
         _stackPtr = _stackPtr - 1; //pop node from stack
         let nodeIdx: u32 = s[_stackPtr];

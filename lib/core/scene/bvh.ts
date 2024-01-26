@@ -200,7 +200,7 @@ class BVH {
             let v1 = new THREE.Vector3(this.m_triangles[i*9+3], this.m_triangles[i*9+4], this.m_triangles[i*9+5]);
             let v2 = new THREE.Vector3(this.m_triangles[i*9+6], this.m_triangles[i*9+7], this.m_triangles[i*9+8]);
 
-            this.m_centroids[i] = v0.add(v1).add(v2).divideScalar(3);
+            this.m_centroids[i] = (v0.add(v1).add(v2)).divideScalar(3);
         }
 
         console.log("triangleCount: " + this.m_triangleIdx.length);
