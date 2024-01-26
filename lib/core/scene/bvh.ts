@@ -1,5 +1,4 @@
-const BVHNodeSize = 4+4+12+12; //leftChild + triangleCount + AABBMins + AABBMaxs = 32 bytes
-const BVHNodeSizeAsFloats = BVHNodeSize / 4; //8 floats
+const BVHNodeSizeAsFloats = 12; //12 floats
 
 interface BVHNode {
     leftFirst: number;          //4 bytes
@@ -37,12 +36,16 @@ class BVH {
             let node = this.m_BVHNodes[i];
             bvhNodeBuffer[i*BVHNodeSizeAsFloats+0] = node.leftFirst;
             bvhNodeBuffer[i*BVHNodeSizeAsFloats+1] = node.triangleCount;
-            bvhNodeBuffer[i*BVHNodeSizeAsFloats+2] = node.AABBMins[0];
-            bvhNodeBuffer[i*BVHNodeSizeAsFloats+3] = node.AABBMins[1];
-            bvhNodeBuffer[i*BVHNodeSizeAsFloats+4] = node.AABBMins[2];
-            bvhNodeBuffer[i*BVHNodeSizeAsFloats+5] = node.AABBMaxs[0];
-            bvhNodeBuffer[i*BVHNodeSizeAsFloats+6] = node.AABBMaxs[1];
-            bvhNodeBuffer[i*BVHNodeSizeAsFloats+7] = node.AABBMaxs[2];
+            bvhNodeBuffer[i*BVHNodeSizeAsFloats+2] = 0.0; //padding
+            bvhNodeBuffer[i*BVHNodeSizeAsFloats+3] = 0.0; //padding
+            bvhNodeBuffer[i*BVHNodeSizeAsFloats+4] = node.AABBMins[0];
+            bvhNodeBuffer[i*BVHNodeSizeAsFloats+5] = node.AABBMins[1];
+            bvhNodeBuffer[i*BVHNodeSizeAsFloats+6] = node.AABBMins[2];
+            bvhNodeBuffer[i*BVHNodeSizeAsFloats+7] = 0.0; //padding
+            bvhNodeBuffer[i*BVHNodeSizeAsFloats+8] = node.AABBMaxs[0];
+            bvhNodeBuffer[i*BVHNodeSizeAsFloats+9] = node.AABBMaxs[1];
+            bvhNodeBuffer[i*BVHNodeSizeAsFloats+10] = node.AABBMaxs[2];
+            bvhNodeBuffer[i*BVHNodeSizeAsFloats+11] = 0.0; //padding
         }
 
         return bvhNodeBuffer;
