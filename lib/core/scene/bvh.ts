@@ -30,7 +30,7 @@ class BVH {
     }
 
     public getBVHNodeBuffer(): ArrayBuffer {
-        console.log("\nNode count: " + this.m_nodeCount);
+        //console.log("\nNode count: " + this.m_nodeCount);
         let buffer = new ArrayBuffer(this.m_nodeCount * BVHNodeSize);
         let view = new DataView(buffer);
 
@@ -71,8 +71,9 @@ class BVH {
         let node = this.m_BVHNodes[nodeIdx];
         node.AABBMins = new THREE.Vector3(FLT_MAX,FLT_MAX,FLT_MAX);
         node.AABBMaxs = new THREE.Vector3(-FLT_MAX,-FLT_MAX,-FLT_MAX);
+        let first = node.leftFirst;
 
-        for(let first = node.leftFirst, i=0; i < node.triangleCount; i++) {
+        for( let i = 0; i < node.triangleCount; i++) {
             let triIdx = this.m_triangleIdx[first+i];
 
             let V0 = new THREE.Vector3(this.m_triangles[triIdx*9+0], this.m_triangles[triIdx*9+1], this.m_triangles[triIdx*9+2]);
@@ -94,7 +95,7 @@ class BVH {
     private _subdivideNode(nodeIdx: number): void {
         let node = this.m_BVHNodes[nodeIdx];
 
-        console.log("nodeIdx: " + nodeIdx + "\n\ttriangleCount: " + node.triangleCount);
+        //console.log("nodeIdx: " + nodeIdx + "\n\ttriangleCount: " + node.triangleCount);
         if(node.triangleCount <= 2) {
             return;
         }
@@ -110,7 +111,7 @@ class BVH {
         }
         
         let splitPos = node.AABBMins.getComponent(axis) + extent.getComponent(axis) / 2;
-        console.log("\n\t splitPos: " + splitPos + "\n\t axis: " + axis + "\n\t extent: " + extent.x + ", " + extent.y + ", " + extent.z);
+        //console.log("\n\t splitPos: " + splitPos + "\n\t axis: " + axis + "\n\t extent: " + extent.x + ", " + extent.y + ", " + extent.z);
         //Quicksort triangles based on split axis
         let i = node.leftFirst;
         let j = i + node.triangleCount - 1;
@@ -132,7 +133,7 @@ class BVH {
         //abort if one side is empty
         let leftCount = i - node.leftFirst;
         if(leftCount == 0 || leftCount == node.triangleCount) {
-            console.log("\n\t leftCount: " + leftCount + "rightCount: " + (node.triangleCount - leftCount));
+            //console.log("\n\t leftCount: " + leftCount + "rightCount: " + (node.triangleCount - leftCount));
             return;
         }
 
@@ -166,6 +167,21 @@ class BVH {
         this._subdivideNode(leftChildIdx);
         this._subdivideNode(rightChildIdx);
     }
+    private _printBVH(): void {
+        for(let i = 0; i < this.m_nodeCount; i++) {
+            let node = this.m_BVHNodes[i];
+            console.log("nodeIdx: " + i + "\n\tleftFirst: " + node.leftFirst + "\n\ttriangleCount: " + node.triangleCount);
+
+            //print triangles of bvh 
+            for(let first = node.leftFirst, i=0; i < node.triangleCount; i++) {
+                let triIdx = this.m_triangleIdx[first+i];
+                console.log("\t\ttriIdx: " + triIdx);
+            }
+
+            console.log("\tAABBMins: " + node.AABBMins.x + ", " + node.AABBMins.y + ", " + node.AABBMins.z);
+            console.log("\tAABBMaxs: " + node.AABBMaxs.x + ", " + node.AABBMaxs.y + ", " + node.AABBMaxs.z);
+        }
+    }
 
     private _buildBVH(): void {
         
@@ -188,25 +204,28 @@ class BVH {
         }
 
         console.log("triangleCount: " + this.m_triangleIdx.length);
-        let rootNode: BVHNode = {
+        
+
+        this.m_BVHNodes[this.m_rootNodeIdx] = {
             leftFirst: 0,
             triangleCount: this.m_triangleIdx.length,
             AABBMins: new THREE.Vector3(),
             AABBMaxs: new THREE.Vector3()
         };
 
-        this.m_BVHNodes[this.m_rootNodeIdx] = rootNode;
         this._updateAABBs(this.m_rootNodeIdx);
         this._subdivideNode(this.m_rootNodeIdx);
-        console.log("\nbuild BVH done");
+        this._printBVH();
     }
 
+    
     private m_triangles: Float32Array;
     private m_BVHNodes: Array<BVHNode>;
     private m_centroids: THREE.Vector3[];
     private m_rootNodeIdx: number = 0;
     private m_nodeCount: number = 0;
     private m_triangleIdx: Uint32Array;
+    private m_minimumTriangleLocation: THREE.Vector3;
 }
 
 export { BVH };
