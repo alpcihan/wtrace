@@ -20,7 +20,6 @@ class BVH {
         this.m_triangles = vertices;
 
         let N: number = vertices.length / 9; //triangle count
-        console.log(N);
         this.m_BVHNodes = new Array<BVHNode>(N*2-1);
         this.m_centroids = new Float32Array(N*3);
         this.m_triangleIdx = new Uint32Array(N);
@@ -100,7 +99,6 @@ class BVH {
     private _subdivideNode(nodeIdx: number): void {
         let node = this.m_BVHNodes[nodeIdx];
 
-        //console.log("nodeIdx: " + nodeIdx + "\n\ttriangleCount: " + node.triangleCount);
         if(node.triangleCount <= 2) {
             return;
         }
@@ -116,7 +114,6 @@ class BVH {
         }
         
         let splitPos = node.AABBMins[axis] + (extent[axis] / 2);
-        //console.log("\n\t splitPos: " + splitPos + "\n\t axis: " + axis + "\n\t extent: " + extent.x + ", " + extent.y + ", " + extent.z);
         //Quicksort triangles based on split axis
         let i = node.leftFirst;
         let j = i + node.triangleCount - 1;
@@ -138,7 +135,6 @@ class BVH {
         //abort if one side is empty
         let leftCount = i - node.leftFirst;
         if(leftCount == 0 || leftCount == node.triangleCount) {
-            //console.log("\n\t leftCount: " + leftCount + "rightCount: " + (node.triangleCount - leftCount));
             return;
         }
 
@@ -175,16 +171,11 @@ class BVH {
     private _printBVH(): void {
         for(let i = 0; i < this.m_nodeCount; i++) {
             let node = this.m_BVHNodes[i];
-            console.log("nodeIdx: " + i + "\n\tleftFirst: " + node.leftFirst + "\n\ttriangleCount: " + node.triangleCount);
 
             //print triangles of bvh 
             for(let first = node.leftFirst, i=0; i < node.triangleCount; i++) {
                 let triIdx = this.m_triangleIdx[first+i];
-                console.log("\t\ttriIdx: " + triIdx);
             }
-
-            console.log("\tAABBMins: " + node.AABBMins[0] + ", " + node.AABBMins[1] + ", " + node.AABBMins[2]);
-            console.log("\tAABBMaxs: " + node.AABBMaxs[0] + ", " + node.AABBMaxs[1] + ", " + node.AABBMaxs[2]);
         }
     }
 
@@ -205,9 +196,6 @@ class BVH {
             this.m_centroids[i*3+1] = (v0[1] + v1[1] + v2[1]) / 3.0;
             this.m_centroids[i*3+2] = (v0[2] + v1[2] + v2[2]) / 3.0;
         }
-
-        console.log("triangleCount: " + this.m_triangleIdx.length);
-        
 
         this.m_BVHNodes[this.m_rootNodeIdx] = {
             leftFirst: 0,

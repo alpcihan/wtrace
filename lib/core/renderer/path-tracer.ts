@@ -197,9 +197,6 @@ class PathTracer {
                     },
                 ],
             });
-            console.log("bvhNodeBuffer size: " + SceneManager.scene.sceneDataManager.bvhNodeBuffer)
-            console.log("triangleIdxBuffer size: " + SceneManager.scene.sceneDataManager.triangleIdxBuffer);
-            console.log("vertexBuffer size: " + SceneManager.scene.sceneDataManager.vertexBuffer);
             const pathTracingPipelineLayout = IGPU.get().createPipelineLayout({
                 bindGroupLayouts: [pathTracingBindGroupLayout],
             });

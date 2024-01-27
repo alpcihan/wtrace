@@ -34,7 +34,6 @@ class SceneDataManager {
     private m_triangleIdxBuffer: GPUBuffer;
 
     private _updateVertexBuffer(): void {
-        console.log("Vertex buffer size: " + this.m_vertices.byteLength);
         this.m_vertexBuffer = IGPU.get().createBuffer({
             size: this.m_vertices.byteLength,
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
@@ -51,9 +50,6 @@ class SceneDataManager {
 
         let bvhNodeBuffer = this.m_bvh.getBVHNodeBuffer();
         let triangleIdxBuffer = this.m_bvh.getTriangleIdxBuffer();
-
-        console.log("BVH node buffer size: " + bvhNodeBuffer.byteLength);
-        console.log("Triangle idx buffer size: " + triangleIdxBuffer.byteLength);
 
         this.m_bvhNodeBuffer = IGPU.get().createBuffer({
             size: bvhNodeBuffer.byteLength,

@@ -5,16 +5,14 @@
 @group(0) @binding(1) var<storage, read> vertices: array<f32>;
 @group(0) @binding(2) var<storage, read_write> accumulationInfo: array<vec4f>; // TODO: replace with storage texture
 
-struct BVHNode{
-    leftFirst: f32, //if triCount == 0 represents leftChild, if triCount > 0 represents first triangleIdx
+struct BVHNode {        // TODO: use uint for "leftFirst" and "triangleCount"
+    leftFirst: f32,     //if triCount == 0 represents leftChild, if triCount > 0 represents first triangleIdx
     triangleCount: f32,
-    padding: vec2f,
     aabbMins: vec4f,
     aabbMaxs: vec4f,
 };
 @group(0) @binding(3) var<storage, read> triIdxInfo: array<u32>;
 @group(0) @binding(4) var<storage, read> bvhNodes: array<BVHNode>;
-
 
 const MAX_FLOAT32: f32 = 3.402823466e+38;
 
@@ -286,7 +284,7 @@ fn intersectBVH(r: Ray, hit_info: ptr<function, HitInfo>){
     var color: vec3f = vec3f(0.0, 0.0, 0.0);
 
     while(_stackPtr > 0) {
-        _stackPtr = _stackPtr - 1; //pop node from stack
+        _stackPtr = _stackPtr - 1; // pop node from stack
         let nodeIdx: u32 = s[_stackPtr];
         let node: BVHNode = bvhNodes[nodeIdx];
         let aabbMin: vec3f = node.aabbMins.xyz;
