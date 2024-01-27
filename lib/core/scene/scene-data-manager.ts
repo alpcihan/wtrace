@@ -1,3 +1,4 @@
+import * as THREE from "three";
 import { MeshModel } from "../objects/model/mesh-model";
 import { IGPU } from "../renderer/igpu";
 import { BVH } from "./bvh/bvh";
@@ -6,7 +7,7 @@ class SceneDataManager {
     public constructor() {
         this.m_vertices = new Float32Array();
         this._updateVertexBuffer();
-        this.m_bvh = new BVH();
+        this.m_bvh = new BVH(new THREE.Matrix4);
     }
 
     public addModel(model: MeshModel): void {
