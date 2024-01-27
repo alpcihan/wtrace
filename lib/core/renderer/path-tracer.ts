@@ -153,6 +153,22 @@ class PathTracer {
                             type: "storage",
                         },
                     },
+                    {
+                        // triangle indices
+                        binding: 3,
+                        visibility: GPUShaderStage.COMPUTE,
+                        buffer: {
+                            type: "read-only-storage",
+                        },
+                    },
+                    {
+                        // bvh nodes
+                        binding: 4,
+                        visibility: GPUShaderStage.COMPUTE,
+                        buffer: {
+                            type: "read-only-storage",
+                        },
+                    },
                 ],
             });
 
@@ -171,9 +187,19 @@ class PathTracer {
                         binding: 2,
                         resource: { buffer: this.m_accumulationBuffer },
                     },
+                    {
+                        binding: 3,
+                        resource: { buffer: SceneManager.scene.sceneDataManager.triangleIdxBuffer },
+                    },
+                    {
+                        binding: 4,
+                        resource: { buffer: SceneManager.scene.sceneDataManager.bvhNodeBuffer },
+                    },
                 ],
             });
-
+            console.log("bvhNodeBuffer size: " + SceneManager.scene.sceneDataManager.bvhNodeBuffer)
+            console.log("triangleIdxBuffer size: " + SceneManager.scene.sceneDataManager.triangleIdxBuffer);
+            console.log("vertexBuffer size: " + SceneManager.scene.sceneDataManager.vertexBuffer);
             const pathTracingPipelineLayout = IGPU.get().createPipelineLayout({
                 bindGroupLayouts: [pathTracingBindGroupLayout],
             });

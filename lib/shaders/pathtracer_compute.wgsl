@@ -5,6 +5,17 @@
 @group(0) @binding(1) var<storage, read> vertices: array<f32>;
 @group(0) @binding(2) var<storage, read_write> accumulationInfo: array<vec4f>; // TODO: replace with storage texture
 
+struct BVHNode{
+    leftFirst: f32, //if triCount == 0 represents leftChild, if triCount > 0 represents first triangleIdx
+    triangleCount: f32,
+    padding: vec2f,
+    aabbMins: vec4f,
+    aabbMaxs: vec4f,
+};
+@group(0) @binding(3) var<storage, read> triIdxInfo: array<u32>;
+@group(0) @binding(4) var<storage, read> bvhNodes: array<BVHNode>;
+
+
 const MAX_FLOAT32: f32 = 3.402823466e+38;
 
 struct Uniforms {
@@ -39,6 +50,10 @@ struct Material {
     color: vec3f,
     emissiveColor: vec3f
 };
+
+fn isNan(f: f32) -> bool {
+    return f != f;
+}
 
 @compute @workgroup_size(16,16,1)
 fn main(@builtin(global_invocation_id) globalInvocationID : vec3u) {
@@ -106,7 +121,7 @@ fn traceRay(ray: Ray, seed: u32) -> vec3f {
     return incomingLight;
 }
 
-fn hitWorld(ray: Ray, bestHit: ptr<function, HitInfo>) {
+fn hitWorld(ray: Ray, bestHit: ptr<function, HitInfo>){
     // Scene helper objects data // TODO: pass as buffer
     var sphere: Sphere = Sphere(vec3f(2.0,2.0,3.0), 2.0);
     var lightMaterial: Material = Material(vec3f(1.0,1.0,1.0), vec3f(1.0,1.0,1.0));
@@ -115,7 +130,7 @@ fn hitWorld(ray: Ray, bestHit: ptr<function, HitInfo>) {
 
     intersectSphere(&sphere, &lightMaterial, ray, bestHit);
     intersectXZPlane(floorY, &floorMaterial, ray, bestHit);
-    intersectTriangles(ray, bestHit);
+    intersectBVH(ray, bestHit);
 }
 
 fn intersectXZPlane(
@@ -226,4 +241,85 @@ fn createHitInfo(hitInfo: ptr<function, HitInfo>){
 
 fn rayAt(ray: Ray, t: f32) -> vec3f {
     return ray.origin + ray.direction * t;
+}
+
+fn hitTriangle(ray: Ray, v0: vec3<f32>, v1: vec3<f32>, v2: vec3<f32>) -> f32 {
+    let v1v0: vec3f = v1 - v0;
+    let v2v0: vec3f = v2 - v0;
+    let roV0: vec3f = ray.origin - v0;
+
+    let n: vec3f = cross(v1v0, v2v0);
+    let q: vec3f = cross(roV0, ray.direction); 
+    let d: f32 = 1.0 / dot(ray.direction, n);
+    let u: f32 = d * dot(-q, v2v0);
+    let v: f32 = d * dot(q, v1v0);
+    let t: f32 = d * dot(-n, roV0);
+
+    if(u<0.0 || v<0.0 || u+v>1.0 || t<0.0) {
+        return MAX_FLOAT32;
+    }
+
+    return t;
+}
+
+fn intersectAABB(ray: Ray, aabbMin: vec3<f32>, aabbMax: vec3<f32>)-> bool{
+    let invDirection: vec3f = 1.0 / ray.direction;
+    let t1: vec3f = (aabbMin - ray.origin) * invDirection;
+    let t2: vec3f = (aabbMax - ray.origin) * invDirection;
+
+    let tmin: vec3f = min(t1, t2);
+    let tmax: vec3f = max(t1, t2);
+
+    let tenter: f32 = max(max(tmin.x, tmin.y), tmin.z);
+    let texit: f32 = min(min(tmax.x, tmax.y), tmax.z);
+
+    return (tenter < texit) && (texit > 0.0);
+}
+
+fn intersectBVH(r: Ray, hit_info: ptr<function, HitInfo>){
+    var s: array<u32, 64>;
+    var _stackPtr: i32 = 0;
+    let rootIdx: u32 = 0;
+
+    s[_stackPtr] = rootIdx;
+    _stackPtr = _stackPtr + 1;
+    var color: vec3f = vec3f(0.0, 0.0, 0.0);
+
+    while(_stackPtr > 0) {
+        _stackPtr = _stackPtr - 1; //pop node from stack
+        let nodeIdx: u32 = s[_stackPtr];
+        let node: BVHNode = bvhNodes[nodeIdx];
+        let aabbMin: vec3f = node.aabbMins.xyz;
+        let aabbMax: vec3f = node.aabbMaxs.xyz;
+
+        if(intersectAABB(r, aabbMin, aabbMax)) {
+            let triCount: u32 = u32(node.triangleCount);
+            let lFirst: u32 = u32(node.leftFirst);
+            if(triCount > 0) { // if triangle count > 0 means leaf node (leftFirst gives first triangleIdx)
+                for(var i: u32 = 0; i < triCount; i = i + 1) {
+                    
+                    let idx: u32 = triIdxInfo[lFirst + i];
+                    
+                    //Do triangle intersection
+                    let v0: vec3f = vec3<f32>(vertices[idx*9+0], vertices[idx*9+1], vertices[idx*9+2]);
+                    let v1: vec3f = vec3<f32>(vertices[idx*9+3], vertices[idx*9+4], vertices[idx*9+5]);
+                    let v2: vec3f = vec3<f32>(vertices[idx*9+6], vertices[idx*9+7], vertices[idx*9+8]);
+
+                    let res: f32 = hitTriangle(r, v0, v1, v2);
+                    if(res < (*hit_info).t && res > 0.0) {
+                        (*hit_info).t = res;
+                        (*hit_info).normal = normalize(cross(v1 - v0, v2 - v0));
+                        (*hit_info).material.color = vec3<f32>(1.0, 0.0, 0.0);
+                        (*hit_info).material.emissiveColor = vec3<f32>(0.0, 0.0, 0.0);
+                    }
+                                    
+                }
+            } else{ // If triangle count = 0 not leaf node (leftFirst gives leftChild node)
+                s[_stackPtr] = lFirst;
+                _stackPtr = _stackPtr + 1;
+                s[_stackPtr] = lFirst + 1; //right child is always left+1
+                _stackPtr = _stackPtr + 1;
+            }
+        }
+    }
 }
