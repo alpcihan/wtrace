@@ -14,6 +14,7 @@ class PathTracer {
 
         this._initContext();
         this._initAssets();
+        SceneManager.scene.sceneDataManager.buildSceneData(); // TODO: find a better place
         this._initPipelines();
     }
 
@@ -193,7 +194,7 @@ class PathTracer {
                     },
                     {
                         binding: 4,
-                        resource: { buffer: SceneManager.scene.sceneDataManager.bvhNodeBuffer },
+                        resource: { buffer: SceneManager.scene.sceneDataManager.BVHBuffer },
                     },
                 ],
             });

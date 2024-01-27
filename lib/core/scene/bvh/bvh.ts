@@ -6,52 +6,43 @@ const BVHNodeSizeAsFloats = 12; // 12 floats
 interface BVHNode {
     leftFirst: number;
     triangleCount: number;
-    bound: THREE.Box3;
+    aabb: THREE.Box3;
 }
 
 class BVH {
-    public constructor(transform: THREE.Matrix4) {
+    public constructor(transform: THREE.Matrix4, vertices: Float32Array) {
+        this.m_triangles = vertices;
+        this.m_transform = transform.clone();
+        this.m_aabb = new THREE.Box3();
         this.m_BVHNodes = new Array<BVHNode>();
         this.m_triangleIdx = new Uint32Array();
     }
 
-    public build(vertices: Float32Array): void {
-        this.m_triangles = vertices;
+    public get nodes(): Array<BVHNode> {
+        return this.m_BVHNodes;
+    }
 
-        let N: number = vertices.length / 9; // triangle count
+    public get triangleIndices(): Uint32Array {
+        return this.m_triangleIdx;
+    }
+
+    public static get nodeSize(): number {
+        return BVHNodeSizeAsFloats;
+    }
+
+    public build(): void {
+        let N: number = this.m_triangles.length / 9;
         this.m_BVHNodes = new Array<BVHNode>(N * 2 - 1);
         this.m_centroids = new Float32Array(N * 3);
         this.m_triangleIdx = new Uint32Array(N);
         this.m_nodeCount = 1;
         this._buildBVH();
+        
     }
 
-    public getBVHNodeBuffer(): Float32Array {
-        const bvhNodeBuffer = new Float32Array(this.m_nodeCount * BVHNodeSizeAsFloats);
-
-        this.m_BVHNodes.forEach((node, i) => {
-            bvhNodeBuffer[i * BVHNodeSizeAsFloats + 0] = node.leftFirst;
-            bvhNodeBuffer[i * BVHNodeSizeAsFloats + 1] = node.triangleCount;
-            bvhNodeBuffer[i * BVHNodeSizeAsFloats + 2] = 0.0; //padding
-            bvhNodeBuffer[i * BVHNodeSizeAsFloats + 3] = 0.0; //padding
-            bvhNodeBuffer[i * BVHNodeSizeAsFloats + 4] = node.bound.min.x;
-            bvhNodeBuffer[i * BVHNodeSizeAsFloats + 5] = node.bound.min.y;
-            bvhNodeBuffer[i * BVHNodeSizeAsFloats + 6] = node.bound.min.z;
-            bvhNodeBuffer[i * BVHNodeSizeAsFloats + 7] = 0.0; //padding
-            bvhNodeBuffer[i * BVHNodeSizeAsFloats + 8] = node.bound.max.x;
-            bvhNodeBuffer[i * BVHNodeSizeAsFloats + 9] = node.bound.max.y;
-            bvhNodeBuffer[i * BVHNodeSizeAsFloats + 10] = node.bound.max.z;
-            bvhNodeBuffer[i * BVHNodeSizeAsFloats + 11] = 0.0; //padding
-        });
-
-        return bvhNodeBuffer;
-    }
-
-    public getTriangleIdxBuffer(): Uint32Array {
-        return this.m_triangleIdx;
-    }
-
-    private m_triangles: Float32Array;
+    private m_transform: THREE.Matrix4;
+    private m_aabb: THREE.Box3;
+    private m_triangles: Float32Array; // TODO: pack triangle data
     private m_BVHNodes: Array<BVHNode>;
     private m_centroids: Float32Array;
     private m_rootNodeIdx: number = 0;
@@ -91,7 +82,7 @@ class BVH {
         this.m_BVHNodes[this.m_rootNodeIdx] = {
             leftFirst: 0,
             triangleCount: this.m_triangleIdx.length,
-            bound: new THREE.Box3(),
+            aabb: new THREE.Box3(),
         };
 
         this._updateAABBs(this.m_rootNodeIdx);
@@ -129,13 +120,13 @@ class BVH {
             ); 
 
             // nodes
-            node.bound.min.min(V0); 
-            node.bound.min.min(V1); 
-            node.bound.min.min(V2); 
+            node.aabb.min.min(V0); 
+            node.aabb.min.min(V1); 
+            node.aabb.min.min(V2); 
 
-            node.bound.max.max(V0); 
-            node.bound.max.max(V1); 
-            node.bound.max.max(V2); 
+            node.aabb.max.max(V0); 
+            node.aabb.max.max(V1); 
+            node.aabb.max.max(V2); 
         }
 
         this.m_BVHNodes[nodeIdx] = node;
@@ -149,7 +140,7 @@ class BVH {
         }
 
         // find split axis
-        const extent: THREE.Vector3 = node.bound.max.clone().sub(node.bound.min); 
+        const extent: THREE.Vector3 = node.aabb.max.clone().sub(node.aabb.min); 
         let axis = 0;
         if (extent.y > extent.x) {
             axis = 1;
@@ -157,7 +148,7 @@ class BVH {
             axis = 2;
         }
 
-        let splitPos = node.bound.min.getComponent(axis) + extent.getComponent(axis) / 2;
+        let splitPos = node.aabb.min.getComponent(axis) + extent.getComponent(axis) / 2;
 
         // Quicksort triangles based on split axis
         let i = node.leftFirst;
@@ -191,13 +182,13 @@ class BVH {
         this.m_BVHNodes[leftChildIdx] = {
             leftFirst: node.leftFirst,
             triangleCount: leftCount,
-            bound: new THREE.Box3
+            aabb: new THREE.Box3
         };
 
         this.m_BVHNodes[rightChildIdx] = {
             leftFirst: i,
             triangleCount: node.triangleCount - leftCount,
-            bound: new THREE.Box3
+            aabb: new THREE.Box3
         };
 
         node.leftFirst = leftChildIdx;
