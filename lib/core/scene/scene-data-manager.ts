@@ -1,6 +1,6 @@
 import { MeshModel } from "../objects/model/mesh-model";
 import { IGPU } from "../renderer/igpu";
-import { BVH } from "./bvh";
+import { BVH } from "./bvh/bvh";
 
 class SceneDataManager {
     public constructor() {
@@ -41,13 +41,13 @@ class SceneDataManager {
 
         IGPU.get().queue.writeBuffer(this.m_vertexBuffer, 0, this.m_vertices);
     }
+
     private _updateBVH(): void {
         this.m_bvh.build(this.m_vertices);
         this._updateBVHBuffers();
     }
     
     private _updateBVHBuffers(): void {
-
         let bvhNodeBuffer = this.m_bvh.getBVHNodeBuffer();
         let triangleIdxBuffer = this.m_bvh.getTriangleIdxBuffer();
 
