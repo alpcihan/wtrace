@@ -1,25 +1,24 @@
-const BVHNodeSizeAsFloats = 12; //12 floats
+const FLT_MAX = 3.402823466e+38;
+const BVHNodeSizeAsFloats = 12; // 12 floats
 
 interface BVHNode {
-    leftFirst: number;          //4 bytes
-    triangleCount: number;      //4 bytes
-    AABBMins: Float32Array;    //12 bytes
-    AABBMaxs: Float32Array;    //12 bytes
+    leftFirst: number;      // 4 bytes
+    triangleCount: number;  // 4 bytes
+    AABBMins: Float32Array; // 12 bytes
+    AABBMaxs: Float32Array; // 12 bytes
 }
-
-const FLT_MAX = 3.402823466e+38;
 
 class BVH {
     
     public constructor() {
         this.m_BVHNodes = new Array<BVHNode>();
         this.m_triangleIdx = new Uint32Array();
-
     }
+
     public build(vertices: Float32Array): void {
         this.m_triangles = vertices;
 
-        let N: number = vertices.length / 9; //triangle count
+        let N: number = vertices.length / 9; // triangle count
         this.m_BVHNodes = new Array<BVHNode>(N*2-1);
         this.m_centroids = new Float32Array(N*3);
         this.m_triangleIdx = new Uint32Array(N);
@@ -54,19 +53,19 @@ class BVH {
         return this.m_triangleIdx;
     }
 
-    private minVec3(a: Float32Array, b: Float32Array): Float32Array {
+    private _minVec3(a: Float32Array, b: Float32Array): Float32Array {
         return new Float32Array([Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.min(a[2], b[2])]);
     }
 
-    private maxVec3(a: Float32Array, b: Float32Array): Float32Array {
+    private _maxVec3(a: Float32Array, b: Float32Array): Float32Array {
         return new Float32Array([Math.max(a[0], b[0]), Math.max(a[1], b[1]), Math.max(a[2], b[2])]);
     }
 
-    private subVec3(a: Float32Array, b: Float32Array): Float32Array {
+    private _subVec3(a: Float32Array, b: Float32Array): Float32Array {
         return new Float32Array([a[0]-b[0], a[1]-b[1], a[2]-b[2]]);
     }
 
-    private getCentroid(triIdx: number): Float32Array {
+    private _getCentroid(triIdx: number): Float32Array {
         return new Float32Array([this.m_centroids[triIdx*3+0], this.m_centroids[triIdx*3+1], this.m_centroids[triIdx*3+2]]);
     }
 
@@ -84,13 +83,13 @@ class BVH {
             let V1 = new Float32Array([this.m_triangles[triIdx*9+3], this.m_triangles[triIdx*9+4], this.m_triangles[triIdx*9+5]]);
             let V2 = new Float32Array([this.m_triangles[triIdx*9+6], this.m_triangles[triIdx*9+7], this.m_triangles[triIdx*9+8]]);
 
-            node.AABBMins = this.minVec3(node.AABBMins, V0);
-            node.AABBMins = this.minVec3(node.AABBMins, V1);
-            node.AABBMins = this.minVec3(node.AABBMins, V2);
+            node.AABBMins = this._minVec3(node.AABBMins, V0);
+            node.AABBMins = this._minVec3(node.AABBMins, V1);
+            node.AABBMins = this._minVec3(node.AABBMins, V2);
 
-            node.AABBMaxs = this.maxVec3(node.AABBMaxs, V0);
-            node.AABBMaxs = this.maxVec3(node.AABBMaxs, V1);
-            node.AABBMaxs = this.maxVec3(node.AABBMaxs, V2);
+            node.AABBMaxs = this._maxVec3(node.AABBMaxs, V0);
+            node.AABBMaxs = this._maxVec3(node.AABBMaxs, V1);
+            node.AABBMaxs = this._maxVec3(node.AABBMaxs, V2);
         }
         
         this.m_BVHNodes[nodeIdx] = node;
@@ -104,7 +103,7 @@ class BVH {
         }
 
         //find split axis
-        let extent = this.subVec3(node.AABBMaxs, node.AABBMins);
+        let extent = this._subVec3(node.AABBMaxs, node.AABBMins);
         let axis = 0;
         if(extent[1] > extent[0]) {
             axis = 1;
@@ -114,13 +113,14 @@ class BVH {
         }
         
         let splitPos = node.AABBMins[axis] + (extent[axis] / 2);
+
         //Quicksort triangles based on split axis
         let i = node.leftFirst;
         let j = i + node.triangleCount - 1;
 
         while(i<=j) {
             let triIdx = this.m_triangleIdx[i];
-            let centroid: Float32Array =  this.getCentroid(triIdx);
+            let centroid: Float32Array =  this._getCentroid(triIdx);
             if(centroid[axis] < splitPos) {
                 i++;
             }
@@ -150,6 +150,7 @@ class BVH {
             AABBMins: new Float32Array(),
             AABBMaxs: new Float32Array()
         };
+        
         this.m_BVHNodes[rightChildIdx] = {
             leftFirst: i,
             triangleCount: node.triangleCount - leftCount,
@@ -168,6 +169,7 @@ class BVH {
         this._subdivideNode(leftChildIdx);
         this._subdivideNode(rightChildIdx);
     }
+
     private _printBVH(): void {
         for(let i = 0; i < this.m_nodeCount; i++) {
             let node = this.m_BVHNodes[i];
@@ -209,14 +211,12 @@ class BVH {
         this._printBVH();
     }
 
-    
     private m_triangles: Float32Array;
     private m_BVHNodes: Array<BVHNode>;
     private m_centroids: Float32Array;
     private m_rootNodeIdx: number = 0;
     private m_nodeCount: number = 0;
     private m_triangleIdx: Uint32Array;
-    private m_minimumTriangleLocation: THREE.Vector3;
 }
 
 export { BVH };

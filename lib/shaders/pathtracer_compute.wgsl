@@ -1,26 +1,22 @@
-// enable chromium_experimental_read_write_storage_texture;
-
-// @group(0) @binding(-) var colorBuffer: texture_storage_2d<rgba8unorm, write>; // Example usage: textureStore(colorBuffer, texelCoord, vec4f(pixel_color, 1.0));
-@group(0) @binding(0) var<uniform> uniforms: Uniforms;
-@group(0) @binding(1) var<storage, read> vertices: array<f32>;
-@group(0) @binding(2) var<storage, read_write> accumulationInfo: array<vec4f>; // TODO: replace with storage texture
-
-struct BVHNode {        // TODO: use uint for "leftFirst" and "triangleCount"
-    leftFirst: f32,     //if triCount == 0 represents leftChild, if triCount > 0 represents first triangleIdx
-    triangleCount: f32,
-    aabbMins: vec4f,
-    aabbMaxs: vec4f,
-};
-@group(0) @binding(3) var<storage, read> triIdxInfo: array<u32>;
-@group(0) @binding(4) var<storage, read> bvhNodes: array<BVHNode>;
-
+//-------------------------------------------------------------------
+// Consts
+//-------------------------------------------------------------------
 const MAX_FLOAT32: f32 = 3.402823466e+38;
+
+//-------------------------------------------------------------------
+// Structs
+//-------------------------------------------------------------------
 
 struct Uniforms {
     view_i: mat4x4f,
     projection_i: mat4x4f,
     resolution: vec2f, // TODO: pass as uint
     frameIdx: u32
+};
+
+struct Ray {
+    direction: vec3f,
+    origin: vec3f,
 };
 
 struct Sphere {
@@ -31,11 +27,6 @@ struct Sphere {
 struct XZPlane{
     normal: vec3f,
     distance: f32,
-};
-
-struct Ray {
-    direction: vec3f,
-    origin: vec3f,
 };
 
 struct HitInfo {
@@ -49,9 +40,22 @@ struct Material {
     emissiveColor: vec3f
 };
 
-fn isNan(f: f32) -> bool {
-    return f != f;
-}
+struct BVHNode {        // TODO: use uint for "leftFirst" and "triangleCount"
+    leftFirst: f32,     //if triCount == 0 represents leftChild, if triCount > 0 represents first triangleIdx
+    triangleCount: f32,
+    aabbMins: vec4f,
+    aabbMaxs: vec4f,
+};
+
+//-------------------------------------------------------------------
+// Bindings
+//-------------------------------------------------------------------
+
+@group(0) @binding(0) var<uniform> uniforms: Uniforms;
+@group(0) @binding(1) var<storage, read> vertices: array<f32>;
+@group(0) @binding(2) var<storage, read_write> accumulationInfo: array<vec4f>; // TODO: replace with storage texture
+@group(0) @binding(3) var<storage, read> triIdxInfo: array<u32>;
+@group(0) @binding(4) var<storage, read> bvhNodes: array<BVHNode>;
 
 @compute @workgroup_size(16,16,1)
 fn main(@builtin(global_invocation_id) globalInvocationID : vec3u) {
@@ -320,4 +324,8 @@ fn intersectBVH(r: Ray, hit_info: ptr<function, HitInfo>){
             }
         }
     }
+}
+
+fn isNan(f: f32) -> bool {
+    return f != f;
 }
