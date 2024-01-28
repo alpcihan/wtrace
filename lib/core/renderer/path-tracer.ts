@@ -163,8 +163,16 @@ class PathTracer {
                         },
                     },
                     {
-                        // bvh nodes
+                        // blas nodes
                         binding: 4,
+                        visibility: GPUShaderStage.COMPUTE,
+                        buffer: {
+                            type: "read-only-storage",
+                        },
+                    },
+                    {
+                        // blas instances
+                        binding: 5,
                         visibility: GPUShaderStage.COMPUTE,
                         buffer: {
                             type: "read-only-storage",
@@ -195,6 +203,10 @@ class PathTracer {
                     {
                         binding: 4,
                         resource: { buffer: SceneManager.scene.sceneDataManager.blasBuffer },
+                    },
+                    {
+                        binding: 5,
+                        resource: { buffer: SceneManager.scene.sceneDataManager.blasInstanceBuffer },
                     },
                 ],
             });

@@ -6,7 +6,6 @@ const MAX_FLOAT32: f32 = 3.402823466e+38;
 //-------------------------------------------------------------------
 // Structs
 //-------------------------------------------------------------------
-
 struct Uniforms {
     view_i: mat4x4f,
     projection_i: mat4x4f,
@@ -47,15 +46,21 @@ struct BLASNode {        // TODO: use uint for "leftFirst" and "triangleCount"
     aabbMaxs: vec4f,
 };
 
+struct BLASInstance {
+    transform: mat4x4f,     // TODO: remove if unused
+    transform_i: mat4x4f,
+    blasOffset: u32
+};
+
 //-------------------------------------------------------------------
 // Bindings
 //-------------------------------------------------------------------
-
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var<storage, read> vertices: array<f32>;
 @group(0) @binding(2) var<storage, read_write> accumulationInfo: array<vec4f>; // TODO: replace with storage texture
 @group(0) @binding(3) var<storage, read> triIdxInfo: array<u32>;
 @group(0) @binding(4) var<storage, read> blasNodes: array<BLASNode>;
+@group(0) @binding(5) var<storage, read> blasInstances: array<BLASInstance>;
 
 @compute @workgroup_size(16,16,1)
 fn main(@builtin(global_invocation_id) globalInvocationID : vec3u) {
@@ -276,6 +281,10 @@ fn intersectAABB(ray: Ray, aabbMin: vec3<f32>, aabbMax: vec3<f32>)-> bool{
     let texit: f32 = min(min(tmax.x, tmax.y), tmax.z);
 
     return (tenter < texit) && (texit > 0.0);
+}
+
+fn intersectAccelerationStructure(r: Ray, hit_info: ptr<function, HitInfo>) {
+    
 }
 
 fn intersectBVH(r: Ray, hit_info: ptr<function, HitInfo>){

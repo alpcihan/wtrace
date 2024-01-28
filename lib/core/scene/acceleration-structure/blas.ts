@@ -12,7 +12,6 @@ interface BLASNode {
 class BLAS {
     public constructor(vertices: Float32Array) {
         this.m_triangles = vertices;
-        this.m_aabb = new THREE.Box3();
         this.m_BLASNodes = new Array<BLASNode>();
         this.m_triangleIdx = new Uint32Array();
     }
@@ -34,7 +33,6 @@ class BLAS {
         this._buildBLAS();
     }
 
-    private m_aabb: THREE.Box3;
     private m_triangles: Float32Array; // TODO: pack triangle data
     private m_BLASNodes: Array<BLASNode>;
     private m_centroids: Float32Array;
