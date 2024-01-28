@@ -194,7 +194,7 @@ class PathTracer {
                     },
                     {
                         binding: 4,
-                        resource: { buffer: SceneManager.scene.sceneDataManager.BVHBuffer },
+                        resource: { buffer: SceneManager.scene.sceneDataManager.blasBuffer },
                     },
                 ],
             });

@@ -40,7 +40,7 @@ struct Material {
     emissiveColor: vec3f
 };
 
-struct BVHNode {        // TODO: use uint for "leftFirst" and "triangleCount"
+struct BLASNode {        // TODO: use uint for "leftFirst" and "triangleCount"
     leftFirst: f32,     //if triCount == 0 represents leftChild, if triCount > 0 represents first triangleIdx
     triangleCount: f32,
     aabbMins: vec4f,
@@ -55,7 +55,7 @@ struct BVHNode {        // TODO: use uint for "leftFirst" and "triangleCount"
 @group(0) @binding(1) var<storage, read> vertices: array<f32>;
 @group(0) @binding(2) var<storage, read_write> accumulationInfo: array<vec4f>; // TODO: replace with storage texture
 @group(0) @binding(3) var<storage, read> triIdxInfo: array<u32>;
-@group(0) @binding(4) var<storage, read> bvhNodes: array<BVHNode>;
+@group(0) @binding(4) var<storage, read> blasNodes: array<BLASNode>;
 
 @compute @workgroup_size(16,16,1)
 fn main(@builtin(global_invocation_id) globalInvocationID : vec3u) {
@@ -125,7 +125,7 @@ fn traceRay(ray: Ray, seed: u32) -> vec3f {
 
 fn hitWorld(ray: Ray, bestHit: ptr<function, HitInfo>){
     // Scene helper objects data // TODO: pass as buffer
-    var sphere: Sphere = Sphere(vec3f(2.0,2.0,3.0), 2.0);
+    var sphere: Sphere = Sphere(vec3f(2.0,4.0,3.0), 2.0);
     var lightMaterial: Material = Material(vec3f(1.0,1.0,1.0), vec3f(1.0,1.0,1.0));
     var floorY: f32 = -1;
     var floorMaterial: Material = Material(vec3f(1.0,1.0,1.0), vec3f(0,0,0));
@@ -290,7 +290,7 @@ fn intersectBVH(r: Ray, hit_info: ptr<function, HitInfo>){
     while(_stackPtr > 0) {
         _stackPtr = _stackPtr - 1; // pop node from stack
         let nodeIdx: u32 = s[_stackPtr];
-        let node: BVHNode = bvhNodes[nodeIdx];
+        let node: BLASNode = blasNodes[nodeIdx];
         let aabbMin: vec3f = node.aabbMins.xyz;
         let aabbMax: vec3f = node.aabbMaxs.xyz;
 

@@ -1,14 +1,14 @@
 import * as THREE from "three";
 import { MeshModel } from "../objects/model/mesh-model";
 import { IGPU } from "../renderer/igpu";
-import { BVH } from "./bvh/bvh";
+import { BLAS, BLAS_NODE_SIZE } from "./acceleration-structure/blas";
 
 class SceneDataManager {
     public constructor() {
         this.m_models = new Array<MeshModel>();
         this.m_vertices = new Float32Array();
-        this.m_bvhNodeCount = 0;
-        this.m_BVHs = new Array<BVH>();
+        this.m_blasNodeCount = 0;
+        this.m_blasArray = new Array<BLAS>();
         this._updateVertexBuffer();
     }
 
@@ -20,24 +20,24 @@ class SceneDataManager {
         this.m_models.forEach(model => {
             // add vertices
             this.m_vertices = new Float32Array([...this.m_vertices, ...model.mesh.vertices]);
-
-            // create bvh
-            const bvh: BVH = new BVH(new THREE.Matrix4, model.mesh.vertices);
-            bvh.build();
-            this.m_bvhNodeCount += bvh.nodes.length;
-            this.m_BVHs.push(bvh);
+ 
+            // create blas
+            const blas: BLAS = new BLAS(model.mesh.vertices);
+            blas.build();
+            this.m_blasNodeCount += blas.nodes.length;
+            this.m_blasArray.push(blas);
         });
 
         this._updateVertexBuffer();
-        this._updateBVHBuffers();
+        this._updateBLASBuffers();
     }
 
     public get vertexBuffer(): GPUBuffer {
         return this.m_vertexBuffer;
     }
 
-    public get BVHBuffer(): GPUBuffer {
-        return this.m_BVHBuffer;
+    public get blasBuffer(): GPUBuffer {
+        return this.m_blasBuffer;
     }
 
     public get triangleIdxBuffer(): GPUBuffer {
@@ -48,9 +48,9 @@ class SceneDataManager {
     private m_vertexBuffer: GPUBuffer;
     private m_models: Array<MeshModel>;
     
-    private m_BVHs: Array<BVH>;
-    private m_bvhNodeCount: number; // total node count
-    private m_BVHBuffer: GPUBuffer; // bvh array
+    private m_blasArray: Array<BLAS>;
+    private m_blasNodeCount: number;        // total node count
+    private m_blasBuffer: GPUBuffer;        // blas array
     private m_triangleIdxBuffer: GPUBuffer;
 
     private _updateVertexBuffer(): void {
@@ -62,50 +62,50 @@ class SceneDataManager {
         IGPU.get().queue.writeBuffer(this.m_vertexBuffer, 0, this.m_vertices);
     }
     
-    private _updateBVHBuffers(): void {
-        // pack bvh data
-        const BVHArr: Float32Array = new Float32Array(this.m_bvhNodeCount * BVH.nodeSize);
-        const triangleIdxArr: Uint32Array = new Uint32Array((this.m_vertices.length / 9) * 4);
+    private _updateBLASBuffers(): void {
+        // pack blas data
+        const blasArrayF32: Float32Array = new Float32Array(this.m_blasNodeCount * BLAS_NODE_SIZE);
+        const triangleIdxArrayF32: Uint32Array = new Uint32Array((this.m_vertices.length / 9) * 4);
 
         let nodeOffset: number = 0;
         let triangleIdxOffset: number = 0;
-        this.m_BVHs.forEach(bvh => {
+        this.m_blasArray.forEach(blas => {
             // pack nodes
-            bvh.nodes.forEach((node, i) => {
-                BVHArr[(nodeOffset + i) * BVH.nodeSize + 0] = node.leftFirst;
-                BVHArr[(nodeOffset + i) * BVH.nodeSize + 1] = node.triangleCount;
-                BVHArr[(nodeOffset + i) * BVH.nodeSize + 2] = 0.0; // padding
-                BVHArr[(nodeOffset + i) * BVH.nodeSize + 3] = 0.0; // padding
-                BVHArr[(nodeOffset + i) * BVH.nodeSize + 4] = node.aabb.min.x;
-                BVHArr[(nodeOffset + i) * BVH.nodeSize + 5] = node.aabb.min.y;
-                BVHArr[(nodeOffset + i) * BVH.nodeSize + 6] = node.aabb.min.z;
-                BVHArr[(nodeOffset + i) * BVH.nodeSize + 7] = 0.0; // padding
-                BVHArr[(nodeOffset + i) * BVH.nodeSize + 8] = node.aabb.max.x;
-                BVHArr[(nodeOffset + i) * BVH.nodeSize + 9] = node.aabb.max.y;
-                BVHArr[(nodeOffset + i) * BVH.nodeSize + 10] = node.aabb.max.z;
-                BVHArr[(nodeOffset + i) * BVH.nodeSize + 11] = 0.0; // padding
+            blas.nodes.forEach((node, i) => {
+                blasArrayF32[(nodeOffset + i) * BLAS_NODE_SIZE + 0] = node.leftFirst;
+                blasArrayF32[(nodeOffset + i) * BLAS_NODE_SIZE + 1] = node.triangleCount;
+                blasArrayF32[(nodeOffset + i) * BLAS_NODE_SIZE + 2] = 0.0; // padding
+                blasArrayF32[(nodeOffset + i) * BLAS_NODE_SIZE + 3] = 0.0; // padding
+                blasArrayF32[(nodeOffset + i) * BLAS_NODE_SIZE + 4] = node.aabb.min.x;
+                blasArrayF32[(nodeOffset + i) * BLAS_NODE_SIZE + 5] = node.aabb.min.y;
+                blasArrayF32[(nodeOffset + i) * BLAS_NODE_SIZE + 6] = node.aabb.min.z;
+                blasArrayF32[(nodeOffset + i) * BLAS_NODE_SIZE + 7] = 0.0; // padding
+                blasArrayF32[(nodeOffset + i) * BLAS_NODE_SIZE + 8] = node.aabb.max.x;
+                blasArrayF32[(nodeOffset + i) * BLAS_NODE_SIZE + 9] = node.aabb.max.y;
+                blasArrayF32[(nodeOffset + i) * BLAS_NODE_SIZE + 10] = node.aabb.max.z;
+                blasArrayF32[(nodeOffset + i) * BLAS_NODE_SIZE + 11] = 0.0; // padding
             });
-            nodeOffset += bvh.nodes.length;
+            nodeOffset += blas.nodes.length;
 
             // pack triangle indices
-            bvh.triangleIndices.forEach((triangleIdx, i) => {
-                triangleIdxArr[triangleIdxOffset + i] = triangleIdx + triangleIdxOffset;
+            blas.triangleIndices.forEach((triangleIdx, i) => {
+                triangleIdxArrayF32[triangleIdxOffset + i] = triangleIdx + triangleIdxOffset;
             })
-            triangleIdxOffset += bvh.triangleIndices.length;
+            triangleIdxOffset += blas.triangleIndices.length;
         });
 
-        // create bvh gpu resources
-        this.m_BVHBuffer = IGPU.get().createBuffer({
-            size: BVHArr.byteLength,
+        // create blas gpu resources
+        this.m_blasBuffer = IGPU.get().createBuffer({
+            size: blasArrayF32.byteLength,
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
         });
-        IGPU.get().queue.writeBuffer(this.m_BVHBuffer, 0, BVHArr);
+        IGPU.get().queue.writeBuffer(this.m_blasBuffer, 0, blasArrayF32);
 
         this.m_triangleIdxBuffer = IGPU.get().createBuffer({
-            size: triangleIdxArr.byteLength,
+            size: triangleIdxArrayF32.byteLength,
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
         });
-        IGPU.get().queue.writeBuffer(this.m_triangleIdxBuffer, 0, triangleIdxArr);
+        IGPU.get().queue.writeBuffer(this.m_triangleIdxBuffer, 0, triangleIdxArrayF32);
     }
 }
 

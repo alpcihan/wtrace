@@ -1,55 +1,48 @@
 import * as THREE from "three";
 
 const FLT_MAX = 3.402823466e38;
-const BVHNodeSizeAsFloats = 12; // 12 floats
+const BLAS_NODE_SIZE: number = 12; // 12 floats
 
-interface BVHNode {
+interface BLASNode {
     leftFirst: number;
     triangleCount: number;
     aabb: THREE.Box3;
 }
 
-class BVH {
-    public constructor(transform: THREE.Matrix4, vertices: Float32Array) {
+class BLAS {
+    public constructor(vertices: Float32Array) {
         this.m_triangles = vertices;
-        this.m_transform = transform.clone();
         this.m_aabb = new THREE.Box3();
-        this.m_BVHNodes = new Array<BVHNode>();
+        this.m_BLASNodes = new Array<BLASNode>();
         this.m_triangleIdx = new Uint32Array();
     }
 
-    public get nodes(): Array<BVHNode> {
-        return this.m_BVHNodes;
+    public get nodes(): Array<BLASNode> {
+        return this.m_BLASNodes;
     }
 
     public get triangleIndices(): Uint32Array {
         return this.m_triangleIdx;
     }
 
-    public static get nodeSize(): number {
-        return BVHNodeSizeAsFloats;
-    }
-
     public build(): void {
         let N: number = this.m_triangles.length / 9;
-        this.m_BVHNodes = new Array<BVHNode>(N * 2 - 1);
+        this.m_BLASNodes = new Array<BLASNode>(N * 2 - 1);
         this.m_centroids = new Float32Array(N * 3);
         this.m_triangleIdx = new Uint32Array(N);
         this.m_nodeCount = 1;
-        this._buildBVH();
-        
+        this._buildBLAS();
     }
 
-    private m_transform: THREE.Matrix4;
     private m_aabb: THREE.Box3;
     private m_triangles: Float32Array; // TODO: pack triangle data
-    private m_BVHNodes: Array<BVHNode>;
+    private m_BLASNodes: Array<BLASNode>;
     private m_centroids: Float32Array;
     private m_rootNodeIdx: number = 0;
     private m_nodeCount: number = 0;
     private m_triangleIdx: Uint32Array;
 
-    private _buildBVH(): void {
+    private _buildBLAS(): void {
         // set initial triangle indices
         for (let i = 0; i < this.m_triangleIdx.length; i++) {
             this.m_triangleIdx[i] = i;
@@ -79,7 +72,7 @@ class BVH {
             this.m_centroids[i * 3 + 2] = (v0[2] + v1[2] + v2[2]) / 3.0;
         }
 
-        this.m_BVHNodes[this.m_rootNodeIdx] = {
+        this.m_BLASNodes[this.m_rootNodeIdx] = {
             leftFirst: 0,
             triangleCount: this.m_triangleIdx.length,
             aabb: new THREE.Box3(),
@@ -90,7 +83,7 @@ class BVH {
     }
 
     private _updateAABBs(nodeIdx: number): void {
-        let node = this.m_BVHNodes[nodeIdx];
+        let node = this.m_BLASNodes[nodeIdx];
         let first = node.leftFirst;
 
         let V0, V1, V2: THREE.Vector3;
@@ -129,11 +122,11 @@ class BVH {
             node.aabb.max.max(V2); 
         }
 
-        this.m_BVHNodes[nodeIdx] = node;
+        this.m_BLASNodes[nodeIdx] = node;
     }
 
     private _subdivideNode(nodeIdx: number): void {
-        let node = this.m_BVHNodes[nodeIdx];
+        let node = this.m_BLASNodes[nodeIdx];
 
         if (node.triangleCount <= 2) {
             return;
@@ -179,13 +172,13 @@ class BVH {
         let rightChildIdx = this.m_nodeCount;
         this.m_nodeCount++;
 
-        this.m_BVHNodes[leftChildIdx] = {
+        this.m_BLASNodes[leftChildIdx] = {
             leftFirst: node.leftFirst,
             triangleCount: leftCount,
             aabb: new THREE.Box3
         };
 
-        this.m_BVHNodes[rightChildIdx] = {
+        this.m_BLASNodes[rightChildIdx] = {
             leftFirst: i,
             triangleCount: node.triangleCount - leftCount,
             aabb: new THREE.Box3
@@ -193,7 +186,7 @@ class BVH {
 
         node.leftFirst = leftChildIdx;
         node.triangleCount = 0;
-        this.m_BVHNodes[nodeIdx] = node;
+        this.m_BLASNodes[nodeIdx] = node;
 
         this._updateAABBs(leftChildIdx);
         this._updateAABBs(rightChildIdx);
@@ -212,4 +205,4 @@ class BVH {
     }
 }
 
-export { BVH };
+export { BLAS, BLAS_NODE_SIZE };
