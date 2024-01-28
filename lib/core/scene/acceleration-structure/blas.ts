@@ -1,6 +1,5 @@
 import * as THREE from "three";
 
-const FLT_MAX = 3.402823466e38;
 const BLAS_NODE_SIZE: number = 12; // 12 floats
 
 interface BLASNode {
@@ -12,12 +11,15 @@ interface BLASNode {
 class BLAS {
     public constructor(vertices: Float32Array) {
         this.m_triangles = vertices;
-        this.m_BLASNodes = new Array<BLASNode>();
         this.m_triangleIdx = new Uint32Array();
     }
 
     public get nodes(): Array<BLASNode> {
         return this.m_BLASNodes;
+    }
+
+    public get nodeCount(): number {
+        return this.m_nodeCount;
     }
 
     public get triangleIndices(): Uint32Array {

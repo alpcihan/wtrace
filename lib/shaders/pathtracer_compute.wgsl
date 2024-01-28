@@ -42,6 +42,7 @@ struct Material {
 struct BLASNode {        // TODO: use uint for "leftFirst" and "triangleCount"
     leftFirst: f32,     //if triCount == 0 represents leftChild, if triCount > 0 represents first triangleIdx
     triangleCount: f32,
+    
     aabbMins: vec4f,
     aabbMaxs: vec4f,
 };
@@ -49,7 +50,8 @@ struct BLASNode {        // TODO: use uint for "leftFirst" and "triangleCount"
 struct BLASInstance {
     transform: mat4x4f,     // TODO: remove if unused
     transform_i: mat4x4f,
-    blasOffset: u32
+    blasOffset: u32         // blas node offset
+    // 3*4 byte padding
 };
 
 //-------------------------------------------------------------------
@@ -131,13 +133,13 @@ fn traceRay(ray: Ray, seed: u32) -> vec3f {
 fn hitWorld(ray: Ray, bestHit: ptr<function, HitInfo>){
     // Scene helper objects data // TODO: pass as buffer
     var sphere: Sphere = Sphere(vec3f(2.0,4.0,3.0), 2.0);
-    var lightMaterial: Material = Material(vec3f(1.0,1.0,1.0), vec3f(1.0,1.0,1.0));
+    var lightMaterial: Material = Material(vec3f(1.5), vec3f(1.5));
     var floorY: f32 = -1;
     var floorMaterial: Material = Material(vec3f(1.0,1.0,1.0), vec3f(0,0,0));
 
     intersectSphere(&sphere, &lightMaterial, ray, bestHit);
     intersectXZPlane(floorY, &floorMaterial, ray, bestHit);
-    intersectBVH(ray, bestHit);
+    intersectAccelerationStructure(ray, bestHit);
 }
 
 fn intersectXZPlane(
@@ -284,13 +286,16 @@ fn intersectAABB(ray: Ray, aabbMin: vec3<f32>, aabbMax: vec3<f32>)-> bool{
 }
 
 fn intersectAccelerationStructure(r: Ray, hit_info: ptr<function, HitInfo>) {
-    
+    let instanceCount: u32 = arrayLength(&blasInstances);
+    for(var i: u32 = 0; i < instanceCount; i++) {
+        intersectBVH(r, blasInstances[i].blasOffset, hit_info);
+    }
 }
 
-fn intersectBVH(r: Ray, hit_info: ptr<function, HitInfo>){
+fn intersectBVH(r: Ray, nodeOffset: u32, hit_info: ptr<function, HitInfo>){
     var s: array<u32, 64>;
     var _stackPtr: i32 = 0;
-    let rootIdx: u32 = 0;
+    let rootIdx: u32 = nodeOffset;
 
     s[_stackPtr] = rootIdx;
     _stackPtr = _stackPtr + 1;
@@ -320,11 +325,12 @@ fn intersectBVH(r: Ray, hit_info: ptr<function, HitInfo>){
                     if(res < (*hit_info).t && res > 0.0) {
                         (*hit_info).t = res;
                         (*hit_info).normal = normalize(cross(v1 - v0, v2 - v0));
-                        (*hit_info).material.color = vec3<f32>(1.0, 0.0, 0.0);
+                        
+                        (*hit_info).material.color = vec3f(1,0,0);  
                         (*hit_info).material.emissiveColor = vec3<f32>(0.0, 0.0, 0.0);
-                    }
-                                    
+                    }             
                 }
+
             } else{ // If triangle count = 0 not leaf node (leftFirst gives leftChild node)
                 s[_stackPtr] = lFirst;
                 _stackPtr = _stackPtr + 1;

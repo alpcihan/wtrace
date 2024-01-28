@@ -18,9 +18,8 @@ class SceneDataManager {
     public addModel(model: MeshModel) {
         this.m_models.push(model);
     }
-
-    public buildSceneData() {
-        // TODO: add build check
+ 
+    public buildSceneData() { // TODO: add build check
         this.m_models.forEach(model => {
             // add vertices
             this.m_vertices = new Float32Array([...this.m_vertices, ...model.mesh.vertices]);
@@ -31,12 +30,13 @@ class SceneDataManager {
                 invTransform: model.invTransform,
                 blasOffset: this.m_blasNodeCount
             });
-
+            
             // create blas
             const blas: BLAS = new BLAS(model.mesh.vertices);
             blas.build();
+
             this.m_blasArray.push(blas);
-            this.m_blasNodeCount += blas.nodes.length;
+            this.m_blasNodeCount += blas.nodeCount;
         });
 
         this._updateVertexBuffer();
@@ -82,35 +82,36 @@ class SceneDataManager {
     private _updateBLASBuffers(): void {
         // init arrays
         const blasArrayF32: Float32Array = new Float32Array(this.m_blasNodeCount * BLAS_NODE_SIZE);
-        const triangleIdxArrayF32: Uint32Array = new Uint32Array((this.m_vertices.length / 9) * 4);
+        const triangleIdxArrayU32: Uint32Array = new Uint32Array((this.m_vertices.length / 9));
         const blasInstanceArrayByte: ArrayBuffer = new ArrayBuffer(BLAS_INSTANCE_GPU_BYTE_SIZE * this.m_blasInstanceArray.length); 
 
+        let blasNodeOffset: number = 0;
+        let triangleIdxOffset: number = 0;
         // pack blas node and triangle index data
         {
-            let nodeOffset: number = 0;
-            let triangleIdxOffset: number = 0;
             this.m_blasArray.forEach(blas => {
                 // pack nodes
-                blas.nodes.forEach((node, i) => {
-                    blasArrayF32[(nodeOffset + i) * BLAS_NODE_SIZE + 0] = node.leftFirst;
-                    blasArrayF32[(nodeOffset + i) * BLAS_NODE_SIZE + 1] = node.triangleCount;
-                    blasArrayF32[(nodeOffset + i) * BLAS_NODE_SIZE + 2] = 0.0; // padding
-                    blasArrayF32[(nodeOffset + i) * BLAS_NODE_SIZE + 3] = 0.0; // padding
-                    blasArrayF32[(nodeOffset + i) * BLAS_NODE_SIZE + 4] = node.aabb.min.x;
-                    blasArrayF32[(nodeOffset + i) * BLAS_NODE_SIZE + 5] = node.aabb.min.y;
-                    blasArrayF32[(nodeOffset + i) * BLAS_NODE_SIZE + 6] = node.aabb.min.z;
-                    blasArrayF32[(nodeOffset + i) * BLAS_NODE_SIZE + 7] = 0.0; // padding
-                    blasArrayF32[(nodeOffset + i) * BLAS_NODE_SIZE + 8] = node.aabb.max.x;
-                    blasArrayF32[(nodeOffset + i) * BLAS_NODE_SIZE + 9] = node.aabb.max.y;
-                    blasArrayF32[(nodeOffset + i) * BLAS_NODE_SIZE + 10] = node.aabb.max.z;
-                    blasArrayF32[(nodeOffset + i) * BLAS_NODE_SIZE + 11] = 0.0; // padding
+                blas.nodes.forEach((node, i) => {            
+                    blasArrayF32[(blasNodeOffset + i) * BLAS_NODE_SIZE + 0] = node.triangleCount > 0 ? node.leftFirst + triangleIdxOffset : node.leftFirst + blasNodeOffset;
+                    blasArrayF32[(blasNodeOffset + i) * BLAS_NODE_SIZE + 1] = node.triangleCount;
+                    blasArrayF32[(blasNodeOffset + i) * BLAS_NODE_SIZE + 2] = 0.0; // padding
+                    blasArrayF32[(blasNodeOffset + i) * BLAS_NODE_SIZE + 3] = 0.0; // padding
+                    blasArrayF32[(blasNodeOffset + i) * BLAS_NODE_SIZE + 4] = node.aabb.min.x;
+                    blasArrayF32[(blasNodeOffset + i) * BLAS_NODE_SIZE + 5] = node.aabb.min.y;
+                    blasArrayF32[(blasNodeOffset + i) * BLAS_NODE_SIZE + 6] = node.aabb.min.z;
+                    blasArrayF32[(blasNodeOffset + i) * BLAS_NODE_SIZE + 7] = 0.0; // padding
+                    blasArrayF32[(blasNodeOffset + i) * BLAS_NODE_SIZE + 8] = node.aabb.max.x;
+                    blasArrayF32[(blasNodeOffset + i) * BLAS_NODE_SIZE + 9] = node.aabb.max.y;
+                    blasArrayF32[(blasNodeOffset + i) * BLAS_NODE_SIZE + 10] = node.aabb.max.z;
+                    blasArrayF32[(blasNodeOffset + i) * BLAS_NODE_SIZE + 11] = 0.0; // padding
                 });
-                nodeOffset += blas.nodes.length;
 
                 // pack triangle indices
                 blas.triangleIndices.forEach((triangleIdx, i) => {
-                    triangleIdxArrayF32[triangleIdxOffset + i] = triangleIdx + triangleIdxOffset;
+                    triangleIdxArrayU32[triangleIdxOffset + i] = triangleIdx + triangleIdxOffset;
                 });
+            
+                blasNodeOffset += blas.nodeCount;
                 triangleIdxOffset += blas.triangleIndices.length;
             });
         }
@@ -136,13 +137,13 @@ class SceneDataManager {
             size: blasArrayF32.byteLength,
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
         });
-        IGPU.get().queue.writeBuffer(this.m_blasBuffer, 0, blasArrayF32);
+        IGPU.get().queue.writeBuffer(this.m_blasBuffer, 0, blasArrayF32, 0, blasNodeOffset * BLAS_NODE_SIZE);
 
         this.m_triangleIdxBuffer = IGPU.get().createBuffer({
-            size: triangleIdxArrayF32.byteLength,
+            size: triangleIdxArrayU32.byteLength,
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
         });
-        IGPU.get().queue.writeBuffer(this.m_triangleIdxBuffer, 0, triangleIdxArrayF32);
+        IGPU.get().queue.writeBuffer(this.m_triangleIdxBuffer, 0, triangleIdxArrayU32);
 
         this.m_blasInstanceBuffer = IGPU.get().createBuffer({
             size: blasInstanceArrayByte.byteLength,
