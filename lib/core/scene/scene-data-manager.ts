@@ -7,7 +7,7 @@ import { BLASInstance, BLAS_INSTANCE_GPU_BYTE_SIZE } from "./acceleration-struct
 class SceneDataManager {
     public constructor() {
         this.m_models = new Array<MeshModel>();
-        this.m_vertices = new Float32Array();
+        this.m_points = new Float32Array();
         this.m_blasNodeCount = 0;
         this.m_blasArray = new Array<BLAS>();
         this.m_blasInstanceArray = new Array<BLASInstance>();
@@ -22,7 +22,7 @@ class SceneDataManager {
     public buildSceneData() { // TODO: add build check
         this.m_models.forEach(model => {
             // add vertices
-            this.m_vertices = new Float32Array([...this.m_vertices, ...model.mesh.vertices]);
+            this.m_points = new Float32Array([...this.m_points, ...model.mesh.points]);
 
             // create instance data
             this.m_blasInstanceArray.push({
@@ -32,11 +32,10 @@ class SceneDataManager {
             });
             
             // create blas
-            const blas: BLAS = new BLAS(model.mesh.vertices);
+            const blas: BLAS = new BLAS(model.mesh.points);
             blas.build();
-
             this.m_blasArray.push(blas);
-            this.m_blasNodeCount += blas.nodeCount;
+            this.m_blasNodeCount += blas.nodes.length;
         });
 
         this._updateVertexBuffer();
@@ -59,7 +58,7 @@ class SceneDataManager {
         return this.m_blasInstanceBuffer;
     }
 
-    private m_vertices: Float32Array;
+    private m_points: Float32Array;
     private m_models: Array<MeshModel>;
     private m_blasArray: Array<BLAS>;
     private m_blasNodeCount: number; // total node count
@@ -72,17 +71,17 @@ class SceneDataManager {
 
     private _updateVertexBuffer(): void {
         this.m_vertexBuffer = IGPU.get().createBuffer({
-            size: this.m_vertices.byteLength,
+            size: this.m_points.byteLength,
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
         });
 
-        IGPU.get().queue.writeBuffer(this.m_vertexBuffer, 0, this.m_vertices);
+        IGPU.get().queue.writeBuffer(this.m_vertexBuffer, 0, this.m_points);
     }
 
     private _updateBLASBuffers(): void {
         // init arrays
         const blasArrayF32: Float32Array = new Float32Array(this.m_blasNodeCount * BLAS_NODE_SIZE);
-        const triangleIdxArrayU32: Uint32Array = new Uint32Array((this.m_vertices.length / 9));
+        const triangleIdxArrayU32: Uint32Array = new Uint32Array((this.m_points.length / 9));
         const blasInstanceArrayByte: ArrayBuffer = new ArrayBuffer(BLAS_INSTANCE_GPU_BYTE_SIZE * this.m_blasInstanceArray.length); 
 
         let blasNodeOffset: number = 0;
@@ -111,7 +110,7 @@ class SceneDataManager {
                     triangleIdxArrayU32[triangleIdxOffset + i] = triangleIdx + triangleIdxOffset;
                 });
             
-                blasNodeOffset += blas.nodeCount;
+                blasNodeOffset += blas.nodes.length;
                 triangleIdxOffset += blas.triangleIndices.length;
             });
         }

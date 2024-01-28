@@ -42,7 +42,7 @@ struct Material {
 struct BLASNode {        // TODO: use uint for "leftFirst" and "triangleCount"
     leftFirst: f32,     //if triCount == 0 represents leftChild, if triCount > 0 represents first triangleIdx
     triangleCount: f32,
-    
+
     aabbMins: vec4f,
     aabbMaxs: vec4f,
 };
@@ -58,7 +58,7 @@ struct BLASInstance {
 // Bindings
 //-------------------------------------------------------------------
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
-@group(0) @binding(1) var<storage, read> vertices: array<f32>;
+@group(0) @binding(1) var<storage, read> points: array<f32>;
 @group(0) @binding(2) var<storage, read_write> accumulationInfo: array<vec4f>; // TODO: replace with storage texture
 @group(0) @binding(3) var<storage, read> triIdxInfo: array<u32>;
 @group(0) @binding(4) var<storage, read> blasNodes: array<BLASNode>;
@@ -189,12 +189,12 @@ fn intersectSphere(
 
 fn intersectTriangles(ray: Ray, bestHit: ptr<function, HitInfo>) {
     const EPSILON: f32 = 0.0000001;
-    let vertexCount : u32 = arrayLength(&vertices);
+    let vertexCount : u32 = arrayLength(&points);
     for(var i: u32 = 0; i < vertexCount ; i+=9) {
 
-        let v0: vec3f = vec3f(vertices[i], vertices[i+1], vertices[i+2]);
-        let v1: vec3f = vec3f(vertices[i+3], vertices[i+4], vertices[i+5]);
-        let v2: vec3f = vec3f(vertices[i+6], vertices[i+7], vertices[i+8]);
+        let v0: vec3f = vec3f(points[i], points[i+1], points[i+2]);
+        let v1: vec3f = vec3f(points[i+3], points[i+4], points[i+5]);
+        let v2: vec3f = vec3f(points[i+6], points[i+7], points[i+8]);
 
         let vertex0: vec3f = v0;
         let vertex1: vec3f = v1;
@@ -317,9 +317,9 @@ fn intersectBVH(r: Ray, nodeOffset: u32, hit_info: ptr<function, HitInfo>){
                     let idx: u32 = triIdxInfo[lFirst + i];
                     
                     //Do triangle intersection
-                    let v0: vec3f = vec3<f32>(vertices[idx*9+0], vertices[idx*9+1], vertices[idx*9+2]);
-                    let v1: vec3f = vec3<f32>(vertices[idx*9+3], vertices[idx*9+4], vertices[idx*9+5]);
-                    let v2: vec3f = vec3<f32>(vertices[idx*9+6], vertices[idx*9+7], vertices[idx*9+8]);
+                    let v0: vec3f = vec3f(points[idx*9+0], points[idx*9+1], points[idx*9+2]);
+                    let v1: vec3f = vec3f(points[idx*9+3], points[idx*9+4], points[idx*9+5]);
+                    let v2: vec3f = vec3f(points[idx*9+6], points[idx*9+7], points[idx*9+8]);
 
                     let res: f32 = hitTriangle(r, v0, v1, v2);
                     if(res < (*hit_info).t && res > 0.0) {
@@ -327,7 +327,7 @@ fn intersectBVH(r: Ray, nodeOffset: u32, hit_info: ptr<function, HitInfo>){
                         (*hit_info).normal = normalize(cross(v1 - v0, v2 - v0));
                         
                         (*hit_info).material.color = vec3f(1,0,0);  
-                        (*hit_info).material.emissiveColor = vec3<f32>(0.0, 0.0, 0.0);
+                        (*hit_info).material.emissiveColor = vec3f(0.0, 0.0, 0.0);
                     }             
                 }
 

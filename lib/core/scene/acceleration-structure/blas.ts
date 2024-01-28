@@ -9,17 +9,13 @@ interface BLASNode {
 }
 
 class BLAS {
-    public constructor(vertices: Float32Array) {
-        this.m_triangles = vertices;
+    public constructor(points: Float32Array) {
+        this.m_points = points;
         this.m_triangleIdx = new Uint32Array();
     }
 
     public get nodes(): Array<BLASNode> {
-        return this.m_BLASNodes;
-    }
-
-    public get nodeCount(): number {
-        return this.m_nodeCount;
+        return this.m_blasNodes;
     }
 
     public get triangleIndices(): Uint32Array {
@@ -27,16 +23,17 @@ class BLAS {
     }
 
     public build(): void {
-        let N: number = this.m_triangles.length / 9;
-        this.m_BLASNodes = new Array<BLASNode>(N * 2 - 1);
+        let N: number = this.m_points.length / 9;
+        this.m_blasNodes = new Array<BLASNode>(N * 2 - 1);
         this.m_centroids = new Float32Array(N * 3);
         this.m_triangleIdx = new Uint32Array(N);
         this.m_nodeCount = 1;
+
         this._buildBLAS();
     }
 
-    private m_triangles: Float32Array; // TODO: pack triangle data
-    private m_BLASNodes: Array<BLASNode>;
+    private m_points: Float32Array; // TODO: pack triangle data
+    private m_blasNodes: Array<BLASNode>;
     private m_centroids: Float32Array;
     private m_rootNodeIdx: number = 0;
     private m_nodeCount: number = 0;
@@ -52,19 +49,19 @@ class BLAS {
         for (let i = 0; i < this.m_triangleIdx.length; i++) {
             // traverse triangles (as much as triangle count)
             let v0 = new Float32Array([
-                this.m_triangles[i * 9 + 0],
-                this.m_triangles[i * 9 + 1],
-                this.m_triangles[i * 9 + 2],
+                this.m_points[i * 9 + 0],
+                this.m_points[i * 9 + 1],
+                this.m_points[i * 9 + 2],
             ]);
             let v1 = new Float32Array([
-                this.m_triangles[i * 9 + 3],
-                this.m_triangles[i * 9 + 4],
-                this.m_triangles[i * 9 + 5],
+                this.m_points[i * 9 + 3],
+                this.m_points[i * 9 + 4],
+                this.m_points[i * 9 + 5],
             ]);
             let v2 = new Float32Array([
-                this.m_triangles[i * 9 + 6],
-                this.m_triangles[i * 9 + 7],
-                this.m_triangles[i * 9 + 8],
+                this.m_points[i * 9 + 6],
+                this.m_points[i * 9 + 7],
+                this.m_points[i * 9 + 8],
             ]);
 
             this.m_centroids[i * 3 + 0] = (v0[0] + v1[0] + v2[0]) / 3.0;
@@ -72,7 +69,7 @@ class BLAS {
             this.m_centroids[i * 3 + 2] = (v0[2] + v1[2] + v2[2]) / 3.0;
         }
 
-        this.m_BLASNodes[this.m_rootNodeIdx] = {
+        this.m_blasNodes[this.m_rootNodeIdx] = {
             leftFirst: 0,
             triangleCount: this.m_triangleIdx.length,
             aabb: new THREE.Box3(),
@@ -80,10 +77,12 @@ class BLAS {
 
         this._updateAABBs(this.m_rootNodeIdx);
         this._subdivideNode(this.m_rootNodeIdx);
+
+        this.m_blasNodes.splice(this.m_nodeCount); // only keep the used nodes
     }
 
     private _updateAABBs(nodeIdx: number): void {
-        let node = this.m_BLASNodes[nodeIdx];
+        let node = this.m_blasNodes[nodeIdx];
         let first = node.leftFirst;
 
         let V0, V1, V2: THREE.Vector3;
@@ -95,21 +94,21 @@ class BLAS {
             let triIdx = this.m_triangleIdx[first + i];
 
             V0.set(
-                this.m_triangles[triIdx * 9 + 0],
-                this.m_triangles[triIdx * 9 + 1],
-                this.m_triangles[triIdx * 9 + 2]
+                this.m_points[triIdx * 9 + 0],
+                this.m_points[triIdx * 9 + 1],
+                this.m_points[triIdx * 9 + 2]
             ); 
 
             V1.set(
-                this.m_triangles[triIdx * 9 + 3],
-                this.m_triangles[triIdx * 9 + 4],
-                this.m_triangles[triIdx * 9 + 5]
+                this.m_points[triIdx * 9 + 3],
+                this.m_points[triIdx * 9 + 4],
+                this.m_points[triIdx * 9 + 5]
             ); 
 
             V2.set(
-                this.m_triangles[triIdx * 9 + 6],
-                this.m_triangles[triIdx * 9 + 7],
-                this.m_triangles[triIdx * 9 + 8]
+                this.m_points[triIdx * 9 + 6],
+                this.m_points[triIdx * 9 + 7],
+                this.m_points[triIdx * 9 + 8]
             ); 
 
             // nodes
@@ -122,11 +121,11 @@ class BLAS {
             node.aabb.max.max(V2); 
         }
 
-        this.m_BLASNodes[nodeIdx] = node;
+        this.m_blasNodes[nodeIdx] = node;
     }
 
     private _subdivideNode(nodeIdx: number): void {
-        let node = this.m_BLASNodes[nodeIdx];
+        let node = this.m_blasNodes[nodeIdx];
 
         if (node.triangleCount <= 2) {
             return;
@@ -172,13 +171,13 @@ class BLAS {
         let rightChildIdx = this.m_nodeCount;
         this.m_nodeCount++;
 
-        this.m_BLASNodes[leftChildIdx] = {
+        this.m_blasNodes[leftChildIdx] = {
             leftFirst: node.leftFirst,
             triangleCount: leftCount,
             aabb: new THREE.Box3
         };
 
-        this.m_BLASNodes[rightChildIdx] = {
+        this.m_blasNodes[rightChildIdx] = {
             leftFirst: i,
             triangleCount: node.triangleCount - leftCount,
             aabb: new THREE.Box3
@@ -186,7 +185,7 @@ class BLAS {
 
         node.leftFirst = leftChildIdx;
         node.triangleCount = 0;
-        this.m_BLASNodes[nodeIdx] = node;
+        this.m_blasNodes[nodeIdx] = node;
 
         this._updateAABBs(leftChildIdx);
         this._updateAABBs(rightChildIdx);

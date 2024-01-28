@@ -1,5 +1,5 @@
 class Mesh {
-    public vertices: Float32Array;
+    public points: Float32Array;
 }
 
 export { Mesh };
