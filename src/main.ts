@@ -31,22 +31,20 @@ const main = async () => {
     // load the models (TODO: make async)
     let mesh: wt.Mesh | undefined = await wt.MeshLoader.load("assets/xyz.obj");
 
-    for (let z = 0; z < 8; z++) {
-        for (let x = 0; x < 8; x++) {
+    for (let z = 0; z < 10; z++) {
+        for (let x = 0; x < 10; x++) {
             if (mesh === undefined) continue;
-
+            // material
             let material: wt.Material = new wt.Material();
-            material.baseColor = new THREE.Vector3(
-                randFloat(0, 1),
-                randFloat(0, 1),
-                randFloat(0, 1)
-            );
-
+            const color: THREE.Vector3 = new THREE.Vector3(randFloat(0, 1), randFloat(0, 1), randFloat(0, 1));
+            material.baseColor = new THREE.Vector3(randFloat(0, 1), randFloat(0, 1), randFloat(0, 1));
+            material.emissiveColor = randFloat(0, 1) < 0.2 ? color.clone().multiplyScalar(3) : new THREE.Vector3(0,0,0);
+            
+            // model
             let model: wt.MeshModel = new wt.MeshModel(mesh, material);
-
-            model.position = new THREE.Vector3(x * 4 - 4, 0, z * 4);
-            model.euler = new THREE.Euler(0, -0.5, 0);
-            model.scale = new THREE.Vector3(0.02, 0.02, 0.02);
+            model.position = new THREE.Vector3(x * 2 - 5, -0.55, z * 2 - 5);
+            model.euler = new THREE.Euler(0, 3.5, 0);
+            model.scale = new THREE.Vector3(0.01, 0.01, 0.01);
 
             scene.add(model);
         }

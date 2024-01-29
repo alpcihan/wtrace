@@ -50,8 +50,9 @@ struct BLASNode {        // TODO: use uint for "leftFirst" and "triangleCount"
 struct BLASInstance {
     transform: mat4x4f,     // transform
     transform_i: mat4x4f,   // transform inverse
-    blasOffset: u32         // blas node offset
-    // 3*4 byte padding
+    blasOffset: u32,        // blas node offset
+    materialIdx: u32
+    // 2*4 byte padding
 };
 
 //-------------------------------------------------------------------
@@ -63,11 +64,10 @@ struct BLASInstance {
 @group(0) @binding(3) var<storage, read> triIdxInfo: array<u32>;
 @group(0) @binding(4) var<storage, read> blasNodes: array<BLASNode>;
 @group(0) @binding(5) var<storage, read> blasInstances: array<BLASInstance>;
-// @group(0) @binding(6) var<storage, read> materials: array<Material>;
+@group(0) @binding(6) var<storage, read> materials: array<Material>;
 
 @compute @workgroup_size(16,16,1)
 fn main(@builtin(global_invocation_id) globalInvocationID : vec3u) {
-
     var resolution: vec2i = vec2i(uniforms.resolution);
 
     let texelCoord : vec2i = vec2i(i32(globalInvocationID.x), i32(globalInvocationID.y));
@@ -134,8 +134,8 @@ fn traceRay(ray: Ray, seed: u32) -> vec3f {
 
 fn hitWorld(ray: Ray, bestHit: ptr<function, HitInfo>){
     // Scene helper objects data // TODO: pass as buffer
-    var sphere: Sphere = Sphere(vec3f(2.0,4.0,3.0), 2.0);
-    var lightMaterial: Material = Material(vec3f(1.5), vec3f(1.5));
+    var sphere: Sphere = Sphere(vec3f(2.0,10.0,3.0), 4.0);
+    var lightMaterial: Material = Material(vec3f(2), vec3f(2));
     var floorY: f32 = -1;
     var floorMaterial: Material = Material(vec3f(1.0,1.0,1.0), vec3f(0,0,0));
 
@@ -319,8 +319,7 @@ fn intersectBVH(r: Ray, instanceIdx: u32, hit_info: ptr<function, HitInfo>){
                     if(res < (*hit_info).t && res > 0.0) {
                         (*hit_info).t = res;
                         (*hit_info).normal = normalize((instance.transform * vec4f(cross(v1 - v0, v2 - v0),0)).xyz);
-                        (*hit_info).material.color = vec3f(1,0,0);  
-                        (*hit_info).material.emissiveColor = vec3f(0.0, 0.0, 0.0);
+                        (*hit_info).material = materials[instance.materialIdx];
                     }             
                 }
 

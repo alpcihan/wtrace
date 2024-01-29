@@ -60,17 +60,17 @@ class SceneDataManager {
             } else {
                 blasNodeOffset = this.m_meshIDtoBlasOffsetMap.get(model.mesh.id) as number;
             }
-            console.log(blasNodeOffset);
+
             // add material
-            // let materialIdx: number | undefined = this.m_materialIDtoIdxMap.get(model.material.id);
-            // if(materialIdx === undefined) {
-            //    this.m_materials.push(model.material);
-            //    materialIdx = this.m_materials.length;
-            //    this.m_materialIDtoIdxMap.set(model.material.id, materialIdx);
-            //}
+            let materialIdx: number | undefined = this.m_materialIDtoIdxMap.get(model.material.id);
+            if(materialIdx === undefined) {
+                this.m_materials.push(model.material);
+                materialIdx = this.m_materials.length;
+                this.m_materialIDtoIdxMap.set(model.material.id, materialIdx);
+            }
             
             // add instance data
-            const instance: BLASInstance = new BLASInstance(model.transform, blasNodeOffset, 0);
+            const instance: BLASInstance = new BLASInstance(model.transform, blasNodeOffset, materialIdx);
             this.m_blasInstanceArray.push(instance);
         });
 
@@ -161,7 +161,7 @@ class SceneDataManager {
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
         });
 
-        IGPU.get().queue.writeBuffer(this.m_blasInstanceBuffer, 0, materialArrayByte);
+        IGPU.get().queue.writeBuffer(this.m_materialBuffer, 0, materialArrayByte);
     }
 }
 
