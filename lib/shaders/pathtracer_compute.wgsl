@@ -48,8 +48,8 @@ struct BLASNode {        // TODO: use uint for "leftFirst" and "triangleCount"
 };
 
 struct BLASInstance {
-    transform: mat4x4f,     // TODO: remove if unused
-    transform_i: mat4x4f,
+    transform: mat4x4f,     // transform
+    transform_i: mat4x4f,   // transform inverse
     blasOffset: u32         // blas node offset
     // 3*4 byte padding
 };
@@ -117,6 +117,7 @@ fn traceRay(ray: Ray, seed: u32) -> vec3f {
         hitWorld(r, &hitInfo);
 
         if (hitInfo.t > 0.0) {
+            // incomingLight = hitInfo.material.color;
             attenuation *= hitInfo.material.color;
             incomingLight += attenuation * hitInfo.material.emissiveColor;
 
@@ -271,31 +272,21 @@ fn hitTriangle(ray: Ray, v0: vec3<f32>, v1: vec3<f32>, v2: vec3<f32>) -> f32 {
     return t;
 }
 
-fn intersectAABB(ray: Ray, aabbMin: vec3<f32>, aabbMax: vec3<f32>)-> bool{
-    let invDirection: vec3f = 1.0 / ray.direction;
-    let t1: vec3f = (aabbMin - ray.origin) * invDirection;
-    let t2: vec3f = (aabbMax - ray.origin) * invDirection;
-
-    let tmin: vec3f = min(t1, t2);
-    let tmax: vec3f = max(t1, t2);
-
-    let tenter: f32 = max(max(tmin.x, tmin.y), tmin.z);
-    let texit: f32 = min(min(tmax.x, tmax.y), tmax.z);
-
-    return (tenter < texit) && (texit > 0.0);
-}
-
 fn intersectAccelerationStructure(r: Ray, hit_info: ptr<function, HitInfo>) {
     let instanceCount: u32 = arrayLength(&blasInstances);
     for(var i: u32 = 0; i < instanceCount; i++) {
-        intersectBVH(r, blasInstances[i].blasOffset, hit_info);
+        intersectBVH(r, i, hit_info);
     }
 }
 
-fn intersectBVH(r: Ray, nodeOffset: u32, hit_info: ptr<function, HitInfo>){
+fn intersectBVH(r: Ray, instanceIdx: u32, hit_info: ptr<function, HitInfo>){
+    var ray: Ray;
+    ray.origin = (blasInstances[instanceIdx].transform_i * vec4f(r.origin,1)).xyz;
+    ray.direction = (blasInstances[instanceIdx].transform_i * vec4f(r.direction,0)).xyz;
+    
     var s: array<u32, 64>;
     var _stackPtr: i32 = 0;
-    let rootIdx: u32 = nodeOffset;
+    let rootIdx: u32 = blasInstances[instanceIdx].blasOffset;
 
     s[_stackPtr] = rootIdx;
     _stackPtr = _stackPtr + 1;
@@ -308,7 +299,7 @@ fn intersectBVH(r: Ray, nodeOffset: u32, hit_info: ptr<function, HitInfo>){
         let aabbMin: vec3f = node.aabbMins.xyz;
         let aabbMax: vec3f = node.aabbMaxs.xyz;
 
-        if(intersectAABB(r, aabbMin, aabbMax)) {
+        if(intersectAABB(ray, aabbMin, aabbMax)) {
             let triCount: u32 = u32(node.triangleCount);
             let lFirst: u32 = u32(node.leftFirst);
             if(triCount > 0) { // if triangle count > 0 means leaf node (leftFirst gives first triangleIdx)
@@ -321,11 +312,10 @@ fn intersectBVH(r: Ray, nodeOffset: u32, hit_info: ptr<function, HitInfo>){
                     let v1: vec3f = vec3f(points[idx*9+3], points[idx*9+4], points[idx*9+5]);
                     let v2: vec3f = vec3f(points[idx*9+6], points[idx*9+7], points[idx*9+8]);
 
-                    let res: f32 = hitTriangle(r, v0, v1, v2);
+                    let res: f32 = hitTriangle(ray, v0, v1, v2);
                     if(res < (*hit_info).t && res > 0.0) {
                         (*hit_info).t = res;
-                        (*hit_info).normal = normalize(cross(v1 - v0, v2 - v0));
-                        
+                        (*hit_info).normal = normalize((blasInstances[instanceIdx].transform * vec4f(cross(v1 - v0, v2 - v0),0)).xyz);
                         (*hit_info).material.color = vec3f(1,0,0);  
                         (*hit_info).material.emissiveColor = vec3f(0.0, 0.0, 0.0);
                     }             
@@ -339,6 +329,20 @@ fn intersectBVH(r: Ray, nodeOffset: u32, hit_info: ptr<function, HitInfo>){
             }
         }
     }
+}
+
+fn intersectAABB(ray: Ray, aabbMin: vec3<f32>, aabbMax: vec3<f32>)-> bool{
+    let invDirection: vec3f = 1.0 / ray.direction;
+    let t1: vec3f = (aabbMin - ray.origin) * invDirection;
+    let t2: vec3f = (aabbMax - ray.origin) * invDirection;
+
+    let tmin: vec3f = min(t1, t2);
+    let tmax: vec3f = max(t1, t2);
+
+    let tenter: f32 = max(max(tmin.x, tmin.y), tmin.z);
+    let texit: f32 = min(min(tmax.x, tmax.y), tmax.z);
+
+    return (tenter < texit) && (texit > 0.0);
 }
 
 fn isNan(f: f32) -> bool {

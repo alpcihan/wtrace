@@ -1,3 +1,4 @@
+import * as THREE from "three";
 import * as wt from "../lib/wtrace";
 import "./main.css";
 
@@ -27,13 +28,15 @@ const main = async () => {
     let scene: wt.Scene = new wt.Scene();
 
     // load the models (TODO: make async)
-    let mesh: wt.Mesh | undefined = await wt.MeshLoader.load("assets/suzanne.obj");
-
+    let mesh: wt.Mesh | undefined = await wt.MeshLoader.load("assets/xyz.obj");
     if (mesh !== undefined) {
         let model: wt.MeshModel = new wt.MeshModel(mesh);
+        model.position = new THREE.Vector3(0,1,0);
+        model.euler = new THREE.Euler(0,-0.5,0);
+        model.scale = new THREE.Vector3(0.02, 0.02, 0.02);
         scene.add(model);
     }
-
+    
     // load the scene
     wt.SceneManager.loadScene(scene);
 
