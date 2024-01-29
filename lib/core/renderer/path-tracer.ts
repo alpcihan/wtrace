@@ -178,6 +178,14 @@ class PathTracer {
                             type: "read-only-storage",
                         },
                     },
+                    //{
+                    //    // materials
+                    //    binding: 6,
+                    //    visibility: GPUShaderStage.COMPUTE,
+                    //    buffer: {
+                    //        type: "read-only-storage",
+                    //    },
+                    //},
                 ],
             });
 
@@ -208,6 +216,10 @@ class PathTracer {
                         binding: 5,
                         resource: { buffer: SceneManager.scene.sceneDataManager.blasInstanceBuffer },
                     },
+                    // {
+                    //    binding: 6,
+                    //    resource: { buffer: SceneManager.scene.sceneDataManager.materialBuffer },
+                    //},
                 ],
             });
             const pathTracingPipelineLayout = IGPU.get().createPipelineLayout({

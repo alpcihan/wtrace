@@ -63,6 +63,7 @@ struct BLASInstance {
 @group(0) @binding(3) var<storage, read> triIdxInfo: array<u32>;
 @group(0) @binding(4) var<storage, read> blasNodes: array<BLASNode>;
 @group(0) @binding(5) var<storage, read> blasInstances: array<BLASInstance>;
+// @group(0) @binding(6) var<storage, read> materials: array<Material>;
 
 @compute @workgroup_size(16,16,1)
 fn main(@builtin(global_invocation_id) globalInvocationID : vec3u) {
@@ -112,7 +113,7 @@ fn traceRay(ray: Ray, seed: u32) -> vec3f {
     var incomingLight: vec3f = vec3f(0.0, 0.0, 0.0);
     var attenuation: vec3f = vec3f(1.0, 1.0, 1.0);
 
-    for(var i: u32 = 0; i < 4; i++) {
+    for(var i: u32 = 0; i < 3; i++) {
         createHitInfo(&hitInfo);
         hitWorld(r, &hitInfo);
 
@@ -280,13 +281,15 @@ fn intersectAccelerationStructure(r: Ray, hit_info: ptr<function, HitInfo>) {
 }
 
 fn intersectBVH(r: Ray, instanceIdx: u32, hit_info: ptr<function, HitInfo>){
+    let instance: BLASInstance = blasInstances[instanceIdx];
+
     var ray: Ray;
-    ray.origin = (blasInstances[instanceIdx].transform_i * vec4f(r.origin,1)).xyz;
-    ray.direction = (blasInstances[instanceIdx].transform_i * vec4f(r.direction,0)).xyz;
+    ray.origin = (instance.transform_i * vec4f(r.origin,1)).xyz;
+    ray.direction = (instance.transform_i * vec4f(r.direction,0)).xyz;
     
     var s: array<u32, 64>;
     var _stackPtr: i32 = 0;
-    let rootIdx: u32 = blasInstances[instanceIdx].blasOffset;
+    let rootIdx: u32 = instance.blasOffset;
 
     s[_stackPtr] = rootIdx;
     _stackPtr = _stackPtr + 1;
@@ -315,7 +318,7 @@ fn intersectBVH(r: Ray, instanceIdx: u32, hit_info: ptr<function, HitInfo>){
                     let res: f32 = hitTriangle(ray, v0, v1, v2);
                     if(res < (*hit_info).t && res > 0.0) {
                         (*hit_info).t = res;
-                        (*hit_info).normal = normalize((blasInstances[instanceIdx].transform * vec4f(cross(v1 - v0, v2 - v0),0)).xyz);
+                        (*hit_info).normal = normalize((instance.transform * vec4f(cross(v1 - v0, v2 - v0),0)).xyz);
                         (*hit_info).material.color = vec3f(1,0,0);  
                         (*hit_info).material.emissiveColor = vec3f(0.0, 0.0, 0.0);
                     }             

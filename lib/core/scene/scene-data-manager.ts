@@ -1,3 +1,4 @@
+import { MATERIAL_BYTE_SIZE, Material } from "../material/material";
 import { MeshModel } from "../objects/model/mesh-model";
 import { IGPU } from "../renderer/igpu";
 import { BLAS, BLAS_NODE_SIZE } from "./acceleration-structure/blas";
@@ -10,6 +11,9 @@ class SceneDataManager {
         this.m_blasNodeCount = 0;
         this.m_blasArray = new Array<BLAS>();
         this.m_blasInstanceArray = new Array<BLASInstance>();
+        this.m_materials = new Array<Material>();
+        this.m_materialIDtoIdxMap = new Map<number, number>();
+        this.m_meshIDtoBlasOffsetMap = new Map<number, number>();
 
         this._updateVertexBuffer();
     }
@@ -30,27 +34,49 @@ class SceneDataManager {
         return this.m_blasInstanceBuffer;
     }
 
+    public get materialBuffer(): Readonly<GPUBuffer> {
+        return this.m_materialBuffer;
+    }
+
     public addModel(model: MeshModel) {
         this.m_models.push(model);
     }
  
     public buildSceneData() { // TODO: add build check
         this.m_models.forEach(model => {
-            // add points
-            this.m_points = new Float32Array([...this.m_points, ...model.mesh.points]);
+            let blasNodeOffset: number = this.m_blasNodeCount;
 
-            // add instance data
-            const instance: BLASInstance = new BLASInstance(model.transform, this.m_blasNodeCount);
-            this.m_blasInstanceArray.push(instance);
+            // add mesh
+            if(!this.m_meshIDtoBlasOffsetMap.has(model.mesh.id)) {
+                // add points
+                this.m_points = new Float32Array([...this.m_points, ...model.mesh.points]);
+
+                // add blas
+                const blas: BLAS = new BLAS(model.mesh.points);
+                this.m_blasArray.push(blas);
+                this.m_blasNodeCount += blas.nodes.length;
+
+                this.m_meshIDtoBlasOffsetMap.set(model.mesh.id, blasNodeOffset);
+            } else {
+                blasNodeOffset = this.m_meshIDtoBlasOffsetMap.get(model.mesh.id) as number;
+            }
+            console.log(blasNodeOffset);
+            // add material
+            // let materialIdx: number | undefined = this.m_materialIDtoIdxMap.get(model.material.id);
+            // if(materialIdx === undefined) {
+            //    this.m_materials.push(model.material);
+            //    materialIdx = this.m_materials.length;
+            //    this.m_materialIDtoIdxMap.set(model.material.id, materialIdx);
+            //}
             
-            // add blas
-            const blas: BLAS = new BLAS(model.mesh.points);
-            this.m_blasArray.push(blas);
-            this.m_blasNodeCount += blas.nodes.length;
+            // add instance data
+            const instance: BLASInstance = new BLASInstance(model.transform, blasNodeOffset, 0);
+            this.m_blasInstanceArray.push(instance);
         });
 
         this._updateVertexBuffer();
         this._updateBLASBuffers();
+        this._updateMaterialBuffer();
     }
 
     private m_points: Float32Array;
@@ -58,11 +84,16 @@ class SceneDataManager {
     private m_blasArray: Array<BLAS>;
     private m_blasNodeCount: number; // total node count
     private m_blasInstanceArray: Array<BLASInstance>;
+    private m_materials: Array<Material>;
+
+    private m_materialIDtoIdxMap: Map<number, number>;
+    private m_meshIDtoBlasOffsetMap: Map<number, number>;
 
     private m_vertexBuffer: GPUBuffer;
     private m_triangleIdxBuffer: GPUBuffer;
     private m_blasInstanceBuffer: GPUBuffer;
     private m_blasBuffer: GPUBuffer; // blas array
+    private m_materialBuffer: GPUBuffer;
 
     private _updateVertexBuffer(): void {
         this.m_vertexBuffer = IGPU.get().createBuffer({
@@ -116,6 +147,21 @@ class SceneDataManager {
         });
 
         IGPU.get().queue.writeBuffer(this.m_blasInstanceBuffer, 0, blasInstanceArrayByte);
+    }
+
+    private _updateMaterialBuffer(): void {
+        const materialArrayByte: ArrayBuffer = new ArrayBuffer(MATERIAL_BYTE_SIZE * this.m_materials.length); 
+
+        this.m_materials.forEach((material, i) => {
+            material.writeToArray(materialArrayByte, MATERIAL_BYTE_SIZE * i);
+        })
+
+        this.m_materialBuffer = IGPU.get().createBuffer({
+            size: materialArrayByte.byteLength,
+            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+        });
+
+        IGPU.get().queue.writeBuffer(this.m_blasInstanceBuffer, 0, materialArrayByte);
     }
 }
 
