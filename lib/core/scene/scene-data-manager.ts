@@ -114,18 +114,16 @@ class SceneDataManager {
         let blasNodeOffset: number = 0;
         let triangleIdxOffset: number = 0;
         this.m_blasArray.forEach(blas => {
-            blas.writeNodesToArray(blasArrayF32.subarray(blasNodeOffset * BLAS_NODE_SIZE), blasNodeOffset, triangleIdxOffset);
+            blas.writeNodesToArray(blasArrayF32, blasNodeOffset, triangleIdxOffset);
             blasNodeOffset += blas.nodes.length;
 
-            blas.writeTriangleIndicesToArray(triangleIdxArrayU32.subarray(triangleIdxOffset), triangleIdxOffset);
+            blas.writeTriangleIndicesToArray(triangleIdxArrayU32, triangleIdxOffset);
             triangleIdxOffset += blas.triangleIndices.length;
         });
         
         // pack blas instance data
-        let blasInstanceByteOffset: number = 0;
-        this.m_blasInstanceArray.forEach(instance => {
-            instance.writeToArray(blasInstanceArrayByte, blasInstanceByteOffset);
-            blasInstanceByteOffset += BLAS_INSTANCE_BYTE_SIZE;
+        this.m_blasInstanceArray.forEach((instance, i) => {
+            instance.writeToArray(blasInstanceArrayByte, i * BLAS_INSTANCE_BYTE_SIZE);
         });       
 
         // create gpu resources

@@ -37,35 +37,25 @@ class BLAS {
     }
 
     public writeNodesToArray(target: Float32Array, nodeOffset: number = 0, triangleIdxOffset: number = 0): void {
-        if(target.byteLength < this.m_nodes.length * BLAS_NODE_BYTE_SIZE) {
-            console.warn("target size must be larger or equal to the blas size: ", this.m_nodes.length * BLAS_NODE_BYTE_SIZE, " bytes.");
-            return;
-        }
-
         this.m_nodes.forEach((node, i) => {            
-            target[i * BLAS_NODE_SIZE + 0] = node.triangleCount > 0 ? node.leftFirst + triangleIdxOffset : node.leftFirst + nodeOffset;
-            target[i * BLAS_NODE_SIZE + 1] = node.triangleCount;
-            target[i * BLAS_NODE_SIZE + 2] = 0.0; // padding
-            target[i * BLAS_NODE_SIZE + 3] = 0.0; // padding
-            target[i * BLAS_NODE_SIZE + 4] = node.aabb.min.x;
-            target[i * BLAS_NODE_SIZE + 5] = node.aabb.min.y;
-            target[i * BLAS_NODE_SIZE + 6] = node.aabb.min.z;
-            target[i * BLAS_NODE_SIZE + 7] = 0.0; // padding
-            target[i * BLAS_NODE_SIZE + 8] = node.aabb.max.x;
-            target[i * BLAS_NODE_SIZE + 9] = node.aabb.max.y;
-            target[i * BLAS_NODE_SIZE + 10] = node.aabb.max.z;
-            target[i * BLAS_NODE_SIZE + 11] = 0.0; // padding
+            target[(nodeOffset + i) * BLAS_NODE_SIZE + 0] = node.triangleCount > 0 ? node.leftFirst + triangleIdxOffset : node.leftFirst + nodeOffset;
+            target[(nodeOffset + i) * BLAS_NODE_SIZE + 1] = node.triangleCount;
+            target[(nodeOffset + i) * BLAS_NODE_SIZE + 2] = 0.0; // padding
+            target[(nodeOffset + i) * BLAS_NODE_SIZE + 3] = 0.0; // padding
+            target[(nodeOffset + i) * BLAS_NODE_SIZE + 4] = node.aabb.min.x;
+            target[(nodeOffset + i) * BLAS_NODE_SIZE + 5] = node.aabb.min.y;
+            target[(nodeOffset + i) * BLAS_NODE_SIZE + 6] = node.aabb.min.z;
+            target[(nodeOffset + i) * BLAS_NODE_SIZE + 7] = 0.0; // padding
+            target[(nodeOffset + i) * BLAS_NODE_SIZE + 8] = node.aabb.max.x;
+            target[(nodeOffset + i) * BLAS_NODE_SIZE + 9] = node.aabb.max.y;
+            target[(nodeOffset + i) * BLAS_NODE_SIZE + 10] = node.aabb.max.z;
+            target[(nodeOffset + i) * BLAS_NODE_SIZE + 11] = 0.0; // padding
         });
     }
 
     public writeTriangleIndicesToArray(target: Uint32Array, triangleIdxOffset: number = 0) {
-        if(target.byteLength < this.m_triangleIndices.byteLength) {
-            console.warn("target size must be larger or equal to the triangle indices size: ", this.m_triangleIndices.byteLength, " bytes.");
-            return;
-        }
-
         this.m_triangleIndices.forEach((triangleIdx, i) => {
-            target[i] = triangleIdxOffset + triangleIdx ;
+            target[triangleIdxOffset + i] = triangleIdxOffset + triangleIdx ;
         });
     }
 
