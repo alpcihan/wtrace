@@ -1,5 +1,7 @@
-import * as wt from "../lib/wtrace";
 import "./main.css";
+import * as THREE from "three";
+import * as wt from "../lib/wtrace";
+import { randFloat } from "three/src/math/MathUtils";
 
 var canvas: HTMLCanvasElement;
 var fpsElement: HTMLTextAreaElement;
@@ -27,11 +29,25 @@ const main = async () => {
     let scene: wt.Scene = new wt.Scene();
 
     // load the models (TODO: make async)
-    let mesh: wt.Mesh | undefined = await wt.MeshLoader.load("assets/suzanne.obj");
+    let mesh: wt.Mesh | undefined = await wt.MeshLoader.load("assets/xyz.obj");
 
-    if (mesh !== undefined) {
-        let model: wt.MeshModel = new wt.MeshModel(mesh);
-        scene.add(model);
+    for (let z = 0; z < 10; z++) {
+        for (let x = 0; x < 10; x++) {
+            if (mesh === undefined) continue;
+            // material
+            let material: wt.Material = new wt.Material();
+            const color: THREE.Vector3 = new THREE.Vector3(randFloat(0, 1), randFloat(0, 1), randFloat(0, 1));
+            material.baseColor = new THREE.Vector3(randFloat(0, 1), randFloat(0, 1), randFloat(0, 1));
+            material.emissiveColor = randFloat(0, 1) < 0.2 ? color.clone().multiplyScalar(3) : new THREE.Vector3(0,0,0);
+            
+            // model
+            let model: wt.MeshModel = new wt.MeshModel(mesh, material);
+            model.position = new THREE.Vector3(x * 2 - 5, -0.55, z * 2 - 5);
+            model.euler = new THREE.Euler(0, 3.5, 0);
+            model.scale = new THREE.Vector3(0.01, 0.01, 0.01);
+
+            scene.add(model);
+        }
     }
 
     // load the scene

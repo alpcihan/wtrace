@@ -14,6 +14,7 @@ class PathTracer {
 
         this._initContext();
         this._initAssets();
+        SceneManager.scene.sceneDataManager.buildSceneData(); // TODO: find a better place
         this._initPipelines();
     }
 
@@ -162,8 +163,24 @@ class PathTracer {
                         },
                     },
                     {
-                        // bvh nodes
+                        // blas nodes
                         binding: 4,
+                        visibility: GPUShaderStage.COMPUTE,
+                        buffer: {
+                            type: "read-only-storage",
+                        },
+                    },
+                    {
+                        // blas instances
+                        binding: 5,
+                        visibility: GPUShaderStage.COMPUTE,
+                        buffer: {
+                            type: "read-only-storage",
+                        },
+                    },
+                    {
+                        // materials
+                        binding: 6,
                         visibility: GPUShaderStage.COMPUTE,
                         buffer: {
                             type: "read-only-storage",
@@ -193,13 +210,18 @@ class PathTracer {
                     },
                     {
                         binding: 4,
-                        resource: { buffer: SceneManager.scene.sceneDataManager.bvhNodeBuffer },
+                        resource: { buffer: SceneManager.scene.sceneDataManager.blasBuffer },
+                    },
+                    {
+                        binding: 5,
+                        resource: { buffer: SceneManager.scene.sceneDataManager.blasInstanceBuffer },
+                    },
+                    {
+                        binding: 6,
+                        resource: { buffer: SceneManager.scene.sceneDataManager.materialBuffer },
                     },
                 ],
             });
-            console.log("bvhNodeBuffer size: " + SceneManager.scene.sceneDataManager.bvhNodeBuffer)
-            console.log("triangleIdxBuffer size: " + SceneManager.scene.sceneDataManager.triangleIdxBuffer);
-            console.log("vertexBuffer size: " + SceneManager.scene.sceneDataManager.vertexBuffer);
             const pathTracingPipelineLayout = IGPU.get().createPipelineLayout({
                 bindGroupLayouts: [pathTracingBindGroupLayout],
             });
