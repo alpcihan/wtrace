@@ -64,8 +64,8 @@ class SceneDataManager {
             // add material
             let materialIdx: number | undefined = this.m_materialIDtoIdxMap.get(model.material.id);
             if(materialIdx === undefined) {
-                this.m_materials.push(model.material);
                 materialIdx = this.m_materials.length;
+                this.m_materials.push(model.material);
                 this.m_materialIDtoIdxMap.set(model.material.id, materialIdx);
             }
             
