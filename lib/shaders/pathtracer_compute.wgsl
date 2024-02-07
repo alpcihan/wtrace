@@ -293,7 +293,6 @@ fn intersectBVH(r: Ray, instanceIdx: u32, hit_info: ptr<function, HitInfo>){
 
     s[_stackPtr] = rootIdx;
     _stackPtr = _stackPtr + 1;
-    var color: vec3f = vec3f(0.0, 0.0, 0.0);
 
     while(_stackPtr > 0) {
         _stackPtr = _stackPtr - 1; // pop node from stack

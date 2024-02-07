@@ -151,23 +151,68 @@ class BLAS {
         this.m_nodes[nodeIdx] = node;
     }
 
+    private _evaluateSAH(nodeIdx: number, axis: number, splitPos: number): number {
+        let leftBox: THREE.Box3 = new THREE.Box3();
+        let rightBox: THREE.Box3 = new THREE.Box3();
+        let leftCount = 0;
+        let rightCount = 0;
+        let node = this.m_nodes[nodeIdx];
+
+        for( let i = 0; i < node.triangleCount; i++ ) {
+            let triIdx = this.m_triangleIndices[node.leftFirst + i];
+            let centroid = this._getCentroid(triIdx);
+
+            if(centroid.toArray()[axis] < splitPos) {
+                leftBox.expandByPoint(centroid);
+                leftCount++;
+            }
+            else {
+                rightBox.expandByPoint(centroid);
+                rightCount++;
+            }
+        }
+        
+        let leftDim = leftBox.getSize(new THREE.Vector3());
+        let rightDim = rightBox.getSize(new THREE.Vector3());
+
+        let leftArea = leftDim.x * leftDim.y + leftDim.y * leftDim.z + leftDim.z * leftDim.x;
+        let rightArea = rightDim.x * rightDim.y + rightDim.y * rightDim.z + rightDim.z * rightDim.x;
+        
+        let cost = leftCount * leftArea + rightCount * rightArea;
+        return (cost>0) ? cost : Number.MAX_VALUE;
+    }
+
     private _subdivideNode(nodeIdx: number): void {
         let node = this.m_nodes[nodeIdx];
 
-        if (node.triangleCount <= 2) {
+        // find split axis
+        let bestAxis = -1;
+        let bestPos = 0;
+        let bestCost = Number.MAX_VALUE;
+
+        for( let axis = 0; axis < 3; axis++ ) {
+            for( let i = 0; i < node.triangleCount; i++ ) {
+                let centroid = this._getCentroid(this.m_triangleIndices[node.leftFirst + i]);
+                let candidatePos = centroid.toArray()[axis];
+                let cost: number = this._evaluateSAH(nodeIdx, axis, candidatePos);
+                if (cost < bestCost) {
+                    bestAxis = axis;
+                    bestPos = candidatePos;
+                    bestCost = cost;
+                }
+            }
+        }
+
+        let parentExtent = node.aabb.getSize(new THREE.Vector3());
+        let parentArea = parentExtent.x * parentExtent.y + parentExtent.y * parentExtent.z + parentExtent.z * parentExtent.x;
+        let parentCost = parentArea * node.triangleCount;
+
+        if( bestCost >= parentCost ) {
             return;
         }
-
-        // find split axis
-        const extent: THREE.Vector3 = node.aabb.max.clone().sub(node.aabb.min); 
-        let axis = 0;
-        if (extent.y > extent.x) {
-            axis = 1;
-        } else if (extent.z > extent.getComponent(axis)) {
-            axis = 2;
-        }
-
-        let splitPos = node.aabb.min.getComponent(axis) + extent.getComponent(axis) / 2;
+        
+        let axis = bestAxis;
+        let splitPos = bestPos;
 
         // Quicksort triangles based on split axis
         let i = node.leftFirst;
@@ -175,8 +220,8 @@ class BLAS {
 
         while (i <= j) {
             let triIdx = this.m_triangleIndices[i];
-            let centroid: Float32Array = this._getCentroid(triIdx);
-            if (centroid[axis] < splitPos) {
+            let centroid = this._getCentroid(triIdx);
+            if (centroid.toArray()[axis] < splitPos) {
                 i++;
             } else {
                 let tmp = this.m_triangleIndices[i];
@@ -222,12 +267,12 @@ class BLAS {
         this._subdivideNode(rightChildIdx);
     }
 
-    private _getCentroid(triIdx: number): Float32Array {
-        return new Float32Array([
+    private _getCentroid(triIdx: number): THREE.Vector3 {
+        return new THREE.Vector3(
             this.m_centroids[triIdx * 3 + 0],
             this.m_centroids[triIdx * 3 + 1],
             this.m_centroids[triIdx * 3 + 2],
-        ]);
+        );
     }
 }
 
