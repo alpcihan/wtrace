@@ -29,16 +29,16 @@ const main = async () => {
     let scene: wt.Scene = new wt.Scene();
 
     // load the models (TODO: make async)
-    let mesh: wt.Mesh | undefined = await wt.MeshLoader.load("assets/suzanne.obj");
+    let mesh: wt.Mesh | undefined = await wt.MeshLoader.load("assets/bunny.obj");
 
-    for (let z = 0; z < 1; z++) {
+    for (let z = 0; z < 10; z++) {
         for (let x = 0; x < 1; x++) {
             if (mesh === undefined) continue;
             // material
             let material: wt.Material = new wt.Material();
             const color: THREE.Vector3 = new THREE.Vector3(randFloat(0, 1), randFloat(0, 1), randFloat(0, 1));
-            material.baseColor = new THREE.Vector3(1.0,0.0,0.0);//randFloat(0, 1), randFloat(0, 1), randFloat(0, 1));
-            material.emissiveColor = new THREE.Vector3(0,0,0);//randFloat(0, 1) < 0.2 ? color.clone().multiplyScalar(3) : new THREE.Vector3(0,0,0);
+            material.baseColor = new THREE.Vector3(randFloat(0, 1), randFloat(0, 1), randFloat(0, 1));
+            material.emissiveColor = randFloat(0, 1) < 0.2 ? color.clone().multiplyScalar(3) : new THREE.Vector3(0,0,0);
             
             // model
             let model: wt.MeshModel = new wt.MeshModel(mesh, material);

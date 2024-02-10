@@ -6,6 +6,13 @@ interface BLASNode {
     aabb: THREE.Box3;
 }
 
+interface Bin{
+    aabb: THREE.Box3;
+    triCount: number;
+}
+
+
+const BINS: number = 10;
 const BLAS_NODE_SIZE: number = 12; // 12 floats
 const BLAS_NODE_BYTE_SIZE: number = 1 * 4 + // leftFirst (float)
                                     1 * 4 + // triangleCount (float)
@@ -151,66 +158,116 @@ class BLAS {
         this.m_nodes[nodeIdx] = node;
     }
 
-    private _evaluateSAH(nodeIdx: number, axis: number, splitPos: number): number {
-        let leftBox: THREE.Box3 = new THREE.Box3();
-        let rightBox: THREE.Box3 = new THREE.Box3();
-        let leftCount = 0;
-        let rightCount = 0;
+    private _findBestSplit(nodeIdx: number): [number, number, number] {
         let node = this.m_nodes[nodeIdx];
+        let bestAxis :number = -1;
+        let bestPos: number = 0.0;
+        let bestCost = Number.MAX_VALUE;
 
-        for( let i = 0; i < node.triangleCount; i++ ) {
-            let triIdx = this.m_triangleIndices[node.leftFirst + i];
-            let centroid = this._getCentroid(triIdx);
+        for (let axis = 0; axis < 3; axis++) {
+            let boundsMin = Number.MAX_VALUE;
+            let boundsMax = -Number.MAX_VALUE;
 
-            if(centroid.toArray()[axis] < splitPos) {
-                leftBox.expandByPoint(centroid);
-                leftCount++;
+            for (let i = 0; i < node.triangleCount; i++) {
+                let triIdx = this.m_triangleIndices[node.leftFirst + i];
+                let centroid = this._getCentroid(triIdx).clone();
+                boundsMin = Math.min(boundsMin, centroid.toArray()[axis]);
+                boundsMax = Math.max(boundsMax, centroid.toArray()[axis]);
             }
-            else {
-                rightBox.expandByPoint(centroid);
-                rightCount++;
+            if (boundsMin == boundsMax) {
+                continue;
+            }
+
+            let bin: Bin[] = new Array(BINS).fill(null).map(() => ({aabb: new THREE.Box3(), triCount: 0}));
+
+            let scale: number = BINS / (boundsMax - boundsMin);
+            for(let i = 0; i < node.triangleCount; i++) {
+                let triIdx = this.m_triangleIndices[node.leftFirst + i];
+                let centroid = this._getCentroid(triIdx);
+                let binIdx = Math.min(BINS-1 ,Math.floor((centroid.toArray()[axis] - boundsMin) * scale));
+                
+                let V0 = new THREE.Vector3(
+                    this.m_points[triIdx * 9 + 0],
+                    this.m_points[triIdx * 9 + 1],
+                    this.m_points[triIdx * 9 + 2]
+                );
+                let V1 = new THREE.Vector3(
+                    this.m_points[triIdx * 9 + 3],
+                    this.m_points[triIdx * 9 + 4],
+                    this.m_points[triIdx * 9 + 5]
+                );
+                let V2 = new THREE.Vector3(
+                    this.m_points[triIdx * 9 + 6],
+                    this.m_points[triIdx * 9 + 7],
+                    this.m_points[triIdx * 9 + 8]
+                );
+                
+                bin[binIdx].triCount++;
+                bin[binIdx].aabb.expandByPoint(V0);
+                bin[binIdx].aabb.expandByPoint(V1);
+                bin[binIdx].aabb.expandByPoint(V2);
+            }
+
+            let leftBox: THREE.Box3 = new THREE.Box3();
+            leftBox.makeEmpty();
+            let rightBox: THREE.Box3 = new THREE.Box3();
+            rightBox.makeEmpty();      
+            let leftCount : Uint32Array = new Uint32Array(BINS-1);
+            let rightCount : Uint32Array = new Uint32Array(BINS-1);
+            let leftArea : Float32Array = new Float32Array(BINS-1);
+            let rightArea : Float32Array = new Float32Array(BINS-1);
+            let leftSum = 0;
+            let rightSum = 0;
+
+            for(let i = 0; i < BINS-1; i++) {
+                leftBox.union(bin[i].aabb);
+                leftCount[i] = leftSum += bin[i].triCount;
+                let leftBoxSize = leftBox.getSize(new THREE.Vector3());
+                leftArea[i] = leftBoxSize.x * leftBoxSize.y + leftBoxSize.y * leftBoxSize.z + leftBoxSize.z * leftBoxSize.x;
+                rightBox.union(bin[BINS - 1 - i].aabb);
+                rightCount[BINS - 2 - i] = rightSum += bin[BINS - 1 - i].triCount;
+                let rightBoxSize = rightBox.getSize(new THREE.Vector3());
+                rightArea[BINS - 2 - i] = rightBoxSize.x * rightBoxSize.y + rightBoxSize.y * rightBoxSize.z + rightBoxSize.z * rightBoxSize.x;
+            }
+
+            scale = (boundsMax - boundsMin) / BINS;
+            for(let i = 0; i < BINS-1; i++) {
+                let cost = leftCount[i] * leftArea[i] + rightCount[i] * rightArea[i];
+                if (cost < bestCost) {
+                    bestAxis = axis;
+                    bestPos = boundsMin + scale*(i+1);
+                    bestCost = cost;
+                }
             }
         }
-        
-        let leftDim = leftBox.getSize(new THREE.Vector3());
-        let rightDim = rightBox.getSize(new THREE.Vector3());
 
-        let leftArea = leftDim.x * leftDim.y + leftDim.y * leftDim.z + leftDim.z * leftDim.x;
-        let rightArea = rightDim.x * rightDim.y + rightDim.y * rightDim.z + rightDim.z * rightDim.x;
-        
-        let cost = leftCount * leftArea + rightCount * rightArea;
-        return (cost>0) ? cost : Number.MAX_VALUE;
+        return [bestAxis, bestPos, bestCost];
+    }
+
+    private _calculateNodeCost(nodeIdx: number): number { 
+        let node = this.m_nodes[nodeIdx];
+        let extent = node.aabb.getSize(new THREE.Vector3());
+        let area = extent.x * extent.y + extent.y * extent.z + extent.z * extent.x;
+        return area * node.triangleCount;
     }
 
     private _subdivideNode(nodeIdx: number): void {
         let node = this.m_nodes[nodeIdx];
 
         // find split axis
-        let bestAxis = -1;
-        let bestPos = 0;
-        let bestCost = Number.MAX_VALUE;
+        let bestAxis: number;
+        let bestPos: number;
+        let bestCost: number;
 
-        for( let axis = 0; axis < 3; axis++ ) {
-            for( let i = 0; i < node.triangleCount; i++ ) {
-                let centroid = this._getCentroid(this.m_triangleIndices[node.leftFirst + i]);
-                let candidatePos = centroid.toArray()[axis];
-                let cost: number = this._evaluateSAH(nodeIdx, axis, candidatePos);
-                if (cost < bestCost) {
-                    bestAxis = axis;
-                    bestPos = candidatePos;
-                    bestCost = cost;
-                }
-            }
-        }
+        [bestAxis, bestPos, bestCost] = this._findBestSplit(nodeIdx);
 
-        let parentExtent = node.aabb.getSize(new THREE.Vector3());
-        let parentArea = parentExtent.x * parentExtent.y + parentExtent.y * parentExtent.z + parentExtent.z * parentExtent.x;
-        let parentCost = parentArea * node.triangleCount;
+        let parentCost = this._calculateNodeCost(nodeIdx);
 
         if( bestCost >= parentCost ) {
             return;
         }
         
+        console.log("bestAxis: ", bestAxis, "bestPos: ", bestPos, "bestCost: ", bestCost, "\n");
         let axis = bestAxis;
         let splitPos = bestPos;
 

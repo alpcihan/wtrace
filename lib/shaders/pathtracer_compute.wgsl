@@ -112,7 +112,7 @@ fn traceRay(ray: Ray, seed: u32) -> vec3f {
 
     var incomingLight: vec3f = vec3f(0.0, 0.0, 0.0);
     var attenuation: vec3f = vec3f(1.0, 1.0, 1.0);
-
+     
     for(var i: u32 = 0; i < 3; i++) {
         createHitInfo(&hitInfo);
         hitWorld(r, &hitInfo);
@@ -276,7 +276,7 @@ fn hitTriangle(ray: Ray, v0: vec3<f32>, v1: vec3<f32>, v2: vec3<f32>) -> f32 {
 fn intersectAccelerationStructure(r: Ray, hit_info: ptr<function, HitInfo>) {
     let instanceCount: u32 = arrayLength(&blasInstances);
     for(var i: u32 = 0; i < instanceCount; i++) {
-        intersectBVH(r, i, hit_info);
+       intersectBVH(r, i, hit_info);
     }
 }
 
@@ -290,7 +290,7 @@ fn intersectBVH(r: Ray, instanceIdx: u32, hit_info: ptr<function, HitInfo>){
     var s: array<u32, 64>;
     var _stackPtr: i32 = 0;
     let rootIdx: u32 = instance.blasOffset;
-
+    
     s[_stackPtr] = rootIdx;
     _stackPtr = _stackPtr + 1;
 
