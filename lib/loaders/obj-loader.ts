@@ -12,7 +12,11 @@ class OBJLoader {
             const mesh = meshMap as THREE.Mesh;
             const geometry = mesh.geometry;
             const attributes = geometry.attributes;
-            triangleVertices = attributes.position.array as Float32Array;
+            if (triangleVertices === undefined) {
+                triangleVertices = new Float32Array(attributes.position.array);
+            } else {
+                triangleVertices = new Float32Array([...triangleVertices, ...new Float32Array(attributes.position.array)]);
+            }
         });
 
         return triangleVertices;

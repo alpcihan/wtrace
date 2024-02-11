@@ -43,7 +43,7 @@ class CameraController {
         yawnCounterClockwiseInput: Key.KeyArrowLeft,
     };
 
-    public speed: number = 2;
+    public speed: number = 5;
     public rotationSpeed: number = 90;
 
     public update(deltaTime: number) {

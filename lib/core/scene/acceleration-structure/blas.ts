@@ -74,6 +74,10 @@ class BLAS {
     private m_triangleIndices: Uint32Array;
 
     private _buildBLAS(): void {
+
+        //get time
+        let time = performance.now();
+
         // set initial triangle indices
         for (let i = 0; i < this.m_triangleIndices.length; i++) {
             this.m_triangleIndices[i] = i;
@@ -111,6 +115,8 @@ class BLAS {
 
         this._updateAABBs(this.m_rootNodeIdx);
         this._subdivideNode(this.m_rootNodeIdx);
+
+        console.log("BLAS build time: ", (performance.now() - time)*0.001, "seconds");
 
         this.m_nodes.splice(this.m_nodeCount); // only keep the used nodes
     }
