@@ -77,13 +77,17 @@ fn main(@builtin(global_invocation_id) globalInvocationID : vec3u) {
         return;
     }
 
-    let uv: vec2f = (vec2f(texelCoord) / vec2f(resolution)) * 2 - 1;
-    var ray: Ray = createCameraRay(uv, uniforms.view_i, uniforms.projection_i);
-    
     var seed_i1: u32 = u32(texelCoord.x + texelCoord.y * resolution.x);
     var seed_i2: u32 = u32(uniforms.frameIdx);
     var seed: u32 = pcg(&seed_i1)+ pcg(&seed_i2);
 
+    var uv: vec2f = (vec2f(texelCoord) / vec2f(resolution)) * 2 - 1;
+
+    uv.x += frand(&seed) * calculateUvSize().x;
+    uv.y += frand(&seed) * calculateUvSize().y;
+
+    var ray: Ray = createCameraRay(uv, uniforms.view_i, uniforms.projection_i);
+    
     var pixel_color: vec3f = traceRay(ray,seed);
 
     var state: vec4f = accumulationInfo[texelCoord.y * resolution.x + texelCoord.x];
@@ -105,7 +109,11 @@ fn createCameraRay(uv: vec2f, view_i: mat4x4f, projection_i: mat4x4f) -> Ray {
     ray.direction = normalize(ray.direction);
 
     return ray;
-} 
+}
+
+fn calculateUvSize() -> vec2f{
+    return 1.0 / uniforms.resolution;
+}
 
 fn traceRay(ray: Ray, seed: u32) -> vec3f {
     var hitInfo: HitInfo;
