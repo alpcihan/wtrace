@@ -29,7 +29,8 @@ const main = async () => {
     let scene: wt.Scene = new wt.Scene();
 
     // load the models (TODO: make async)
-    let mesh: wt.Mesh | undefined = await wt.MeshLoader.load("assets/sponza.obj");
+    let mesh: wt.Mesh | undefined = await wt.MeshLoader.load("assets/suzanne.obj");
+    //let albedoTexture = await wt.TextureLoader.load("assets/sponza.png");
 
     for (let z = 0; z < 1; z++) {
         for (let x = 0; x < 1; x++) {
@@ -38,13 +39,13 @@ const main = async () => {
             let material: wt.Material = new wt.Material();
             const color: THREE.Vector3 = new THREE.Vector3(randFloat(0, 1), randFloat(0, 1), randFloat(0, 1));
             material.baseColor = new THREE.Vector3(randFloat(0, 1), randFloat(0, 1), randFloat(0, 1));
-            material.emissiveColor = new THREE.Vector3(0,0,0); //randFloat(0, 1) < 0.2 ? color.clone().multiplyScalar(3) : new THREE.Vector3(0,0,0);
+            material.emissiveColor = new THREE.Vector3(0,0,0);
             
             // model
             let model: wt.MeshModel = new wt.MeshModel(mesh, material);
             model.position = new THREE.Vector3(0, 0, 0);
             model.euler = new THREE.Euler(0, 0, 0);
-            model.scale = new THREE.Vector3(0.01, 0.01, 0.01);
+            model.scale = new THREE.Vector3(1, 1, 1);
 
             scene.add(model);
         }

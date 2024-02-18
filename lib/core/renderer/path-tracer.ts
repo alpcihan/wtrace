@@ -186,6 +186,12 @@ class PathTracer {
                             type: "read-only-storage",
                         },
                     },
+                    {
+                        // Texture
+                        binding : 7,
+                        visibility: GPUShaderStage.COMPUTE,
+                        texture: {},
+                    },
                 ],
             });
 
@@ -219,6 +225,10 @@ class PathTracer {
                     {
                         binding: 6,
                         resource: { buffer: SceneManager.scene.sceneDataManager.materialBuffer },
+                    },
+                    {
+                        binding: 7,
+                        resource: SceneManager.scene.sceneDataManager.textureView,
                     },
                 ],
             });

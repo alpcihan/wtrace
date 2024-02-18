@@ -65,6 +65,7 @@ struct BLASInstance {
 @group(0) @binding(4) var<storage, read> blasNodes: array<BLASNode>;
 @group(0) @binding(5) var<storage, read> blasInstances: array<BLASInstance>;
 @group(0) @binding(6) var<storage, read> materials: array<Material>;
+@group(0) @binding(7) var ourTexture: texture_2d<f32>;
 
 @compute @workgroup_size(16,16,1)
 fn main(@builtin(global_invocation_id) globalInvocationID : vec3u) {
@@ -318,7 +319,9 @@ fn intersectBVH(r: Ray, instanceIdx: u32, hit_info: ptr<function, HitInfo>){
                     if(res < (*hit_info).t && res > 0.0) {
                         (*hit_info).t = res;
                         (*hit_info).normal = normalize((instance.transform * vec4f(cross(v1 - v0, v2 - v0),0)).xyz);
-                        (*hit_info).material = materials[instance.materialIdx];
+                        //(*hit_info).material = materials[instance.materialIdx];
+                        (*hit_info).material.color = textureLoad(ourTexture,vec2i(0,0),0).rgb;
+                        (*hit_info).material.emissiveColor = materials[instance.materialIdx].emissiveColor;
                     }             
                 }
 

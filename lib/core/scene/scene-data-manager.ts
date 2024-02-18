@@ -38,6 +38,15 @@ class SceneDataManager {
         return this.m_materialBuffer;
     }
 
+    public get textureView(): Readonly<GPUTextureView> {
+        return this.m_texture.createView({
+            format: this.m_texture.format,
+            dimension: this.m_texture.dimension,
+            mipLevelCount:  1,
+            arrayLayerCount: 1,
+        });
+    }
+
     public addModel(model: MeshModel) {
         this.m_models.push(model);
     }
@@ -94,6 +103,7 @@ class SceneDataManager {
     private m_blasInstanceBuffer: GPUBuffer;
     private m_blasBuffer: GPUBuffer; // blas array
     private m_materialBuffer: GPUBuffer;
+    private m_texture: GPUTexture;
 
     private _updateVertexBuffer(): void {
         this.m_vertexBuffer = IGPU.get().createBuffer({
@@ -158,6 +168,22 @@ class SceneDataManager {
             size: materialArrayByte.byteLength,
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
         });
+
+        this.m_texture = IGPU.get().createTexture({
+            size: [1,1,1],
+            format: "rgba8unorm",
+            usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST
+        });
+
+        let textureData = new Uint8Array(4);
+        textureData.set([255,0,0,255]);
+
+        IGPU.get().queue.writeTexture(
+            {texture: this.m_texture},
+            textureData,
+            {bytesPerRow: textureData.byteLength * 1},
+            {width: 1, height: 1},
+            );
 
         IGPU.get().queue.writeBuffer(this.m_materialBuffer, 0, materialArrayByte);
     }
