@@ -171,12 +171,12 @@ class SceneDataManager {
 
         this.m_texture = IGPU.get().createTexture({
             size: [1,1,1],
-            format: "rgba8unorm",
+            format: "rgba32float",
             usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST
         });
 
-        let textureData = new Uint8Array(4);
-        textureData.set([255,0,0,255]);
+        let textureData = new Float32Array(4);
+        textureData.set([1.0,0,0,1.0]);
 
         IGPU.get().queue.writeTexture(
             {texture: this.m_texture},

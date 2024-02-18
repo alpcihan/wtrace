@@ -190,7 +190,9 @@ class PathTracer {
                         // Texture
                         binding : 7,
                         visibility: GPUShaderStage.COMPUTE,
-                        texture: {},
+                        texture: {
+                            sampleType: "unfilterable-float"
+                        },
                     },
                 ],
             });
