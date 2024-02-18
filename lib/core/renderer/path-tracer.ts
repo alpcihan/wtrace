@@ -194,6 +194,14 @@ class PathTracer {
                             sampleType: "unfilterable-float"
                         },
                     },
+                    {
+                        // Uv coordinates
+                        binding: 8,
+                        visibility: GPUShaderStage.COMPUTE,
+                        buffer: {
+                            type: "read-only-storage",
+                        },
+                    },
                 ],
             });
 
@@ -231,6 +239,10 @@ class PathTracer {
                     {
                         binding: 7,
                         resource: SceneManager.scene.sceneDataManager.textureView,
+                    },
+                    {
+                        binding: 8,
+                        resource: { buffer: SceneManager.scene.sceneDataManager.uvBuffer},
                     },
                 ],
             });

@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import {WTTexture} from "../../wtrace"
 
 export const MATERIAL_BYTE_SIZE: number = 3 * 4 + // base color (float3)
                                           1 * 4 + // padding
@@ -6,9 +7,10 @@ export const MATERIAL_BYTE_SIZE: number = 3 * 4 + // base color (float3)
                                           1 * 4;  // padding
 
 class Material {
-    public constructor() {
+    public constructor(albedoTexture?: WTTexture) {
         this.id = Material._id++;
 
+        this.albedoTexture = albedoTexture;
         this.baseColor = new THREE.Vector3(1,1,1);
         this.emissiveColor = new THREE.Vector3(0,0,0);
     }
@@ -17,6 +19,7 @@ class Material {
 
     public baseColor: THREE.Vector3;
     public emissiveColor: THREE.Vector3;
+    public readonly albedoTexture: WTTexture | undefined;
 
     public writeToArray(target: ArrayBuffer, offset: number) {
         const baseColorArrayF32: Float32Array = new Float32Array(target, offset, 3 + 1);

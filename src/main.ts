@@ -29,14 +29,14 @@ const main = async () => {
     let scene: wt.Scene = new wt.Scene();
 
     // load the models (TODO: make async)
-    let mesh: wt.Mesh | undefined = await wt.MeshLoader.load("assets/suzanne.obj");
-    //let albedoTexture = await wt.TextureLoader.load("assets/sponza.png");
+    let mesh: wt.Mesh | undefined = await wt.MeshLoader.load("assets/spot_triangulated.obj");
+    let albedoTexture = await wt.TextureLoader.load("assets/spot_texture.png");
 
     for (let z = 0; z < 1; z++) {
         for (let x = 0; x < 1; x++) {
             if (mesh === undefined) continue;
             // material
-            let material: wt.Material = new wt.Material();
+            let material: wt.Material = new wt.Material(albedoTexture);
             const color: THREE.Vector3 = new THREE.Vector3(randFloat(0, 1), randFloat(0, 1), randFloat(0, 1));
             material.baseColor = new THREE.Vector3(randFloat(0, 1), randFloat(0, 1), randFloat(0, 1));
             material.emissiveColor = new THREE.Vector3(0,0,0);
