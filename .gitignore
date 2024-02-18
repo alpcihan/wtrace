@@ -1,4 +1,5 @@
 *.obj
+*.png
 
 lib-cov
 *.seed
