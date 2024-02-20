@@ -18,16 +18,6 @@ struct Ray {
     origin: vec3f,
 };
 
-struct Sphere {
-    center: vec3f,
-    radius: f32,
-};
-
-struct XZPlane{
-    normal: vec3f,
-    distance: f32,
-};
-
 struct HitInfo {
     t: f32,
     normal: vec3f,
@@ -36,11 +26,13 @@ struct HitInfo {
 
 struct Material {
     color: vec3f,
-    emissiveColor: vec3f
+    roughness: f32,
+    emissiveColor: vec3f,
+    metallic: f32
 };
 
 struct BLASNode {        // TODO: use uint for "leftFirst" and "triangleCount"
-    leftFirst: f32,     //if triCount == 0 represents leftChild, if triCount > 0 represents first triangleIdx
+    leftFirst: f32,      // if triCount == 0 represents leftChild, if triCount > 0 represents first triangleIdx
     triangleCount: f32,
 
     aabbMins: vec4f,
@@ -53,6 +45,16 @@ struct BLASInstance {
     blasOffset: u32,        // blas node offset
     materialIdx: u32
     // 2*4 byte padding
+};
+
+struct Sphere {
+    center: vec3f,
+    radius: f32,
+};
+
+struct XZPlane{
+    normal: vec3f,
+    distance: f32,
 };
 
 //-------------------------------------------------------------------
@@ -103,21 +105,23 @@ fn pathTrace(ray: Ray, seed: u32) -> vec3f {
         createHitInfo(&hitInfo);
         hitWorld(r, &hitInfo);
 
-        if (hitInfo.t < MAX_FLOAT32) {
+        // if object hit
+        if (hitInfo.t < MAX_FLOAT32) { 
             acc += abso * hitInfo.material.emissiveColor;
-            // abso *= hitInfo.material.color;
+            abso *= hitInfo.material.color;
 
             r.origin = rayAt(r, hitInfo.t)+ hitInfo.normal*0.001;
             r.direction = frand3OnHemisphere(hitInfo.normal, &s);
-        } else {
+
+        }
+        // if skybox hit 
+        else {                
             var dir: vec3f = r.direction;
             var a: f32 = 0.5*(dir.y + 1.0);
-            acc += ((1.0-a)*vec3f(1.0, 1.0, 1.0) + a*vec3f(0.4, 0.6, 0.9)) * abso;
+            acc += ((1.0-a)*vec3f(1.0, 1.0, 1.0) + a*vec3f(0.5, 0.7, 1.0)) * abso;
             
             break;
         }
-
-        abso *= 0.5;
     }
 
     return acc;
@@ -125,15 +129,20 @@ fn pathTrace(ray: Ray, seed: u32) -> vec3f {
 
 fn hitWorld(ray: Ray, bestHit: ptr<function, HitInfo>){
     // Scene helper objects data // TODO: pass as buffer
-    var sphere: Sphere = Sphere(vec3f(2.0,10.0,3.0), 4.0);
-    var lightMaterial: Material = Material(vec3f(2), vec3f(2));
+    var sphere: Sphere = Sphere(vec3f(0.0,10.0,0.0), 0.0);
+    var lightMaterial: Material = Material(vec3f(2), 1, vec3f(2), 0);
     var floorY: f32 = -1;
-    var floorMaterial: Material = Material(vec3f(1.0,1.0,1.0), vec3f(0,0,0));
+    var floorMaterial: Material = Material(vec3f(0.5,0.5,0.5), 0.5, vec3f(0,0,0), 0.5);
 
     intersectSphere(&sphere, &lightMaterial, ray, bestHit);
     intersectXZPlane(floorY, &floorMaterial, ray, bestHit);
     intersectAccelerationStructure(ray, bestHit);
 }
+
+//-------------------------------------------------------------------
+// BRDF
+//-------------------------------------------------------------------
+
 
 //-------------------------------------------------------------------
 // Ray utils
