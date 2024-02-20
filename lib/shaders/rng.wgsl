@@ -1,4 +1,3 @@
-
 //---------------------------------------
 //  random number generator
 //---------------------------------------
@@ -12,7 +11,25 @@ fn pcg(n: ptr<function,u32>) -> u32 {
 }
 
 fn frand(seed: ptr<function,u32>) -> f32 {
-    return f32(pcg(seed))/4294967296.0;
+    return fract(f32(pcg(seed))/4294967296.0);
+}
+
+fn frand2(seed: ptr<function,u32>) -> vec2f {
+    return vec2f(frand(seed), frand(seed));
+}
+
+fn frand3(seed: ptr<function,u32>) -> vec3f {
+    return vec3f(frand(seed), frand(seed), frand(seed));
+}
+
+fn frand3OnHemisphere(normal: vec3f, seed: ptr<function,u32>) -> vec3f {
+    var frand3OnSphere: vec3f = normalize(frand3(seed));
+
+    if (dot(frand3OnSphere, normal) > 0) {
+        return frand3OnSphere;
+    }
+
+    return -frand3OnSphere;
 }
 
 //https://www.shadertoy.com/view/lssfD7

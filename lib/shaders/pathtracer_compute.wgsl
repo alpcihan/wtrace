@@ -82,7 +82,7 @@ fn main(@builtin(global_invocation_id) globalInvocationID : vec3u) {
     var seed_i2: u32 = u32(uniforms.frameIdx);
     var seed: u32 = pcg(&seed_i1)+ pcg(&seed_i2);
 
-    var pixel_color: vec3f = traceRay(ray,seed);
+    var pixel_color: vec3f = pathTrace(ray,seed);
 
     var state: vec4f = accumulationInfo[texelCoord.y * resolution.x + texelCoord.x];
     var weight: f32 = 1.0 / (state.a + 1);
@@ -91,6 +91,53 @@ fn main(@builtin(global_invocation_id) globalInvocationID : vec3u) {
     accumulationInfo[texelCoord.y * resolution.x + texelCoord.x] = vec4f(finalColor, state.a + 1);
 }
 
+fn pathTrace(ray: Ray, seed: u32) -> vec3f {
+    var hitInfo: HitInfo;
+    var r: Ray = ray;
+    var s: u32 = seed;
+
+    var acc: vec3f = vec3f(0.0, 0.0, 0.0);
+    var abso: vec3f = vec3f(1.0, 1.0, 1.0);
+
+    for(var i: u32 = 0; i < 3; i++) {
+        createHitInfo(&hitInfo);
+        hitWorld(r, &hitInfo);
+
+        if (hitInfo.t < MAX_FLOAT32) {
+            acc += abso * hitInfo.material.emissiveColor;
+            // abso *= hitInfo.material.color;
+
+            r.origin = rayAt(r, hitInfo.t)+ hitInfo.normal*0.001;
+            r.direction = frand3OnHemisphere(hitInfo.normal, &s);
+        } else {
+            var dir: vec3f = r.direction;
+            var a: f32 = 0.5*(dir.y + 1.0);
+            acc += ((1.0-a)*vec3f(1.0, 1.0, 1.0) + a*vec3f(0.4, 0.6, 0.9)) * abso;
+            
+            break;
+        }
+
+        abso *= 0.5;
+    }
+
+    return acc;
+}
+
+fn hitWorld(ray: Ray, bestHit: ptr<function, HitInfo>){
+    // Scene helper objects data // TODO: pass as buffer
+    var sphere: Sphere = Sphere(vec3f(2.0,10.0,3.0), 4.0);
+    var lightMaterial: Material = Material(vec3f(2), vec3f(2));
+    var floorY: f32 = -1;
+    var floorMaterial: Material = Material(vec3f(1.0,1.0,1.0), vec3f(0,0,0));
+
+    intersectSphere(&sphere, &lightMaterial, ray, bestHit);
+    intersectXZPlane(floorY, &floorMaterial, ray, bestHit);
+    intersectAccelerationStructure(ray, bestHit);
+}
+
+//-------------------------------------------------------------------
+// Ray utils
+//-------------------------------------------------------------------
 fn createCameraRay(uv: vec2f, view_i: mat4x4f, projection_i: mat4x4f) -> Ray {
     var ray: Ray;
 
@@ -105,43 +152,40 @@ fn createCameraRay(uv: vec2f, view_i: mat4x4f, projection_i: mat4x4f) -> Ray {
     return ray;
 } 
 
-fn traceRay(ray: Ray, seed: u32) -> vec3f {
-    var hitInfo: HitInfo;
-    var r: Ray = ray;
-    var s: u32 = seed;
-
-    var incomingLight: vec3f = vec3f(0.0, 0.0, 0.0);
-    var attenuation: vec3f = vec3f(1.0, 1.0, 1.0);
-
-    for(var i: u32 = 0; i < 3; i++) {
-        createHitInfo(&hitInfo);
-        hitWorld(r, &hitInfo);
-
-        if (hitInfo.t > 0.0) {
-            // incomingLight = hitInfo.material.color;
-            attenuation *= hitInfo.material.color;
-            incomingLight += attenuation * hitInfo.material.emissiveColor;
-
-            r.origin = rayAt(r, hitInfo.t)+ hitInfo.normal*0.001;
-            r.direction = cosineDirection(&s, hitInfo.normal);
-        } else {
-            break;
-        }
-    }
-
-    return incomingLight;
+fn rayAt(ray: Ray, t: f32) -> vec3f {
+    return ray.origin + ray.direction * t;
 }
 
-fn hitWorld(ray: Ray, bestHit: ptr<function, HitInfo>){
-    // Scene helper objects data // TODO: pass as buffer
-    var sphere: Sphere = Sphere(vec3f(2.0,10.0,3.0), 4.0);
-    var lightMaterial: Material = Material(vec3f(2), vec3f(2));
-    var floorY: f32 = -1;
-    var floorMaterial: Material = Material(vec3f(1.0,1.0,1.0), vec3f(0,0,0));
+//-------------------------------------------------------------------
+// Hit utils
+//-------------------------------------------------------------------
+fn createHitInfo(hitInfo: ptr<function, HitInfo>){
+    (*hitInfo).t = MAX_FLOAT32;
+    (*hitInfo).normal = vec3f(0.0, 0.0, 0.0);
+    (*hitInfo).material.color = vec3f(0.0, 0.0, 0.0);
+    (*hitInfo).material.emissiveColor = vec3f(0.0, 0.0, 0.0);
+}
 
-    intersectSphere(&sphere, &lightMaterial, ray, bestHit);
-    intersectXZPlane(floorY, &floorMaterial, ray, bestHit);
-    intersectAccelerationStructure(ray, bestHit);
+//-------------------------------------------------------------------
+// Intersection tests
+//-------------------------------------------------------------------
+fn hitTriangle(ray: Ray, v0: vec3<f32>, v1: vec3<f32>, v2: vec3<f32>) -> f32 {
+    let v1v0: vec3f = v1 - v0;
+    let v2v0: vec3f = v2 - v0;
+    let roV0: vec3f = ray.origin - v0;
+
+    let n: vec3f = cross(v1v0, v2v0);
+    let q: vec3f = cross(roV0, ray.direction); 
+    let d: f32 = 1.0 / dot(ray.direction, n);
+    let u: f32 = d * dot(-q, v2v0);
+    let v: f32 = d * dot(q, v1v0);
+    let t: f32 = d * dot(-n, roV0);
+
+    if(u<0.0 || v<0.0 || u+v>1.0 || t<0.0) {
+        return MAX_FLOAT32;
+    }
+
+    return t;
 }
 
 fn intersectXZPlane(
@@ -243,36 +287,6 @@ fn intersectTriangles(ray: Ray, bestHit: ptr<function, HitInfo>) {
     }
 }
 
-fn createHitInfo(hitInfo: ptr<function, HitInfo>){
-    (*hitInfo).t = MAX_FLOAT32;
-    (*hitInfo).normal = vec3f(0.0, 0.0, 0.0);
-    (*hitInfo).material.color = vec3f(0.0, 0.0, 0.0);
-    (*hitInfo).material.emissiveColor = vec3f(0.0, 0.0, 0.0);
-}
-
-fn rayAt(ray: Ray, t: f32) -> vec3f {
-    return ray.origin + ray.direction * t;
-}
-
-fn hitTriangle(ray: Ray, v0: vec3<f32>, v1: vec3<f32>, v2: vec3<f32>) -> f32 {
-    let v1v0: vec3f = v1 - v0;
-    let v2v0: vec3f = v2 - v0;
-    let roV0: vec3f = ray.origin - v0;
-
-    let n: vec3f = cross(v1v0, v2v0);
-    let q: vec3f = cross(roV0, ray.direction); 
-    let d: f32 = 1.0 / dot(ray.direction, n);
-    let u: f32 = d * dot(-q, v2v0);
-    let v: f32 = d * dot(q, v1v0);
-    let t: f32 = d * dot(-n, roV0);
-
-    if(u<0.0 || v<0.0 || u+v>1.0 || t<0.0) {
-        return MAX_FLOAT32;
-    }
-
-    return t;
-}
-
 fn intersectAccelerationStructure(r: Ray, hit_info: ptr<function, HitInfo>) {
     let instanceCount: u32 = arrayLength(&blasInstances);
     for(var i: u32 = 0; i < instanceCount; i++) {
@@ -345,8 +359,4 @@ fn intersectAABB(ray: Ray, aabbMin: vec3<f32>, aabbMax: vec3<f32>)-> bool{
     let texit: f32 = min(min(tmax.x, tmax.y), tmax.z);
 
     return (tenter < texit) && (texit > 0.0);
-}
-
-fn isNan(f: f32) -> bool {
-    return f != f;
 }
