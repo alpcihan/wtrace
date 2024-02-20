@@ -64,9 +64,9 @@ fn pathTrace(ray: Ray, seed: ptr<function,u32>) -> vec3f {
 
         // skybox
         if(hitInfo.t > 1000000) {               // TODO: add max render distance
-            let dir: vec3f = r.direction;
-            var a: f32 = 0.5*(dir.y + 1.0);
-            acc += mix(vec3f(1.0, 1.0, 1.0),vec3f(0.5, 0.7, 1.0), a) * abso;
+            //let dir: vec3f = r.direction;
+            //var a: f32 = 0.5*(dir.y + 1.0);
+            //acc += mix(vec3f(1.0, 1.0, 1.0),vec3f(0.5, 0.7, 1.0), a) * abso;
             return acc;
         }
 
@@ -84,7 +84,7 @@ fn pathTrace(ray: Ray, seed: ptr<function,u32>) -> vec3f {
 
         // absorption
         if (brdf.w > 0.0) {
-            abso *= brdf.xyz / brdf.a;
+            abso *= brdf.xyz / brdf.w;
         }
 
         // next ray
@@ -97,12 +97,12 @@ fn pathTrace(ray: Ray, seed: ptr<function,u32>) -> vec3f {
 
 fn hitWorld(ray: Ray, bestHit: ptr<function, HitInfo>){
     // Scene helper objects data // TODO: pass as buffer
-    var sphere: Sphere = Sphere(vec3f(0.0,10.0,0.0), 4.0);
+    var sphere: Sphere = Sphere(vec3f(0.0,0.5,0.0), 0);
     var lightMaterial: Material = Material(vec3f(2), 1, vec3f(2), 0);
     var floorY: f32 = -1;
     var floorMaterial: Material = Material(vec3f(0.5,0.5,0.5), 0.2, vec3f(0,0,0), 0.5);
 
     intersectSphere(&sphere, &lightMaterial, ray, bestHit);
-    intersectXZPlane(floorY, &floorMaterial, ray, bestHit);
+    // intersectXZPlane(floorY, &floorMaterial, ray, bestHit);
     intersectAccelerationStructure(ray, bestHit);
 }

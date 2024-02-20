@@ -6,8 +6,8 @@ import ray_shader from "../../shaders/core/ray.wgsl";
 import bvh_shader from "../../shaders/core/bvh.glsl";
 import bsdf_shader from "../../shaders/core/bsdf.wgsl";
 import rng_shader from "../../shaders/core/rng.wgsl";
-import screen_shader from "../../shaders/screen_shader.wgsl";
 import pathtracer_compute from "../../shaders/pathtracer_compute.wgsl";
+import screen_shader from "../../shaders/screen_shader.wgsl";
 
 import { IGPU } from "./igpu";
 import { SceneManager } from "../scene/scene-manager";
@@ -237,7 +237,7 @@ class PathTracer {
                                       + bvh_shader
                                       + bsdf_shader
                                       + pathtracer_compute;
-                                      
+
             this.m_pathTracingPipeline = IGPU.get().createComputePipeline({
                 label: "path tracing compute pipeline",
                 layout: pathTracingPipelineLayout,
