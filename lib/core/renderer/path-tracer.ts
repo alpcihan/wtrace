@@ -1,8 +1,13 @@
 import * as THREE from "three";
 
-import rng_shader from "../../shaders/rng.wgsl";
-import screen_shader from "../../shaders/screen_shader.wgsl";
+// shaders (TODO: preprocess)
+import math_shader from "../../shaders/core/math.wgsl";
+import ray_shader from "../../shaders/core/ray.wgsl";
+import bvh_shader from "../../shaders/core/bvh.glsl";
+import bsdf_shader from "../../shaders/core/bsdf.wgsl";
+import rng_shader from "../../shaders/core/rng.wgsl";
 import pathtracer_compute from "../../shaders/pathtracer_compute.wgsl";
+import screen_shader from "../../shaders/screen_shader.wgsl";
 
 import { IGPU } from "./igpu";
 import { SceneManager } from "../scene/scene-manager";
@@ -226,7 +231,13 @@ class PathTracer {
                 bindGroupLayouts: [pathTracingBindGroupLayout],
             });
 
-            const pathTracingShader = rng_shader + pathtracer_compute;
+            const pathTracingShader =   math_shader
+                                      + rng_shader 
+                                      + ray_shader
+                                      + bvh_shader
+                                      + bsdf_shader
+                                      + pathtracer_compute;
+
             this.m_pathTracingPipeline = IGPU.get().createComputePipeline({
                 label: "path tracing compute pipeline",
                 layout: pathTracingPipelineLayout,
