@@ -9,10 +9,14 @@ Description will be added soon.
 
 ## Features
 
-- [x] GPU path-tracing 
-- [x] TLAS and BLAS with instanced geometry support
-- [x] OBJ loader
-- [x] BRDF
+- [x] GPU path-tracing with WebGPU compute shader
+- [x] TLAS and BLAS
+- [x] Instanced geometry support
+- [x] BRDF importance sampling
+- [x] OBJ support
 - [x] Material system
-- [ ] GLTF loader
+- [ ] Multi importance sampling
+- [ ] GLTF support
 - [ ] Dielectrics
+- [ ] Caustics
+- [ ] Denoising
