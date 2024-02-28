@@ -67,6 +67,7 @@ export async function createCornellBoxScene(): Promise<wt.Scene> {
     let lightMat: wt.Material = new wt.Material();
     lightMat.roughness = 1;
     lightMat.metallic = 0;
+    lightMat.baseColor = new THREE.Vector3(1, 1, 1);
     lightMat.emissiveColor = new THREE.Vector3(20,20,20);
     let lightMod: wt.MeshModel = new wt.MeshModel(mesh, lightMat);
     lightMod.position = new THREE.Vector3(0, scale - 0.005, 0);
@@ -107,5 +108,31 @@ export async function createXYZDragonScene(): Promise<wt.Scene> {
     model.scale = new THREE.Vector3(0.025, 0.025, 0.025);
     scene.add(model);
 
+    return scene;
+}
+
+export async function createSpotTexturedScene(): Promise<wt.Scene> {
+
+    //create the scene
+    let scene: wt.Scene = new wt.Scene(); //TODO: Add texture scene
+
+    // load the models (TODO: make async)
+    let mesh: wt.Mesh | undefined = await wt.MeshLoader.load("assets/spot_triangulated.obj");
+    let albedoTexture = await wt.TextureLoader.load("assets/spot_texture.png");
+
+    if (mesh === undefined) return scene;
+    // material
+    let material: wt.Material = new wt.Material(albedoTexture);
+    material.baseColor = new THREE.Vector3(-1.0,-1.0,-1.0); //TODO: If there is a related texture loaded make color value -1
+    material.emissiveColor = new THREE.Vector3(0,0,0);
+    
+    // model
+    let model: wt.MeshModel = new wt.MeshModel(mesh, material);
+    model.position = new THREE.Vector3(0, 0, 0);
+    model.euler = new THREE.Euler(0, 0, 0);
+    model.scale = new THREE.Vector3(1, 1, 1);
+
+    scene.add(model);
+    
     return scene;
 }

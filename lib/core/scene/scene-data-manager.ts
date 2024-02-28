@@ -64,7 +64,7 @@ class SceneDataManager {
             if(!this.m_meshIDtoBlasOffsetMap.has(model.mesh.id)) {
                 // add points
                 this.m_points = new Float32Array([...this.m_points, ...model.mesh.points]);
-                this.m_uvs = new Float32Array([...this.m_uvs,...model.mesh.uvs]);
+                if(model.mesh.uvs !== undefined) this.m_uvs = new Float32Array([...this.m_uvs,...model.mesh.uvs]);
 
                 // add blas
                 const blas: BLAS = new BLAS(model.mesh.points);
