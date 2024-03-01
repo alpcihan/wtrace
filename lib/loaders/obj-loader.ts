@@ -16,12 +16,14 @@ class OBJLoader {
             if (triangleVertices === undefined) {
                 triangleVertices = new Float32Array(attributes.position.array);
             }
+            else{
+                triangleVertices = new Float32Array([...triangleVertices, ...new Float32Array(attributes.position.array)]);
+            }
             if(attributes.uv) {
                 if(triangleUVs === undefined) {
                     triangleUVs = new Float32Array(attributes.uv.array);
                 }
                 else {
-                    triangleVertices = new Float32Array([...triangleVertices, ...new Float32Array(attributes.position.array)]);
                     triangleUVs = new Float32Array([...triangleUVs, ...new Float32Array(attributes.uv.array)]);
                 }
             }

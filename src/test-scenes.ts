@@ -111,6 +111,30 @@ export async function createXYZDragonScene(): Promise<wt.Scene> {
     return scene;
 }
 
+export async function createBoxScene(): Promise<wt.Scene> {
+
+    let scene: wt.Scene = new wt.Scene();
+
+    // load the cube model (TODO: make async)
+    let mesh: wt.Mesh | undefined = await wt.MeshLoader.load("assets/cube.obj");
+    if (mesh === undefined){
+        console.log("box mesh is undefined");
+        return scene;
+    } 
+    
+    // left wall
+    let leftWallMat: wt.Material = new wt.Material();
+    leftWallMat.baseColor = new THREE.Vector3(1, 0, 0);
+    leftWallMat.roughness = 0.75;
+    leftWallMat.metallic = 0.25;
+    let leftWallMod: wt.MeshModel = new wt.MeshModel(mesh, leftWallMat);
+    leftWallMod.position = new THREE.Vector3(0, 0, 0);
+    leftWallMod.scale = new THREE.Vector3(1, 1, 1);
+    scene.add(leftWallMod);
+
+    return scene;
+}
+
 export async function createSpotTexturedScene(): Promise<wt.Scene> {
 
     //create the scene

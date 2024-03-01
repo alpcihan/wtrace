@@ -24,7 +24,7 @@ const main = async () => {
     // init the application
     await wt.Application.init(canvas);
 
-    let scene: wt.Scene = await test.createCornellBoxScene();
+    let scene: wt.Scene = await test.createBoxScene();
 
     // load the scene
     wt.SceneManager.loadScene(scene);
