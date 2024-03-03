@@ -256,5 +256,5 @@ fn intersectAABB(ray: Ray, aabbMin: vec3f, aabbMax: vec3f)-> bool{
     let tenter: f32 = max(max(tmin.x, tmin.y), tmin.z);
     let texit: f32 = min(min(tmax.x, tmax.y), tmax.z);
 
-    return (tenter < texit) && (texit > 0.0);
+    return (tenter <= texit) && (texit > 0.0);
 }
