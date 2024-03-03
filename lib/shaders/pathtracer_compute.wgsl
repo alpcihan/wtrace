@@ -25,6 +25,8 @@ struct Material {
 @group(0) @binding(4) var<storage, read> blasNodes: array<BLASNode>;
 @group(0) @binding(5) var<storage, read> blasInstances: array<BLASInstance>;
 @group(0) @binding(6) var<storage, read> materials: array<Material>;
+@group(0) @binding(7) var ourTexture: texture_2d<f32>;
+@group(0) @binding(8) var<storage, read> uvs: array<f32>;
 
 @compute @workgroup_size(16,16,1)
 fn main(@builtin(global_invocation_id) globalInvocationID : vec3u) {
@@ -35,13 +37,16 @@ fn main(@builtin(global_invocation_id) globalInvocationID : vec3u) {
         return;
     }
 
-    let uv: vec2f = (vec2f(texelCoord) / vec2f(resolution)) * 2 - 1;
-    var ray: Ray = createCameraRay(uv, uniforms.view_i, uniforms.projection_i);
-    
     var seed_i1: u32 = u32(texelCoord.x + texelCoord.y * resolution.x);
     var seed_i2: u32 = u32(uniforms.frameIdx);
     var seed: u32 = pcg(&seed_i1)+ pcg(&seed_i2);
+    
+    var uv: vec2f = (vec2f(texelCoord) / vec2f(resolution)) * 2 - 1;
 
+    uv.x += frand(&seed) * calculateUvSize().x;
+    uv.y += frand(&seed) * calculateUvSize().y;
+
+    var ray: Ray = createCameraRay(uv, uniforms.view_i, uniforms.projection_i);
     var pixel_color: vec3f = pathTrace(ray, &seed);
 
     var state: vec4f = accumulationInfo[texelCoord.y * resolution.x + texelCoord.x];
@@ -52,21 +57,22 @@ fn main(@builtin(global_invocation_id) globalInvocationID : vec3u) {
 }
 
 fn pathTrace(ray: Ray, seed: ptr<function,u32>) -> vec3f {
+
     var hitInfo: HitInfo;
     var r: Ray = ray;
-
+    
     var acc: vec3f = vec3f(0.0, 0.0, 0.0);
     var abso: vec3f = vec3f(1.0, 1.0, 1.0);
-
+    
     for(var i: u32 = 0; i < 3; i++) {
         createHitInfo(&hitInfo);
         hitWorld(r, &hitInfo);
 
         // skybox
         if(hitInfo.t > 1000000) {               // TODO: add max render distance
-            //let dir: vec3f = r.direction;
-            //var a: f32 = 0.5*(dir.y + 1.0);
-            //acc += mix(vec3f(1.0, 1.0, 1.0),vec3f(0.5, 0.7, 1.0), a) * abso;
+            let dir: vec3f = r.direction;
+            var a: f32 = 0.5*(dir.y + 1.0);
+            acc += mix(vec3f(1.0, 1.0, 1.0),vec3f(0.5, 0.7, 1.0), a) * abso;
             return acc;
         }
 
@@ -103,6 +109,6 @@ fn hitWorld(ray: Ray, bestHit: ptr<function, HitInfo>){
     var floorMaterial: Material = Material(vec3f(0.5,0.5,0.5), 0.2, vec3f(0,0,0), 0.5);
 
     intersectSphere(&sphere, &lightMaterial, ray, bestHit);
-    // intersectXZPlane(floorY, &floorMaterial, ray, bestHit);
+    intersectXZPlane(floorY, &floorMaterial, ray, bestHit);
     intersectAccelerationStructure(ray, bestHit);
 }

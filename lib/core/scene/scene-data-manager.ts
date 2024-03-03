@@ -8,6 +8,7 @@ class SceneDataManager {
     public constructor() {
         this.m_models = new Array<MeshModel>();
         this.m_points = new Float32Array();
+        this.m_uvs = new Float32Array();
         this.m_blasNodeCount = 0;
         this.m_blasArray = new Array<BLAS>();
         this.m_blasInstanceArray = new Array<BLASInstance>();
@@ -20,6 +21,10 @@ class SceneDataManager {
 
     public get vertexBuffer(): Readonly<GPUBuffer> {
         return this.m_vertexBuffer;
+    }
+
+    public get uvBuffer(): Readonly<GPUBuffer> {
+        return this.m_uvBuffer;
     }
 
     public get triangleIdxBuffer(): Readonly<GPUBuffer> {
@@ -38,6 +43,15 @@ class SceneDataManager {
         return this.m_materialBuffer;
     }
 
+    public get textureView(): Readonly<GPUTextureView> {
+        return this.m_texture.createView({
+            format: this.m_texture.format,
+            dimension: this.m_texture.dimension,
+            mipLevelCount:  1,
+            arrayLayerCount: 1,
+        });
+    }
+
     public addModel(model: MeshModel) {
         this.m_models.push(model);
     }
@@ -50,6 +64,7 @@ class SceneDataManager {
             if(!this.m_meshIDtoBlasOffsetMap.has(model.mesh.id)) {
                 // add points
                 this.m_points = new Float32Array([...this.m_points, ...model.mesh.points]);
+                if(model.mesh.uvs !== undefined) this.m_uvs = new Float32Array([...this.m_uvs,...model.mesh.uvs]);
 
                 // add blas
                 const blas: BLAS = new BLAS(model.mesh.points);
@@ -80,6 +95,8 @@ class SceneDataManager {
     }
 
     private m_points: Float32Array;
+    private m_uvs: Float32Array;
+
     private m_models: Array<MeshModel>;
     private m_blasArray: Array<BLAS>;
     private m_blasNodeCount: number; // total node count
@@ -90,10 +107,13 @@ class SceneDataManager {
     private m_meshIDtoBlasOffsetMap: Map<number, number>;
 
     private m_vertexBuffer: GPUBuffer;
+    private m_uvBuffer: GPUBuffer;
+
     private m_triangleIdxBuffer: GPUBuffer;
     private m_blasInstanceBuffer: GPUBuffer;
     private m_blasBuffer: GPUBuffer; // blas array
     private m_materialBuffer: GPUBuffer;
+    private m_texture: GPUTexture;
 
     private _updateVertexBuffer(): void {
         this.m_vertexBuffer = IGPU.get().createBuffer({
@@ -101,6 +121,12 @@ class SceneDataManager {
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
         });
 
+        this.m_uvBuffer = IGPU.get().createBuffer({
+            size: this.m_uvs.byteLength,
+            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+        });
+
+        IGPU.get().queue.writeBuffer(this.m_uvBuffer, 0, this.m_uvs);
         IGPU.get().queue.writeBuffer(this.m_vertexBuffer, 0, this.m_points);
     }
 
@@ -158,6 +184,42 @@ class SceneDataManager {
             size: materialArrayByte.byteLength,
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
         });
+
+        if(this.m_materials[0].albedoTexture === undefined){
+
+            let textureData = new Uint8Array(4);
+            textureData.set([255,0,0,255]);
+    
+            this.m_texture = IGPU.get().createTexture({
+                size: [1,1,1],
+                format: "rgba8unorm",
+                usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST
+            });
+    
+            IGPU.get().queue.writeTexture(
+                {texture: this.m_texture},
+                textureData,
+                {bytesPerRow: textureData.byteLength * 1},
+                {width: 1, height: 1},
+                );
+        }
+        else{
+            let tex = this.m_materials[0].albedoTexture;
+
+            const texDescriptor: GPUTextureDescriptor = {
+                size: [tex.data.width,tex.data.height,1],
+                format: "rgba8unorm",
+                usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT
+            }
+
+            this.m_texture = IGPU.get().createTexture(texDescriptor);
+    
+            IGPU.get().queue.copyExternalImageToTexture(
+                {source: tex.data , flipY: true},
+                {texture: this.m_texture},
+                texDescriptor.size
+            );
+        }
 
         IGPU.get().queue.writeBuffer(this.m_materialBuffer, 0, materialArrayByte);
     }

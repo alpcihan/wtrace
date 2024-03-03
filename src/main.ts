@@ -24,14 +24,11 @@ const main = async () => {
     // init the application
     await wt.Application.init(canvas);
 
-    // create the scene
-    let scene: wt.Scene = await test.createCornellBoxScene();
+    let scene: wt.Scene = await test.createCornellBoxSpotScene();
 
     // load the scene
     wt.SceneManager.loadScene(scene);
 
     wt.Application.run(onUpdate);
 };
-
-
 main();

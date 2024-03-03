@@ -191,6 +191,21 @@ class PathTracer {
                             type: "read-only-storage",
                         },
                     },
+                    {
+                        // Texture
+                        binding : 7,
+                        visibility: GPUShaderStage.COMPUTE,
+                        texture: {
+                        },
+                    },
+                    {
+                        // Uv coordinates
+                        binding: 8,
+                        visibility: GPUShaderStage.COMPUTE,
+                        buffer: {
+                            type: "read-only-storage",
+                        },
+                    },
                 ],
             });
 
@@ -224,6 +239,14 @@ class PathTracer {
                     {
                         binding: 6,
                         resource: { buffer: SceneManager.scene.sceneDataManager.materialBuffer },
+                    },
+                    {
+                        binding: 7,
+                        resource: SceneManager.scene.sceneDataManager.textureView,
+                    },
+                    {
+                        binding: 8,
+                        resource: { buffer: SceneManager.scene.sceneDataManager.uvBuffer},
                     },
                 ],
             });
