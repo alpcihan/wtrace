@@ -103,8 +103,8 @@ fn pathTrace(ray: Ray, seed: ptr<function,u32>) -> vec3f {
 
 fn hitWorld(ray: Ray, bestHit: ptr<function, HitInfo>){
     // Scene helper objects data // TODO: pass as buffer
-    var sphere: Sphere = Sphere(vec3f(0.0,3.0,0.0), 0);
-    var lightMaterial: Material = Material(vec3f(20), 1, vec3f(20), 0);
+    var sphere: Sphere = Sphere(vec3f(0.0,0.5,0.0), 0);
+    var lightMaterial: Material = Material(vec3f(2), 1, vec3f(2), 0);
     var floorY: f32 = -1;
     var floorMaterial: Material = Material(vec3f(0.5,0.5,0.5), 0.2, vec3f(0,0,0), 0.5);
 

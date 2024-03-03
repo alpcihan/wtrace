@@ -213,8 +213,7 @@ fn intersectBVH(r: Ray, instanceIdx: u32, hit_info: ptr<function, HitInfo>){
                     if(res.x < (*hit_info).t && res.x > 0.0) {
                         (*hit_info).t = res.x;
                         (*hit_info).normal = normalize((instance.transform * vec4f(cross(v1 - v0, v2 - v0),0)).xyz);
-                        (*hit_info).material.albedo = materials[instance.materialIdx].albedo;
-
+                        (*hit_info).material = materials[instance.materialIdx];
                         if( materials[instance.materialIdx].albedo.x < 0.0 ){
                             let v0_uv: vec2f = vec2f(uvs[idx*6+0], uvs[idx*6+1]);
                             let v1_uv: vec2f = vec2f(uvs[idx*6+2], uvs[idx*6+3]);
@@ -230,8 +229,6 @@ fn intersectBVH(r: Ray, instanceIdx: u32, hit_info: ptr<function, HitInfo>){
                             textureCoords.y = min(textureCoords.y, i32(textureDims.y)-1);
                             (*hit_info).material.albedo = textureLoad(ourTexture,textureCoords,0).rgb;
                         }
-                        
-                        (*hit_info).material.emissiveColor = materials[instance.materialIdx].emissiveColor;
                     }             
                 }
 

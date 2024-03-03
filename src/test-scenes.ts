@@ -152,9 +152,9 @@ export async function createCornellBoxSpotScene(): Promise<wt.Scene> {
     
     // model
     let model: wt.MeshModel = new wt.MeshModel(objmesh, material);
-    model.position = new THREE.Vector3(0, 0, 0);
-    model.euler = new THREE.Euler(0, 0, 0);
-    model.scale = new THREE.Vector3(1, 1, 1);
+    model.position = new THREE.Vector3(0, 1, 0);
+    model.euler = new THREE.Euler(0, degToRad(180), 0);
+    model.scale = new THREE.Vector3(1.5, 1.5, 1.5);
 
     scene.add(model);
 
@@ -168,8 +168,8 @@ export async function createCornellBoxSpotScene(): Promise<wt.Scene> {
     // bottom wall
     let bottomWallMat: wt.Material = new wt.Material();
     bottomWallMat.baseColor = new THREE.Vector3(1, 1, 1);
-    bottomWallMat.roughness = 1.0;
-    bottomWallMat.metallic = 0.0;
+    bottomWallMat.roughness = 0.25;
+    bottomWallMat.metallic = 0.75;
     let bottomWallMod: wt.MeshModel = new wt.MeshModel(cubeMesh, bottomWallMat);
     bottomWallMod.position = new THREE.Vector3(0, 0, 0);
     bottomWallMod.scale = new THREE.Vector3(scale, 0.01 * scale, scale);
@@ -178,8 +178,8 @@ export async function createCornellBoxSpotScene(): Promise<wt.Scene> {
     // right wall
     let rightWallMat: wt.Material = new wt.Material();
     rightWallMat.baseColor = new THREE.Vector3(0, 1, 0);
-    rightWallMat.roughness = 1.0;
-    rightWallMat.metallic = 0.0;
+    rightWallMat.roughness = 0.75;
+    rightWallMat.metallic = 0.25;
     let rightWallMod: wt.MeshModel = new wt.MeshModel(cubeMesh, rightWallMat);
     rightWallMod.position = new THREE.Vector3(0.5 * scale, 0.5 * scale, 0);
     rightWallMod.scale = new THREE.Vector3(0.01 * scale, scale, scale);
@@ -188,22 +188,43 @@ export async function createCornellBoxSpotScene(): Promise<wt.Scene> {
     // left wall
     let leftWallMat: wt.Material = new wt.Material();
     leftWallMat.baseColor = new THREE.Vector3(1, 0, 0);
-    leftWallMat.roughness = 1.0;
-    leftWallMat.metallic = 0.0;
+    leftWallMat.roughness = 0.75;
+    leftWallMat.metallic = 0.25;
     let leftWallMod: wt.MeshModel = new wt.MeshModel(cubeMesh, leftWallMat);
     leftWallMod.position = new THREE.Vector3(-0.5 * scale, 0.5 * scale, 0);
     leftWallMod.scale = new THREE.Vector3(0.01 * scale, scale, scale);
     scene.add(leftWallMod);
 
+    // top wall
+    let topWallMat: wt.Material = new wt.Material();
+    topWallMat.baseColor = new THREE.Vector3(1, 1, 1);
+    topWallMat.roughness = 0.75;
+    topWallMat.metallic = 0.25;
+    let topWallMod: wt.MeshModel = new wt.MeshModel(cubeMesh, topWallMat);
+    topWallMod.position = new THREE.Vector3(0, scale, 0);
+    topWallMod.scale = new THREE.Vector3(scale, 0.01 * scale, scale);
+    scene.add(topWallMod);
+
     // back wall
     let backWallMat: wt.Material = new wt.Material();
     backWallMat.baseColor = new THREE.Vector3(1, 1, 1);
-    backWallMat.roughness = 1.0;
-    backWallMat.metallic = 0.0;
+    backWallMat.roughness = 0.75;
+    backWallMat.metallic = 0.25;
     let backWallMod: wt.MeshModel = new wt.MeshModel(cubeMesh, backWallMat);
     backWallMod.position = new THREE.Vector3(0, 0.5 * scale, -0.5 * scale);
     backWallMod.scale = new THREE.Vector3(scale, scale, 0.01 * scale);
     scene.add(backWallMod);
+
+    // light
+    let lightMat: wt.Material = new wt.Material();
+    lightMat.roughness = 1;
+    lightMat.metallic = 0;
+    lightMat.baseColor = new THREE.Vector3(1, 1, 1);
+    lightMat.emissiveColor = new THREE.Vector3(20,20,20);
+    let lightMod: wt.MeshModel = new wt.MeshModel(cubeMesh, lightMat);
+    lightMod.position = new THREE.Vector3(0, scale - 0.005, 0);
+    lightMod.scale = new THREE.Vector3(scale * 0.3, 0.01 * scale, scale * 0.3);
+    scene.add(lightMod);
 
     return scene;
 }
