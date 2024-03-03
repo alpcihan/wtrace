@@ -138,74 +138,6 @@ export async function createBoxScene(): Promise<wt.Scene> {
 export async function createCornellBoxSpotScene(): Promise<wt.Scene> {
     let scene: wt.Scene = new wt.Scene();
 
-    // load the cube model (TODO: make async)
-    let mesh: wt.Mesh | undefined = await wt.MeshLoader.load("assets/cube.obj");
-    if (mesh === undefined) return scene;
-
-    // create the scene manually
-    const scale: number = 5;
-
-    // bottom wall
-    let bottomWallMat: wt.Material = new wt.Material();
-    bottomWallMat.baseColor = new THREE.Vector3(1, 1, 1);
-    bottomWallMat.roughness = 0.25;
-    bottomWallMat.metallic = 0.75;
-    let bottomWallMod: wt.MeshModel = new wt.MeshModel(mesh, bottomWallMat);
-    bottomWallMod.position = new THREE.Vector3(0, 0, 0);
-    bottomWallMod.scale = new THREE.Vector3(scale, 0.01 * scale, scale);
-    scene.add(bottomWallMod);
-
-    // right wall
-    let rightWallMat: wt.Material = new wt.Material();
-    rightWallMat.baseColor = new THREE.Vector3(0, 1, 0);
-    rightWallMat.roughness = 0.75;
-    rightWallMat.metallic = 0.25;
-    let rightWallMod: wt.MeshModel = new wt.MeshModel(mesh, rightWallMat);
-    rightWallMod.position = new THREE.Vector3(0.5 * scale, 0.5 * scale, 0);
-    rightWallMod.scale = new THREE.Vector3(0.01 * scale, scale, scale);
-    scene.add(rightWallMod);
-
-    // left wall
-    let leftWallMat: wt.Material = new wt.Material();
-    leftWallMat.baseColor = new THREE.Vector3(1, 0, 0);
-    leftWallMat.roughness = 0.75;
-    leftWallMat.metallic = 0.25;
-    let leftWallMod: wt.MeshModel = new wt.MeshModel(mesh, leftWallMat);
-    leftWallMod.position = new THREE.Vector3(-0.5 * scale, 0.5 * scale, 0);
-    leftWallMod.scale = new THREE.Vector3(0.01 * scale, scale, scale);
-    scene.add(leftWallMod);
-
-    // top wall
-    let topWallMat: wt.Material = new wt.Material();
-    topWallMat.baseColor = new THREE.Vector3(1, 1, 1);
-    topWallMat.roughness = 0.75;
-    topWallMat.metallic = 0.25;
-    let topWallMod: wt.MeshModel = new wt.MeshModel(mesh, topWallMat);
-    topWallMod.position = new THREE.Vector3(0, scale, 0);
-    topWallMod.scale = new THREE.Vector3(scale, 0.01 * scale, scale);
-    scene.add(topWallMod);
-
-    // back wall
-    let backWallMat: wt.Material = new wt.Material();
-    backWallMat.baseColor = new THREE.Vector3(1, 1, 1);
-    backWallMat.roughness = 0.75;
-    backWallMat.metallic = 0.25;
-    let backWallMod: wt.MeshModel = new wt.MeshModel(mesh, backWallMat);
-    backWallMod.position = new THREE.Vector3(0, 0.5 * scale, -0.5 * scale);
-    backWallMod.scale = new THREE.Vector3(scale, scale, 0.01 * scale);
-    scene.add(backWallMod);
-
-    // light
-    let lightMat: wt.Material = new wt.Material();
-    lightMat.roughness = 1;
-    lightMat.metallic = 0;
-    lightMat.baseColor = new THREE.Vector3(1, 1, 1);
-    lightMat.emissiveColor = new THREE.Vector3(20,20,20);
-    let lightMod: wt.MeshModel = new wt.MeshModel(mesh, lightMat);
-    lightMod.position = new THREE.Vector3(0, scale - 0.005, 0);
-    lightMod.scale = new THREE.Vector3(scale * 0.3, 0.01 * scale, scale * 0.3);
-    scene.add(lightMod);
-
     // load the models (TODO: make async)
     let objmesh: wt.Mesh | undefined = await wt.MeshLoader.load("assets/spot_triangulated.obj");
     let albedoTexture = await wt.TextureLoader.load("assets/spot_texture.png");
@@ -213,8 +145,10 @@ export async function createCornellBoxSpotScene(): Promise<wt.Scene> {
     if (objmesh === undefined) return scene;
     // material
     let material: wt.Material = new wt.Material(albedoTexture);
+
     material.baseColor = new THREE.Vector3(-1.0,-1.0,-1.0); //TODO: If there is a related texture loaded make color value -1
-    material.emissiveColor = new THREE.Vector3(0,0,0);
+    material.roughness = 1.0;
+    material.metallic = 0.0;
     
     // model
     let model: wt.MeshModel = new wt.MeshModel(objmesh, material);
@@ -224,6 +158,52 @@ export async function createCornellBoxSpotScene(): Promise<wt.Scene> {
 
     scene.add(model);
 
+    // load the cube model (TODO: make async)
+    let cubeMesh: wt.Mesh | undefined = await wt.MeshLoader.load("assets/cube.obj");
+    if (cubeMesh === undefined) return scene;
+
+    // create the scene manually
+    const scale: number = 5;
+
+    // bottom wall
+    let bottomWallMat: wt.Material = new wt.Material();
+    bottomWallMat.baseColor = new THREE.Vector3(1, 1, 1);
+    bottomWallMat.roughness = 1.0;
+    bottomWallMat.metallic = 0.0;
+    let bottomWallMod: wt.MeshModel = new wt.MeshModel(cubeMesh, bottomWallMat);
+    bottomWallMod.position = new THREE.Vector3(0, 0, 0);
+    bottomWallMod.scale = new THREE.Vector3(scale, 0.01 * scale, scale);
+    scene.add(bottomWallMod);
+
+    // right wall
+    let rightWallMat: wt.Material = new wt.Material();
+    rightWallMat.baseColor = new THREE.Vector3(0, 1, 0);
+    rightWallMat.roughness = 1.0;
+    rightWallMat.metallic = 0.0;
+    let rightWallMod: wt.MeshModel = new wt.MeshModel(cubeMesh, rightWallMat);
+    rightWallMod.position = new THREE.Vector3(0.5 * scale, 0.5 * scale, 0);
+    rightWallMod.scale = new THREE.Vector3(0.01 * scale, scale, scale);
+    scene.add(rightWallMod);
+
+    // left wall
+    let leftWallMat: wt.Material = new wt.Material();
+    leftWallMat.baseColor = new THREE.Vector3(1, 0, 0);
+    leftWallMat.roughness = 1.0;
+    leftWallMat.metallic = 0.0;
+    let leftWallMod: wt.MeshModel = new wt.MeshModel(cubeMesh, leftWallMat);
+    leftWallMod.position = new THREE.Vector3(-0.5 * scale, 0.5 * scale, 0);
+    leftWallMod.scale = new THREE.Vector3(0.01 * scale, scale, scale);
+    scene.add(leftWallMod);
+
+    // back wall
+    let backWallMat: wt.Material = new wt.Material();
+    backWallMat.baseColor = new THREE.Vector3(1, 1, 1);
+    backWallMat.roughness = 1.0;
+    backWallMat.metallic = 0.0;
+    let backWallMod: wt.MeshModel = new wt.MeshModel(cubeMesh, backWallMat);
+    backWallMod.position = new THREE.Vector3(0, 0.5 * scale, -0.5 * scale);
+    backWallMod.scale = new THREE.Vector3(scale, scale, 0.01 * scale);
+    scene.add(backWallMod);
 
     return scene;
 }
@@ -242,7 +222,8 @@ export async function createSpotTexturedScene(): Promise<wt.Scene> {
     let material: wt.Material = new wt.Material(albedoTexture);
     material.baseColor = new THREE.Vector3(-1.0,-1.0,-1.0); //TODO: If there is a related texture loaded make color value -1
     material.emissiveColor = new THREE.Vector3(0,0,0);
-    
+    material.metallic = 1.0;
+    material.roughness = 0.0;
     // model
     let model: wt.MeshModel = new wt.MeshModel(mesh, material);
     model.position = new THREE.Vector3(0, 0, 0);
