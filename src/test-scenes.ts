@@ -255,3 +255,17 @@ export async function createSpotTexturedScene(): Promise<wt.Scene> {
     
     return scene;
 }
+
+export async function createGLTFBox(): Promise<wt.Scene> {
+
+    let scene = await wt.WTGLTFLoader.load("assets/Box.glb");
+    return scene;
+
+}
+
+export async function createGLTFDamagedHelmet(): Promise<wt.Scene> {
+
+    let scene = await wt.WTGLTFLoader.load("assets/DamagedHelmet.glb");
+    return scene;
+
+}

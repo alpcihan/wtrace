@@ -65,7 +65,11 @@ class SceneDataManager {
                 // add points
                 this.m_points = new Float32Array([...this.m_points, ...model.mesh.points]);
                 if(model.mesh.uvs !== undefined) this.m_uvs = new Float32Array([...this.m_uvs,...model.mesh.uvs]);
-
+                else{
+                    this.m_uvs = new Float32Array(1);
+                    this.m_uvs.set([0]);
+                }
+                
                 // add blas
                 const blas: BLAS = new BLAS(model.mesh.points);
                 this.m_blasArray.push(blas);
