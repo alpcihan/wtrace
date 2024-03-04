@@ -40,44 +40,65 @@ class WTGLTFLoader{
         return this._convertToWTScene(gltf.scene);
     }
 
+    private static _rearrangePoints(points: Float32Array, indices: Uint32Array){
+        let newPoints = new Float32Array(indices.length * 3);
+
+        for (let i = 0; i < indices.length; i++) {
+            newPoints[i * 3] = points[indices[i] * 3];
+            newPoints[i * 3 + 1] = points[indices[i] * 3 + 1];
+            newPoints[i * 3 + 2] = points[indices[i] * 3 + 2];
+        }
+    
+        return newPoints;
+    }
+
+    private static _rearrangeUVs(uvs: Float32Array, indices: Uint32Array){
+        let newUVs = new Float32Array(indices.length * 2);
+
+        for (let i = 0; i < indices.length; i++) {
+            newUVs[i * 2] = uvs[indices[i] * 2];
+            newUVs[i * 2 + 1] = 1 - (uvs[indices[i] * 2 + 1]); //Flip Y
+        }
+        return newUVs;
+    }
+
     private static _convertToWTScene(gltfScene: THREE.Group){
 
         let scene: Scene = new Scene();
+        let texture: WTTexture | undefined = undefined;
+
         gltfScene.traverse((object: any) => {
             if (object.isMesh) {
-                let vertices = object.geometry.attributes.position.array;
-                let indices = object.geometry.index.array;
-                let rearrangedVertices = new Float32Array(indices.length * 3);
-    
-                for (let i = 0; i < indices.length; i++) {
-                    rearrangedVertices[i * 3] = vertices[indices[i] * 3];
-                    rearrangedVertices[i * 3 + 1] = vertices[indices[i] * 3 + 1];
-                    rearrangedVertices[i * 3 + 2] = vertices[indices[i] * 3 + 2];
-                }
-    
-                const mesh = new Mesh();
-                mesh.uvs = undefined;
-                mesh.points = rearrangedVertices;
-                if (object.geometry.attributes.uv !== undefined) {
-                    let uvs = object.geometry.attributes.uv.array;
-                    let rearrangedUvs = new Float32Array(indices.length * 2);
-                    for (let i = 0; i < indices.length; i++) {
-                        rearrangedUvs[i * 2] = uvs[indices[i] * 2];
-                        rearrangedUvs[i * 2 + 1] = uvs[indices[i] * 2 + 1];
-                    }
-                    mesh.uvs = rearrangedUvs;
-                }
+
+                let initialPoints = new Float32Array(object.geometry.attributes.position.array);
+                let indices = new Uint32Array(object.geometry.index.array);
+
+                let mesh = new Mesh();
+                mesh.points = this._rearrangePoints(initialPoints,indices);
+                mesh.uvs = object.geometry.attributes.uv !== undefined ? this._rearrangeUVs(new Float32Array(object.geometry.attributes.uv.array), indices) : undefined;
                 
-                let material = new Material();
-                //if (object.material.map !== null) {
-                //    const texture = new WTTexture();
-                //    texture.data = object.material.map.image;
-                //    material = new Material(texture);
-                //} else {
-                //    material = new Material();
-                //}
+                let material: Material;
+                let threeMat: THREE.MeshBasicMaterial;
+                if (Array.isArray(object.material)) {
+                    threeMat = object.material[0] as THREE.MeshBasicMaterial;
+
+                } else {
+                    threeMat = object.material as THREE.MeshBasicMaterial;
+                }
+                if(texture === undefined && threeMat.map!==null){
+                    const texture = new WTTexture();
+                    texture.data = threeMat.map.image;
+                    material = new Material(texture);
+                    material.baseColor = new THREE.Vector3(-1,-1,-1);
+                }
+                else{
+                    material = new Material();
+                }
     
                 const model = new MeshModel(mesh, material);
+                model.position = object.position;
+                model.euler = object.rotation;
+                model.scale = object.scale;
                 scene.add(model);
             }
         });
@@ -85,7 +106,6 @@ class WTGLTFLoader{
         return scene;
     }
 
-    private static m_gltfScene: THREE.Scene;
     private static m_loader: GLTFLoader;
     private constructor() {}
 }

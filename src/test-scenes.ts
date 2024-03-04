@@ -256,9 +256,9 @@ export async function createSpotTexturedScene(): Promise<wt.Scene> {
     return scene;
 }
 
-export async function createGLTFBox(): Promise<wt.Scene> {
+export async function createGLTFAvocado(): Promise<wt.Scene> {
 
-    let scene = await wt.WTGLTFLoader.load("assets/Box.glb");
+    let scene = await wt.WTGLTFLoader.load("assets/Avocado.glb");
     return scene;
 
 }
