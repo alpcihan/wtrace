@@ -75,8 +75,8 @@ class WTGLTFLoader{
 
                 let mesh = new Mesh();
                 mesh.points = this._rearrangePoints(initialPoints,indices);
-                mesh.uvs = object.geometry.attributes.uv !== undefined ? this._rearrangeUVs(new Float32Array(object.geometry.attributes.uv.array), indices) : undefined;
-                
+                mesh.uvs = object.geometry.attributes.uv !== undefined ? this._rearrangeUVs(object.geometry.attributes.uv.array, indices) : undefined;
+
                 let material: Material;
                 let threeMat: THREE.MeshBasicMaterial;
                 if (Array.isArray(object.material)) {

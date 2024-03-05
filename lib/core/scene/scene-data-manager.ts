@@ -219,7 +219,7 @@ class SceneDataManager {
             this.m_texture = IGPU.get().createTexture(texDescriptor);
     
             IGPU.get().queue.copyExternalImageToTexture(
-                {source: tex.data , flipY: true},
+                {source: tex.data , flipY: false}, // TODO: Only flip for GLTF (Make it parameterized)
                 {texture: this.m_texture},
                 texDescriptor.size
             );

@@ -25,6 +25,8 @@ const main = async () => {
     await wt.Application.init(canvas);
 
     let scene: wt.Scene = await test.createGLTFDamagedHelmet();
+    //let scene: wt.Scene = await test.createCornellBoxSpotScene();
+    
 
     // load the scene
     wt.SceneManager.loadScene(scene);

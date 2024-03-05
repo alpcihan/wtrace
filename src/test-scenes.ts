@@ -263,6 +263,14 @@ export async function createGLTFAvocado(): Promise<wt.Scene> {
 
 }
 
+export async function createGLTFBoxTextured(): Promise<wt.Scene> {
+
+    let scene = await wt.WTGLTFLoader.load("assets/BoxTextured.glb");
+    return scene;
+
+}
+
+
 export async function createGLTFDamagedHelmet(): Promise<wt.Scene> {
 
     let scene = await wt.WTGLTFLoader.load("assets/DamagedHelmet.glb");
