@@ -73,8 +73,7 @@ class PathTracer {
         throw new Error("Function is not implemented.");
     }
 
-    // device/context objects
-    private static m_device: GPUDevice;
+    // canvas
     private m_canvas: HTMLCanvasElement;
     private m_context: GPUCanvasContext;
 
@@ -199,8 +198,16 @@ class PathTracer {
                         },
                     },
                     {
-                        // Uv coordinates
+                        // UV coordinates
                         binding: 8,
+                        visibility: GPUShaderStage.COMPUTE,
+                        buffer: {
+                            type: "read-only-storage",
+                        },
+                    },
+                    {
+                        // normals
+                        binding: 9,
                         visibility: GPUShaderStage.COMPUTE,
                         buffer: {
                             type: "read-only-storage",
@@ -247,6 +254,10 @@ class PathTracer {
                     {
                         binding: 8,
                         resource: { buffer: SceneManager.scene.sceneDataManager.uvBuffer},
+                    },
+                    {
+                        binding: 9,
+                        resource: { buffer: SceneManager.scene.sceneDataManager.normalBuffer},
                     },
                 ],
             });

@@ -39,29 +39,19 @@ class WTGLTFLoader {
         return this._gltfSceneToMeshModels(gltf.scene);
     }
 
-    private static _rearrangePoints(points: Float32Array, indices: Uint32Array) {
-        let newPoints = new Float32Array(indices.length * 3);
-
-        for (let i = 0; i < indices.length; i++) {
-            newPoints[i * 3] = points[indices[i] * 3];
-            newPoints[i * 3 + 1] = points[indices[i] * 3 + 1];
-            newPoints[i * 3 + 2] = points[indices[i] * 3 + 2];
-        }
-
-        return newPoints;
-    }
-
-    private static _populateF32ArrPerIndex(data: Float32Array | undefined, indices: Uint32Array, dataSize: number): Float32Array | undefined {
-        if(data === undefined) return undefined; 
-
+    private static _populateF32ArrPerIndex(
+        data: Float32Array,
+        indices: Uint32Array,
+        dataSize: number
+    ): Float32Array {
         let populated = new Float32Array(indices.length * dataSize);
 
         for (let i = 0; i < indices.length; i++) {
-            for(let j = 0; j < dataSize; j++) {
+            for (let j = 0; j < dataSize; j++) {
                 populated[i * dataSize + j] = data[indices[i] * dataSize + j];
             }
         }
-        
+
         return populated;
     }
 
@@ -73,29 +63,44 @@ class WTGLTFLoader {
 
             let initialPoints = new Float32Array(object.geometry.attributes.position.array);
             let indices = new Uint32Array(object.geometry.index.array);
-            
+
             // create mesh
             let mesh = new Mesh();
-            mesh.points = this._rearrangePoints(initialPoints, indices);
-            mesh.uvs = this._populateF32ArrPerIndex(object.geometry.attributes.uv?.array, indices, 2);
-            mesh.normals = this._populateF32ArrPerIndex(object.geometry.attributes.normal?.array, indices, 3); 
-            
+
+            mesh.points = this._populateF32ArrPerIndex(initialPoints, indices, 3);
+
+            if (object.geometry.attributes.normal)
+                mesh.normals = this._populateF32ArrPerIndex(
+                    object.geometry.attributes.normal.array,
+                    indices,
+                    3
+                );
+
+            if (object.geometry.attributes.uv)
+                mesh.uvs = this._populateF32ArrPerIndex(
+                    object.geometry.attributes.uv.array,
+                    indices,
+                    2
+                );
+
             // create material
-            let material: Material = new Material();;
-            let threeMat = (Array.isArray(object.material) ? object.material[0] : object.material) as THREE.MeshBasicMaterial;
-            
+            let material: Material = new Material();
+            let threeMat = (
+                Array.isArray(object.material) ? object.material[0] : object.material
+            ) as THREE.MeshBasicMaterial;
+
             // load material textures
             if (threeMat.map !== null) {
-                material.albedoTexture = new Texture(threeMat.map.image);;
+                material.albedoTexture = new Texture(threeMat.map.image);
                 material.baseColor = new THREE.Vector3(-1, -1, -1);
             }
-            
+
             // create model
             const model = new MeshModel(mesh, material);
             model.position = object.position;
             model.euler = object.rotation;
             model.scale = object.scale;
-            
+
             meshModels.push(model);
         });
 

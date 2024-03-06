@@ -13,7 +13,6 @@ class MeshModel extends Object3D {
     public override type: Object3DType = Object3DType.MeshModel;
 
     // getters
-
     public get mesh(): Readonly<Mesh> {
         return this.m_mesh;
     }
