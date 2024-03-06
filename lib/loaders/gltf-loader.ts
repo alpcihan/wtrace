@@ -66,8 +66,6 @@ class WTGLTFLoader {
     private static _gltfSceneToMeshModels(gltfScene: THREE.Group): MeshModel[] {
         let meshModels: MeshModel[] = [];
 
-        let texture: Texture | undefined = undefined;
-
         gltfScene.traverse((object: any) => {
             if (!object.isMesh) return;
 
@@ -82,14 +80,14 @@ class WTGLTFLoader {
             // create material
             let material: Material = new Material();;
             let threeMat = (Array.isArray(object.material) ? object.material[0] : object.material) as THREE.MeshBasicMaterial;
- 
+            
+            // load material textures
             if (threeMat.map !== null) {
-                const texture = new Texture();
-                texture.data = threeMat.map.image;
-                material.albedoTexture = texture;
+                material.albedoTexture = new Texture(threeMat.map.image);;
                 material.baseColor = new THREE.Vector3(-1, -1, -1);
             }
-
+            
+            // create model
             const model = new MeshModel(mesh, material);
             model.position = object.position;
             model.euler = object.rotation;
