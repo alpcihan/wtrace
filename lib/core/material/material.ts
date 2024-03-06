@@ -7,7 +7,7 @@ export const MATERIAL_BYTE_SIZE: number = 3 * 4 + // base color (float3)
                                           1 * 4;  // metallic
 
 class Material {
-    public constructor(albedoTexture?: WTTexture) {
+    public constructor(albedoTexture?: WTTexture | undefined) {
         this.id = Material._id++;
 
         this.albedoTexture = albedoTexture;

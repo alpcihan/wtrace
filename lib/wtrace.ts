@@ -5,6 +5,7 @@ export { CameraController } from "./core/camera/camera-controller";
 export { OBJLoader } from "./loaders/obj-loader";
 export { MeshLoader } from "./loaders/mesh-loader";
 export { TextureLoader } from "./loaders/texture-loader";
+export { WTGLTFLoader } from "./loaders/gltf-loader";
 export { MeshModel } from "./core/objects/model/mesh-model";
 export { Mesh } from "./core/objects/model/mesh";
 export { Material } from "./core/material/material"
