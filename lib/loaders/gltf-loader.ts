@@ -1,10 +1,9 @@
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader";
-import { Scene } from "../wtrace";
 import { MeshModel } from "../wtrace";
 import { Mesh } from "../wtrace";
 import { Material } from "../wtrace";
-import { WTTexture } from "../wtrace";
+import { Texture } from "../wtrace";
 import * as THREE from "three";
 
 class WTGLTFLoader {
@@ -52,7 +51,9 @@ class WTGLTFLoader {
         return newPoints;
     }
 
-    private static _rearrangeUVs(uvs: Float32Array, indices: Uint32Array) {
+    private static _rearrangeUVs(uvs: Float32Array | undefined, indices: Uint32Array): Float32Array | undefined {
+        if(uvs === undefined) return undefined; 
+
         let newUVs = new Float32Array(indices.length * 2);
 
         for (let i = 0; i < indices.length; i++) {
@@ -65,35 +66,28 @@ class WTGLTFLoader {
     private static _gltfSceneToMeshModels(gltfScene: THREE.Group): MeshModel[] {
         let meshModels: MeshModel[] = [];
 
-        let texture: WTTexture | undefined = undefined;
+        let texture: Texture | undefined = undefined;
 
         gltfScene.traverse((object: any) => {
             if (!object.isMesh) return;
 
             let initialPoints = new Float32Array(object.geometry.attributes.position.array);
             let indices = new Uint32Array(object.geometry.index.array);
-
+            
+            // create mesh
             let mesh = new Mesh();
             mesh.points = this._rearrangePoints(initialPoints, indices);
-            mesh.uvs =
-                object.geometry.attributes.uv !== undefined
-                    ? this._rearrangeUVs(object.geometry.attributes.uv.array, indices)
-                    : undefined;
-
-            let material: Material;
-            let threeMat: THREE.MeshBasicMaterial;
-            if (Array.isArray(object.material)) {
-                threeMat = object.material[0] as THREE.MeshBasicMaterial;
-            } else {
-                threeMat = object.material as THREE.MeshBasicMaterial;
-            }
-            if (texture === undefined && threeMat.map !== null) {
-                const texture = new WTTexture();
+            mesh.uvs = this._rearrangeUVs(object.geometry.attributes.uv?.array, indices);
+            
+            // create material
+            let material: Material = new Material();;
+            let threeMat = (Array.isArray(object.material) ? object.material[0] : object.material) as THREE.MeshBasicMaterial;
+ 
+            if (threeMat.map !== null) {
+                const texture = new Texture();
                 texture.data = threeMat.map.image;
-                material = new Material(texture);
+                material.albedoTexture = texture;
                 material.baseColor = new THREE.Vector3(-1, -1, -1);
-            } else {
-                material = new Material();
             }
 
             const model = new MeshModel(mesh, material);

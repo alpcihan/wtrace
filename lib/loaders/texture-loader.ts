@@ -1,9 +1,9 @@
-import { WTTexture } from "../wtrace";
+import { Texture } from "../wtrace";
 
 class TextureLoader {
 
-    public static async load(path: string): Promise< WTTexture | undefined > {
-        let texture = new WTTexture();
+    public static async load(path: string): Promise<Texture | undefined > {
+        let texture = new Texture();
 
         const response: Response = await fetch(path);
         

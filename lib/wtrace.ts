@@ -9,6 +9,6 @@ export { WTGLTFLoader } from "./loaders/gltf-loader";
 export { MeshModel } from "./core/objects/model/mesh-model";
 export { Mesh } from "./core/objects/model/mesh";
 export { Material } from "./core/material/material"
-export { WTTexture } from "./core/material/wt-Texture";
+export { Texture } from "./core/material/texture";
 export { Scene } from "./core/scene/scene";
 export { SceneManager } from "./core/scene/scene-manager";
