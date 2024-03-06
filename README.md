@@ -1,13 +1,11 @@
 # WTrace
 
-Experimental WebGPU path tracer (WIP)
+WebGPU path tracer (WIP)
 
-Description will be added soon.
+Description and screenshots will be added soon.
 
-<p float="left">
-  <img src="https://github.com/alpcihan/wtrace/assets/53824261/2af37f8b-ac23-468d-a2bf-aa631f4c4faa" width = "400" height = "400" />
-  <img src="https://github.com/alpcihan/wtrace/assets/53824261/9c965df6-bd9e-4d4d-a723-b88eb5c4db8b" width = "400" height = "400" /> 
-</p>
+<img width="505" alt="Screenshot 2024-03-07 at 00 11 19" src="https://github.com/alpcihan/wtrace/assets/37274614/52d9d862-20ff-4149-8d4b-7aeb3bd8d96e">
+
 
 ## Features
 
