@@ -211,7 +211,6 @@ fn intersectBVH(r: Ray, instanceIdx: u32, hit_info: ptr<function, HitInfo>){
 
                     let res: vec3f = hitTriangle(ray, v0, v1, v2);
                     if(res.x < (*hit_info).t && res.x > 0.0) {
-                        
                         // record hit distance
                         (*hit_info).t = res.x;
 
@@ -219,8 +218,8 @@ fn intersectBVH(r: Ray, instanceIdx: u32, hit_info: ptr<function, HitInfo>){
                         let v0_n: vec3f = vec3f(normals[idx*9+0], normals[idx*9+1], normals[idx*9+2]);
                         let v1_n: vec3f = vec3f(normals[idx*9+3], normals[idx*9+4], normals[idx*9+5]);
                         let v2_n: vec3f = vec3f(normals[idx*9+6], normals[idx*9+7], normals[idx*9+8]);
-                        let n_os: vec3f = normalize((1 - res.y - res.z) * v0_n + res.y * v1_n + res.z * v2_n);
-                        (*hit_info).normal = (instance.transform * vec4f(n_os, 0)).xyz;
+                        let n_os: vec3f = (1 - res.y - res.z) * v0_n + res.y * v1_n + res.z * v2_n;
+                        (*hit_info).normal = normalize((instance.transform * vec4f(n_os, 0)).xyz);
 
                         // record hit material
                         (*hit_info).material = materials[instance.materialIdx];

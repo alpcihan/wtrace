@@ -142,7 +142,7 @@ export async function createGLTFDamagedHelmet(): Promise<wt.Scene> {
     // load the gltf model
     const meshModels: wt.MeshModel[] = await wt.WTGLTFLoader.load("assets/DamagedHelmet.glb");
     meshModels.forEach(meshModel => scene.add(meshModel));
-    /*
+    
     // load the cube model (TODO: make async)
     let cubeMesh: wt.Mesh | undefined = await wt.MeshLoader.load("assets/cube.obj");
     if (cubeMesh === undefined) return scene;
@@ -159,7 +159,7 @@ export async function createGLTFDamagedHelmet(): Promise<wt.Scene> {
     bottomWallMod.position = new THREE.Vector3(0, -1, 0);
     bottomWallMod.scale = new THREE.Vector3(scale, 0.01 * scale, scale);
     scene.add(bottomWallMod);
-
+    
     // right wall
     let rightWallMat: wt.Material = new wt.Material();
     rightWallMat.baseColor = new THREE.Vector3(0, 1, 0);
@@ -210,6 +210,6 @@ export async function createGLTFDamagedHelmet(): Promise<wt.Scene> {
     lightMod.position = new THREE.Vector3(0, scale - 0.005-1, 0);
     lightMod.scale = new THREE.Vector3(scale * 0.3, 0.01 * scale, scale * 0.3);
     scene.add(lightMod);
-*/
+
     return scene;
 }
