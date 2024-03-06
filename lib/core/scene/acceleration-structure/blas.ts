@@ -116,7 +116,7 @@ class BLAS {
         this._updateAABBs(this.m_rootNodeIdx);
         this._subdivideNode(this.m_rootNodeIdx);
 
-        console.log("BLAS build time: ", (performance.now() - time)*0.001, "seconds");
+        // console.log("BLAS build time: ", (performance.now() - time)*0.001, "seconds");
 
         this.m_nodes.splice(this.m_nodeCount); // only keep the used nodes
     }
@@ -273,7 +273,8 @@ class BLAS {
             return;
         }
         
-        console.log("bestAxis: ", bestAxis, "bestPos: ", bestPos, "bestCost: ", bestCost, "\n");
+        // console.log("bestAxis: ", bestAxis, "bestPos: ", bestPos, "bestCost: ", bestCost, "\n");
+        
         let axis = bestAxis;
         let splitPos = bestPos;
 
