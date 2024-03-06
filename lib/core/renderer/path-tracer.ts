@@ -151,15 +151,15 @@ class PathTracer {
                         },
                     },
                     {
-                        // render image (as storage buffer)
+                        // normals
                         binding: 2,
                         visibility: GPUShaderStage.COMPUTE,
                         buffer: {
-                            type: "storage",
+                            type: "read-only-storage",
                         },
                     },
                     {
-                        // triangle indices
+                        // uv
                         binding: 3,
                         visibility: GPUShaderStage.COMPUTE,
                         buffer: {
@@ -167,15 +167,15 @@ class PathTracer {
                         },
                     },
                     {
-                        // blas nodes
+                        // render image (as storage buffer)
                         binding: 4,
                         visibility: GPUShaderStage.COMPUTE,
                         buffer: {
-                            type: "read-only-storage",
+                            type: "storage",
                         },
                     },
                     {
-                        // blas instances
+                        // triangle indices
                         binding: 5,
                         visibility: GPUShaderStage.COMPUTE,
                         buffer: {
@@ -183,7 +183,7 @@ class PathTracer {
                         },
                     },
                     {
-                        // materials
+                        // blas nodes
                         binding: 6,
                         visibility: GPUShaderStage.COMPUTE,
                         buffer: {
@@ -191,14 +191,15 @@ class PathTracer {
                         },
                     },
                     {
-                        // Texture
-                        binding : 7,
+                        // blas instances
+                        binding: 7,
                         visibility: GPUShaderStage.COMPUTE,
-                        texture: {
+                        buffer: {
+                            type: "read-only-storage",
                         },
                     },
                     {
-                        // UV coordinates
+                        // materials
                         binding: 8,
                         visibility: GPUShaderStage.COMPUTE,
                         buffer: {
@@ -206,13 +207,13 @@ class PathTracer {
                         },
                     },
                     {
-                        // normals
-                        binding: 9,
+                        // Texture
+                        binding : 9,
                         visibility: GPUShaderStage.COMPUTE,
-                        buffer: {
-                            type: "read-only-storage",
+                        texture: {
                         },
                     },
+  
                 ],
             });
 
@@ -229,36 +230,37 @@ class PathTracer {
                     },
                     {
                         binding: 2,
-                        resource: { buffer: this.m_accumulationBuffer },
+                        resource: { buffer: SceneManager.scene.sceneDataManager.normalBuffer},
                     },
                     {
                         binding: 3,
-                        resource: { buffer: SceneManager.scene.sceneDataManager.triangleIdxBuffer },
-                    },
-                    {
-                        binding: 4,
-                        resource: { buffer: SceneManager.scene.sceneDataManager.blasBuffer },
-                    },
-                    {
-                        binding: 5,
-                        resource: { buffer: SceneManager.scene.sceneDataManager.blasInstanceBuffer },
-                    },
-                    {
-                        binding: 6,
-                        resource: { buffer: SceneManager.scene.sceneDataManager.materialBuffer },
-                    },
-                    {
-                        binding: 7,
-                        resource: SceneManager.scene.sceneDataManager.textureView,
-                    },
-                    {
-                        binding: 8,
                         resource: { buffer: SceneManager.scene.sceneDataManager.uvBuffer},
                     },
                     {
-                        binding: 9,
-                        resource: { buffer: SceneManager.scene.sceneDataManager.normalBuffer},
+                        binding: 4,
+                        resource: { buffer: this.m_accumulationBuffer },
                     },
+                    {
+                        binding: 5,
+                        resource: { buffer: SceneManager.scene.sceneDataManager.triangleIdxBuffer },
+                    },
+                    {
+                        binding: 6,
+                        resource: { buffer: SceneManager.scene.sceneDataManager.blasBuffer },
+                    },
+                    {
+                        binding: 7,
+                        resource: { buffer: SceneManager.scene.sceneDataManager.blasInstanceBuffer },
+                    },
+                    {
+                        binding: 8,
+                        resource: { buffer: SceneManager.scene.sceneDataManager.materialBuffer },
+                    },
+                    {
+                        binding: 9,
+                        resource: SceneManager.scene.sceneDataManager.textureView,
+                    },
+              
                 ],
             });
             const pathTracingPipelineLayout = IGPU.get().createPipelineLayout({
