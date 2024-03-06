@@ -4,7 +4,8 @@ Experimental WebGPU path tracer (WIP)
 
 Description will be added soon.
 
-![Screenshot 2024-02-20 at 21 00 15](https://github.com/zhaijialong/RealEngine/assets/37274614/84955429-a82a-4403-bb3d-94c1578cdac8)
+![DamagedHelmet](https://github.com/alpcihan/wtrace/assets/53824261/2af37f8b-ac23-468d-a2bf-aa631f4c4faa)
+![Spot](https://github.com/alpcihan/wtrace/assets/53824261/9c965df6-bd9e-4d4d-a723-b88eb5c4db8b)
 
 
 ## Features
@@ -16,8 +17,8 @@ Description will be added soon.
 - [x] OBJ support
 - [x] Material system
 - [x] Scene system 
+- [x] GLTF support
 - [ ] Multi importance sampling
-- [ ] GLTF support
 - [ ] Dielectrics
 - [ ] Caustics
 - [ ] Denoising
