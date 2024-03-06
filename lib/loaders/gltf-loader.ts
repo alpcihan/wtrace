@@ -51,16 +51,18 @@ class WTGLTFLoader {
         return newPoints;
     }
 
-    private static _rearrangeUVs(uvs: Float32Array | undefined, indices: Uint32Array): Float32Array | undefined {
-        if(uvs === undefined) return undefined; 
+    private static _populateF32ArrPerIndex(data: Float32Array | undefined, indices: Uint32Array, dataSize: number): Float32Array | undefined {
+        if(data === undefined) return undefined; 
 
-        let newUVs = new Float32Array(indices.length * 2);
+        let populated = new Float32Array(indices.length * dataSize);
 
         for (let i = 0; i < indices.length; i++) {
-            newUVs[i * 2] = uvs[indices[i] * 2];
-            newUVs[i * 2 + 1] = (uvs[indices[i] * 2 + 1]);
+            for(let j = 0; j < dataSize; j++) {
+                populated[i * dataSize + j] = data[indices[i] * dataSize + j];
+            }
         }
-        return newUVs;
+        
+        return populated;
     }
 
     private static _gltfSceneToMeshModels(gltfScene: THREE.Group): MeshModel[] {
@@ -75,7 +77,8 @@ class WTGLTFLoader {
             // create mesh
             let mesh = new Mesh();
             mesh.points = this._rearrangePoints(initialPoints, indices);
-            mesh.uvs = this._rearrangeUVs(object.geometry.attributes.uv?.array, indices);
+            mesh.uvs = this._populateF32ArrPerIndex(object.geometry.attributes.uv?.array, indices, 2);
+            mesh.normals = this._populateF32ArrPerIndex(object.geometry.attributes.normal?.array, indices, 3); 
             
             // create material
             let material: Material = new Material();;
