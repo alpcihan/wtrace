@@ -58,7 +58,7 @@ class WTGLTFLoader {
 
         for (let i = 0; i < indices.length; i++) {
             newUVs[i * 2] = uvs[indices[i] * 2];
-            newUVs[i * 2 + 1] = 1 - (uvs[indices[i] * 2 + 1] - 1); // Flip Y
+            newUVs[i * 2 + 1] = (uvs[indices[i] * 2 + 1]);
         }
         return newUVs;
     }
