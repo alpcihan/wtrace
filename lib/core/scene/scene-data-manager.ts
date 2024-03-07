@@ -201,8 +201,9 @@ class SceneDataManager {
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
         });
 
-        if(this.m_materials[0].albedoTexture === undefined){
+        IGPU.get().queue.writeBuffer(this.m_materialBuffer, 0, materialArrayByte);
 
+        if(this.m_materials[0].albedoMap === undefined){
             let textureData = new Uint8Array(4);
             textureData.set([255,0,0,255]);
     
@@ -220,7 +221,7 @@ class SceneDataManager {
                 );
         }
         else{
-            let tex = this.m_materials[0].albedoTexture;
+            let tex = this.m_materials[0].albedoMap;
 
             const texDescriptor: GPUTextureDescriptor = {
                 size: [tex.data.width,tex.data.height,1],
@@ -236,8 +237,6 @@ class SceneDataManager {
                 texDescriptor.size
             );
         }
-
-        IGPU.get().queue.writeBuffer(this.m_materialBuffer, 0, materialArrayByte);
     }
 }
 

@@ -91,9 +91,15 @@ class WTGLTFLoader {
 
             // load material textures
             if (threeMat.map !== null) {
-                material.albedoTexture = new Texture(threeMat.map.image);
+                material.albedoMap = new Texture(threeMat.map.image);
                 material.baseColor = new THREE.Vector3(-1, -1, -1);
             }
+
+            //if(threeMat.specularMap !== null) {
+            //    material.specularMap = new Texture(threeMat.specularMap.image);
+            //}
+
+            console.log(threeMat.map);
 
             // create model
             const model = new MeshModel(mesh, material);
