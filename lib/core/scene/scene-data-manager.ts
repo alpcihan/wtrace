@@ -7,8 +7,11 @@ import { BLASInstance, BLAS_INSTANCE_BYTE_SIZE } from "./acceleration-structure/
 class SceneDataManager {
     public constructor() {
         this.m_models = new Array<MeshModel>();
+
         this.m_points = new Float32Array();
+        this.m_normals = new Float32Array();
         this.m_uvs = new Float32Array();
+
         this.m_blasNodeCount = 0;
         this.m_blasArray = new Array<BLAS>();
         this.m_blasInstanceArray = new Array<BLASInstance>();
@@ -21,6 +24,10 @@ class SceneDataManager {
 
     public get vertexBuffer(): Readonly<GPUBuffer> {
         return this.m_vertexBuffer;
+    }
+
+    public get normalBuffer(): Readonly<GPUBuffer> {
+        return this.m_normalBuffer;
     }
 
     public get uvBuffer(): Readonly<GPUBuffer> {
@@ -61,23 +68,20 @@ class SceneDataManager {
             let blasNodeOffset: number = this.m_blasNodeCount;
 
             // add mesh
-            if(!this.m_meshIDtoBlasOffsetMap.has(model.mesh.id)) {
-                // add points
+            if(this.m_meshIDtoBlasOffsetMap.has(model.mesh.id)) { // if the mesh already created -> GET its index
+                blasNodeOffset = this.m_meshIDtoBlasOffsetMap.get(model.mesh.id) as number;
+            } else { // if the mesh is not created -> create and SET its index
+                // add vertex data
                 this.m_points = new Float32Array([...this.m_points, ...model.mesh.points]);
-                if(model.mesh.uvs !== undefined) this.m_uvs = new Float32Array([...this.m_uvs,...model.mesh.uvs]);
-                else{
-                    this.m_uvs = new Float32Array(1);
-                    this.m_uvs.set([0]);
-                }
-                
+                this.m_normals = new Float32Array([...this.m_normals, ...model.mesh.normals]);
+                this.m_uvs = new Float32Array([...this.m_uvs, ...model.mesh.uvs]);
+                                
                 // add blas
                 const blas: BLAS = new BLAS(model.mesh.points);
                 this.m_blasArray.push(blas);
                 this.m_blasNodeCount += blas.nodes.length;
-
+                
                 this.m_meshIDtoBlasOffsetMap.set(model.mesh.id, blasNodeOffset);
-            } else {
-                blasNodeOffset = this.m_meshIDtoBlasOffsetMap.get(model.mesh.id) as number;
             }
 
             // add material
@@ -100,6 +104,7 @@ class SceneDataManager {
 
     private m_points: Float32Array;
     private m_uvs: Float32Array;
+    private m_normals: Float32Array;
 
     private m_models: Array<MeshModel>;
     private m_blasArray: Array<BLAS>;
@@ -111,6 +116,7 @@ class SceneDataManager {
     private m_meshIDtoBlasOffsetMap: Map<number, number>;
 
     private m_vertexBuffer: GPUBuffer;
+    private m_normalBuffer: GPUBuffer;
     private m_uvBuffer: GPUBuffer;
 
     private m_triangleIdxBuffer: GPUBuffer;
@@ -125,13 +131,19 @@ class SceneDataManager {
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
         });
 
+        this.m_normalBuffer = IGPU.get().createBuffer({
+            size: this.m_normals.byteLength,
+            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+        });
+
         this.m_uvBuffer = IGPU.get().createBuffer({
             size: this.m_uvs.byteLength,
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
         });
 
-        IGPU.get().queue.writeBuffer(this.m_uvBuffer, 0, this.m_uvs);
         IGPU.get().queue.writeBuffer(this.m_vertexBuffer, 0, this.m_points);
+        IGPU.get().queue.writeBuffer(this.m_normalBuffer, 0, this.m_normals);
+        IGPU.get().queue.writeBuffer(this.m_uvBuffer, 0, this.m_uvs);
     }
 
     private _updateBLASBuffers(): void {

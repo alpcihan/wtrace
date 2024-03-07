@@ -20,13 +20,15 @@ struct Material {
 //-------------------------------------------------------------------
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var<storage, read> points: array<f32>;
-@group(0) @binding(2) var<storage, read_write> accumulationInfo: array<vec4f>; // TODO: replace with storage texture
-@group(0) @binding(3) var<storage, read> triIdxInfo: array<u32>;
-@group(0) @binding(4) var<storage, read> blasNodes: array<BLASNode>;
-@group(0) @binding(5) var<storage, read> blasInstances: array<BLASInstance>;
-@group(0) @binding(6) var<storage, read> materials: array<Material>;
-@group(0) @binding(7) var ourTexture: texture_2d<f32>;
-@group(0) @binding(8) var<storage, read> uvs: array<f32>;
+@group(0) @binding(2) var<storage, read> normals: array<f32>;
+@group(0) @binding(3) var<storage, read> uvs: array<f32>;
+@group(0) @binding(4) var<storage, read_write> accumulationInfo: array<vec4f>; // TODO: replace with storage texture
+@group(0) @binding(5) var<storage, read> triIdxInfo: array<u32>;
+@group(0) @binding(6) var<storage, read> blasNodes: array<BLASNode>;
+@group(0) @binding(7) var<storage, read> blasInstances: array<BLASInstance>;
+@group(0) @binding(8) var<storage, read> materials: array<Material>;
+@group(0) @binding(9) var ourTexture: texture_2d<f32>;
+
 
 @compute @workgroup_size(16,16,1)
 fn main(@builtin(global_invocation_id) globalInvocationID : vec3u) {
@@ -43,8 +45,8 @@ fn main(@builtin(global_invocation_id) globalInvocationID : vec3u) {
     
     var uv: vec2f = (vec2f(texelCoord) / vec2f(resolution)) * 2 - 1;
 
-    uv.x += frand(&seed) * calculateUvSize().x;
-    uv.y += frand(&seed) * calculateUvSize().y;
+    // uv.x += frand(&seed) * calculateUvSize().x;
+    // uv.y += frand(&seed) * calculateUvSize().y;
 
     var ray: Ray = createCameraRay(uv, uniforms.view_i, uniforms.projection_i);
     var pixel_color: vec3f = pathTrace(ray, &seed);
