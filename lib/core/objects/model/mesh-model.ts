@@ -30,21 +30,14 @@ class MeshModel extends Object3D {
     private _populateNormals() {
         this.m_mesh.normals = new Float32Array(this.m_mesh.points.length);
         for(let i = 0; i < this.m_mesh.points.length; i+=9) {
-            // v0
             let v0: THREE.Vector3 = new THREE.Vector3(this.m_mesh.points[i], this.m_mesh.points[i+1], this.m_mesh.points[i+2]);
             let v1: THREE.Vector3 = new THREE.Vector3(this.m_mesh.points[i+3], this.m_mesh.points[i+4], this.m_mesh.points[i+5]);
             let v2: THREE.Vector3 = new THREE.Vector3(this.m_mesh.points[i+6], this.m_mesh.points[i+7], this.m_mesh.points[i+8]);
             let n: THREE.Vector3 = (v1.clone().sub(v0)).cross(v2.clone().sub(v0)).normalize();
-
-            this.m_mesh.normals[i+0] = n.x;
-            this.m_mesh.normals[i+1] = n.y;
-            this.m_mesh.normals[i+2] = n.z;
-            this.m_mesh.normals[i+3] = n.x;
-            this.m_mesh.normals[i+4] = n.y;
-            this.m_mesh.normals[i+5] = n.z;
-            this.m_mesh.normals[i+6] = n.x;
-            this.m_mesh.normals[i+7] = n.y;
-            this.m_mesh.normals[i+8] = n.z;
+            
+            this.m_mesh.normals.set([n.x, n.y, n.z], i);
+            this.m_mesh.normals.set([n.x, n.y, n.z], i+3);
+            this.m_mesh.normals.set([n.x, n.y, n.z], i+6);
         }
     }
 }

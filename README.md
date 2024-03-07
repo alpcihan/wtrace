@@ -1,22 +1,21 @@
 # WTrace
 
-WebGPU path tracer (WIP)
+Realtime WebGPU path tracer (WIP)
 
 Description and screenshots will be added soon.
 
-<img width="505" alt="Screenshot 2024-03-07 at 00 11 19" src="https://github.com/alpcihan/wtrace/assets/37274614/52d9d862-20ff-4149-8d4b-7aeb3bd8d96e">
+![wtrace](https://github.com/alpcihan/wtrace/assets/37274614/03900352-f8b5-44da-bb95-3d8ead83b607)
 
 
 ## Features
-
 - [x] GPU path-tracing with compute shaders
-- [x] TLAS and BLAS
+- [x] Acceleration structures
 - [x] Instanced geometry
 - [x] BRDF importance sampling
-- [x] OBJ support
-- [x] Material system
 - [x] Scene system 
+- [x] Material system
 - [x] GLTF support
+- [x] OBJ support
 - [ ] Multi importance sampling
 - [ ] Dielectrics
 - [ ] Caustics

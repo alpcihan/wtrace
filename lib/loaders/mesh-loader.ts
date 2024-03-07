@@ -4,20 +4,19 @@ import { OBJLoader } from "./obj-loader";
 class MeshLoader {
     public static async load(path: string): Promise<Mesh | undefined> {
         // TODO: check file extension
-        let [points, uvs] = await OBJLoader.load(path);
-
-        let mesh: Mesh = new Mesh();
-
-        if (points === undefined) {
+        // load file
+        let obj = await OBJLoader.load(path);
+        if(obj === undefined) {
             console.error("Mesh loader failed to load (%s).", path);
             return undefined;
-        }
-        
-        mesh.points = points;
-
-        if (uvs !== undefined) {
-            mesh.uvs = uvs;
         } 
+
+        let [points, normals, uvs] = obj;
+        
+        let mesh: Mesh = new Mesh();
+        mesh.points = points;
+        mesh.normals = normals;
+        mesh.uvs = uvs;
         
         return mesh;
     }

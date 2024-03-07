@@ -68,7 +68,7 @@ export async function createCornellBoxScene(): Promise<wt.Scene> {
     lightMat.roughness = 1;
     lightMat.metallic = 0;
     lightMat.baseColor = new THREE.Vector3(1, 1, 1);
-    lightMat.emissiveColor = new THREE.Vector3(20,20,20);
+    lightMat.emissiveColor = new THREE.Vector3(20, 20, 20);
     let lightMod: wt.MeshModel = new wt.MeshModel(mesh, lightMat);
     lightMod.position = new THREE.Vector3(0, scale - 0.005, 0);
     lightMod.scale = new THREE.Vector3(scale * 0.3, 0.01 * scale, scale * 0.3);
@@ -79,14 +79,14 @@ export async function createCornellBoxScene(): Promise<wt.Scene> {
     if (objMesh === undefined) return scene;
 
     let objMaterial: wt.Material = new wt.Material();
-    objMaterial.baseColor = new THREE.Vector3(0.5,0.5,0.5);
+    objMaterial.baseColor = new THREE.Vector3(0.5, 0.5, 0.5);
     lightMat.roughness = 0.9;
     lightMat.metallic = 0.1;
 
     let objModel: wt.MeshModel = new wt.MeshModel(objMesh, objMaterial);
     objModel.position = new THREE.Vector3(0, 1, 0);
     objModel.euler = new THREE.Euler(0, degToRad(225), 0);
-    
+
     objModel.scale = new THREE.Vector3(0.025, 0.025, 0.025);
     scene.add(objModel);
 
@@ -112,16 +112,15 @@ export async function createXYZDragonScene(): Promise<wt.Scene> {
 }
 
 export async function createBoxScene(): Promise<wt.Scene> {
-
     let scene: wt.Scene = new wt.Scene();
 
     // load the cube model (TODO: make async)
     let mesh: wt.Mesh | undefined = await wt.MeshLoader.load("assets/cube.obj");
-    if (mesh === undefined){
+    if (mesh === undefined) {
         console.log("Mesh is undefined");
         return scene;
-    } 
-    
+    }
+
     // left wall
     let leftWallMat: wt.Material = new wt.Material();
     leftWallMat.baseColor = new THREE.Vector3(1, 0, 0);
@@ -142,7 +141,7 @@ export async function createGLTFDamagedHelmet(): Promise<wt.Scene> {
     // load the gltf model
     const meshModels: wt.MeshModel[] = await wt.WTGLTFLoader.load("assets/DamagedHelmet.glb");
     meshModels.forEach(meshModel => scene.add(meshModel));
-    
+
     // load the cube model (TODO: make async)
     let cubeMesh: wt.Mesh | undefined = await wt.MeshLoader.load("assets/cube.obj");
     if (cubeMesh === undefined) return scene;
@@ -159,14 +158,14 @@ export async function createGLTFDamagedHelmet(): Promise<wt.Scene> {
     bottomWallMod.position = new THREE.Vector3(0, -1, 0);
     bottomWallMod.scale = new THREE.Vector3(scale, 0.01 * scale, scale);
     scene.add(bottomWallMod);
-    
+
     // right wall
     let rightWallMat: wt.Material = new wt.Material();
     rightWallMat.baseColor = new THREE.Vector3(0, 1, 0);
     rightWallMat.roughness = 0.75;
     rightWallMat.metallic = 0.25;
     let rightWallMod: wt.MeshModel = new wt.MeshModel(cubeMesh, rightWallMat);
-    rightWallMod.position = new THREE.Vector3(0.5 * scale, 0.5 * scale-1, 0);
+    rightWallMod.position = new THREE.Vector3(0.5 * scale, 0.5 * scale - 1, 0);
     rightWallMod.scale = new THREE.Vector3(0.01 * scale, scale, scale);
     scene.add(rightWallMod);
 
@@ -176,7 +175,7 @@ export async function createGLTFDamagedHelmet(): Promise<wt.Scene> {
     leftWallMat.roughness = 0.75;
     leftWallMat.metallic = 0.25;
     let leftWallMod: wt.MeshModel = new wt.MeshModel(cubeMesh, leftWallMat);
-    leftWallMod.position = new THREE.Vector3(-0.5 * scale, 0.5 * scale-1, 0);
+    leftWallMod.position = new THREE.Vector3(-0.5 * scale, 0.5 * scale - 1, 0);
     leftWallMod.scale = new THREE.Vector3(0.01 * scale, scale, scale);
     scene.add(leftWallMod);
 
@@ -186,7 +185,7 @@ export async function createGLTFDamagedHelmet(): Promise<wt.Scene> {
     topWallMat.roughness = 0.75;
     topWallMat.metallic = 0.25;
     let topWallMod: wt.MeshModel = new wt.MeshModel(cubeMesh, topWallMat);
-    topWallMod.position = new THREE.Vector3(0, scale-1, 0);
+    topWallMod.position = new THREE.Vector3(0, scale - 1, 0);
     topWallMod.scale = new THREE.Vector3(scale, 0.01 * scale, scale);
     scene.add(topWallMod);
 
@@ -196,7 +195,7 @@ export async function createGLTFDamagedHelmet(): Promise<wt.Scene> {
     backWallMat.roughness = 0.75;
     backWallMat.metallic = 0.25;
     let backWallMod: wt.MeshModel = new wt.MeshModel(cubeMesh, backWallMat);
-    backWallMod.position = new THREE.Vector3(0, 0.5 * scale-1, -0.5 * scale);
+    backWallMod.position = new THREE.Vector3(0, 0.5 * scale - 1, -0.5 * scale);
     backWallMod.scale = new THREE.Vector3(scale, scale, 0.01 * scale);
     scene.add(backWallMod);
 
@@ -205,11 +204,82 @@ export async function createGLTFDamagedHelmet(): Promise<wt.Scene> {
     lightMat.roughness = 1;
     lightMat.metallic = 0;
     lightMat.baseColor = new THREE.Vector3(1, 1, 1);
-    lightMat.emissiveColor = new THREE.Vector3(20,20,20);
+    lightMat.emissiveColor = new THREE.Vector3(20, 20, 20);
     let lightMod: wt.MeshModel = new wt.MeshModel(cubeMesh, lightMat);
-    lightMod.position = new THREE.Vector3(0, scale - 0.005-1, 0);
+    lightMod.position = new THREE.Vector3(0, scale - 0.005 - 1, 0);
     lightMod.scale = new THREE.Vector3(scale * 0.3, 0.01 * scale, scale * 0.3);
     scene.add(lightMod);
 
+    return scene;
+}
+
+export async function createMeetManScene(): Promise<wt.Scene> {
+    // create the scene
+    let scene: wt.Scene = new wt.Scene();
+
+    // load meshes
+    let headMesh: wt.Mesh | undefined = await wt.MeshLoader.load("assets/models/meetman/head.obj");
+    let bodyMesh: wt.Mesh | undefined = await wt.MeshLoader.load("assets/models/meetman/body.obj");
+    let xyzMesh: wt.Mesh | undefined = await wt.MeshLoader.load("assets/xyz.obj");
+    let cubeMesh: wt.Mesh | undefined = await wt.MeshLoader.load("assets/cube.obj");
+    if (xyzMesh === undefined || headMesh === undefined || bodyMesh === undefined || cubeMesh === undefined ) return scene;
+
+    // load materials
+    let headMat: wt.Material = new wt.Material();
+    headMat.albedoMap = await wt.TextureLoader.load("assets/textures/01_Head_Base_Color.jpg");
+    headMat.metallicMap = await wt.TextureLoader.load("assets/textures/01_Head_MetallicRoughness.jpg");
+
+    let bodyMat: wt.Material = new wt.Material();
+    bodyMat.albedoMap = await wt.TextureLoader.load("assets/textures/02_Body_Base_Color.jpg");
+    bodyMat.metallicMap = await wt.TextureLoader.load("assets/textures/02_Body_MetallicRoughness.jpg");
+
+    let xyzMat: wt.Material = new wt.Material();
+    xyzMat.baseColor = new THREE.Vector3(0.8, 0.3, 0.3);
+    xyzMat.roughness = 0.75;
+    xyzMat.metallic = 0.25;
+
+    let lightMat: wt.Material = new wt.Material();
+    lightMat.roughness = 1;
+    lightMat.metallic = 0;
+    lightMat.baseColor = new THREE.Vector3(1, 1, 1);
+    lightMat.emissiveColor = new THREE.Vector3(3, 3, 3);
+
+    // create models
+    let headMod1: wt.MeshModel = new wt.MeshModel(headMesh, headMat);
+    headMod1.position = new THREE.Vector3(0, 0, -7);
+    headMod1.euler = new THREE.Euler(0, degToRad(-30), 0);
+    headMod1.scale = new THREE.Vector3(100, 100, 100);
+    scene.add(headMod1);
+
+    let bodyMod1: wt.MeshModel = new wt.MeshModel(bodyMesh, bodyMat);
+    bodyMod1.position = new THREE.Vector3(0, 0, -7);
+    bodyMod1.euler = new THREE.Euler(0, degToRad(-45), 0);
+    bodyMod1.scale = new THREE.Vector3(100, 100, 100);
+    scene.add(bodyMod1);
+
+    let headMod2: wt.MeshModel = new wt.MeshModel(headMesh, headMat);
+    headMod2.position = new THREE.Vector3(0, 0, 2);
+    headMod2.euler = new THREE.Euler(0, degToRad(45), 0);
+    headMod2.scale = new THREE.Vector3(100, 100, 100);
+    scene.add(headMod2);
+
+    let bodyMod2: wt.MeshModel = new wt.MeshModel(bodyMesh, bodyMat);
+    bodyMod2.position = new THREE.Vector3(0, 0, 2);
+    bodyMod2.euler = new THREE.Euler(0, degToRad(50), 0);
+    bodyMod2.scale = new THREE.Vector3(100, 100, 100);
+    scene.add(bodyMod2);
+
+    let xyzMod: wt.MeshModel = new wt.MeshModel(xyzMesh, xyzMat);
+    xyzMod.position = new THREE.Vector3(-10, 10, 10);
+    xyzMod.euler = new THREE.Euler(0, 0, 0);
+    xyzMod.scale = new THREE.Vector3(0.25, 0.25, 0.25);
+    scene.add(xyzMod);
+
+    let lightMod: wt.MeshModel = new wt.MeshModel(cubeMesh, lightMat);
+    lightMod.position = new THREE.Vector3(0, 30, -40);
+    lightMod.euler = new THREE.Euler(degToRad(45), 0, 0);
+    lightMod.scale = new THREE.Vector3(90, 0.05, 35);
+    scene.add(lightMod);
+    
     return scene;
 }

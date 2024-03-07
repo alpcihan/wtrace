@@ -207,11 +207,12 @@ class PathTracer {
                         },
                     },
                     {
-                        // Texture
+                        // maps
                         binding : 9,
                         visibility: GPUShaderStage.COMPUTE,
                         texture: {
-                        },
+                            viewDimension: "2d-array"
+                        }
                     },
   
                 ],
