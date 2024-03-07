@@ -43,10 +43,12 @@ fn main(@builtin(global_invocation_id) globalInvocationID : vec3u) {
     var seed_i2: u32 = u32(uniforms.frameIdx);
     var seed: u32 = pcg(&seed_i1)+ pcg(&seed_i2);
     
+    let texelSize: vec2f = calculateUvSize();
     var uv: vec2f = (vec2f(texelCoord) / vec2f(resolution)) * 2 - 1;
+    uv += texelSize * 0.5;
 
-    // uv.x += frand(&seed) * calculateUvSize().x;
-    // uv.y += frand(&seed) * calculateUvSize().y;
+    // uv.x += frand(&seed) * texelSize.x;
+    // uv.y += frand(&seed) * texelSize.y;
 
     var ray: Ray = createCameraRay(uv, uniforms.view_i, uniforms.projection_i);
     var pixel_color: vec3f = pathTrace(ray, &seed);
