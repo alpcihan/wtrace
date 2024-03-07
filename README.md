@@ -4,7 +4,7 @@ Realtime WebGPU path tracer (WIP)
 
 Description and screenshots will be added soon.
 
-<img width="560" alt="wtrace capture" src="https://github.com/alpcihan/wtrace/assets/37274614/abf047e6-90ba-436e-a6fd-4a5de3e43d2a">
+![wtrace](https://github.com/alpcihan/wtrace/assets/37274614/03900352-f8b5-44da-bb95-3d8ead83b607)
 
 
 ## Features
