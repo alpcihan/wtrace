@@ -95,12 +95,6 @@ class WTGLTFLoader {
                 material.baseColor = new THREE.Vector3(-1, -1, -1);
             }
 
-            //if(threeMat.roughnessMap !== null) {
-            //    material.roughnessMap = new Texture(threeMat.roughnessMap.image);
-            //}
-
-            console.log(threeMat.map);
-
             // create model
             const model = new MeshModel(mesh, material);
             model.position = object.position;

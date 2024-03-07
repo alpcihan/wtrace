@@ -226,8 +226,6 @@ class SceneDataManager {
                 roughnessMapIdx: material.roughnessMap !== undefined ? this.m_totalMapCount++ : -1,
                 metallicMapIdx: material.metallicMap !== undefined ? this.m_totalMapCount++ : -1,
             });
-
-            console.log(material);
         });
 
         this.m_materialBuffer = IGPU.get().createBuffer({
