@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import {Texture} from "../../wtrace"
+import { error } from "console";
 
 export const MATERIAL_BYTE_SIZE: number = 3 * 4 + // base color (float3)
                                           1 * 4 + // roughness
@@ -11,7 +12,7 @@ class Material {
         this.id = Material._id++;
 
         this.albedoTexture = albedoTexture;
-        this.baseColor = new THREE.Vector3(1,1,1);
+        this.baseColor = albedoTexture? new THREE.Vector3(-1,-1,-1): new THREE.Vector3(1,1,1);
         this.emissiveColor = new THREE.Vector3(0,0,0);
         this.roughness = 0.5;
         this.metallic = 0.5;

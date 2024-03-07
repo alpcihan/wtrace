@@ -4,7 +4,7 @@ import { OBJLoader } from "./obj-loader";
 class MeshLoader {
     public static async load(path: string): Promise<Mesh | undefined> {
         // TODO: check file extension
-        let [points, uvs] = await OBJLoader.load(path);
+        let [points, uvs, normals] = await OBJLoader.load(path);
 
         let mesh: Mesh = new Mesh();
 
@@ -18,6 +18,10 @@ class MeshLoader {
         if (uvs !== undefined) {
             mesh.uvs = uvs;
         } 
+
+        if (normals !== undefined) {
+            mesh.normals = normals;
+        }
         
         return mesh;
     }
