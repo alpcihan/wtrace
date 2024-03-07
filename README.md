@@ -9,7 +9,7 @@ Description and screenshots will be added soon.
 
 ## Features
 - [x] GPU path-tracing with compute shaders
-- [x] TLAS and BLAS
+- [x] Acceleration structure
 - [x] Instanced geometry
 - [x] BRDF importance sampling
 - [x] Scene system 
