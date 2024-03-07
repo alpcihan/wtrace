@@ -1,6 +1,5 @@
 import * as THREE from "three";
 import {Texture} from "../../wtrace"
-import { error } from "console";
 
 export const MATERIAL_BYTE_SIZE: number = 3 * 4 + // base color (float3)
                                           1 * 4 + // roughness
