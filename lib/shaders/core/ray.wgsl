@@ -204,7 +204,7 @@ fn intersectBVH(r: Ray, instanceIdx: u32, hit_info: ptr<function, HitInfo>){
                     
                     let idx: u32 = triIdxInfo[lFirst + i];
                     
-                    // triangle intersection
+                    // check triangle intersection
                     let v0: vec3f = vec3f(points[idx*9+0], points[idx*9+1], points[idx*9+2]);
                     let v1: vec3f = vec3f(points[idx*9+3], points[idx*9+4], points[idx*9+5]);
                     let v2: vec3f = vec3f(points[idx*9+6], points[idx*9+7], points[idx*9+8]);
@@ -225,25 +225,29 @@ fn intersectBVH(r: Ray, instanceIdx: u32, hit_info: ptr<function, HitInfo>){
                         let material: Material = materials[instance.materialIdx];
                         (*hit_info).material = material;
 
+                        // get hit uv
+                        let v0_uv: vec2f = vec2f(uvs[idx*6+0], uvs[idx*6+1]);
+                        let v1_uv: vec2f = vec2f(uvs[idx*6+2], uvs[idx*6+3]);
+                        let v2_uv: vec2f = vec2f(uvs[idx*6+4], uvs[idx*6+5]);
+                        var hit_UV: vec2f = (1 - res.y - res.z) * v0_uv + res.y * v1_uv + res.z * v2_uv;
+                        hit_UV = fract(hit_UV); // repeat the texture 
+                        hit_UV.y = 1 - hit_UV.y;
+
+                        let textureDims = textureDimensions(materialTextures).xy;
+                        var textureCoords: vec2i;
+                        textureCoords.x = i32(round(hit_UV.x * f32(textureDims.x)));
+                        textureCoords.y = i32(round(hit_UV.y * f32(textureDims.y)));
+
+                        // albedo
                         if(material.albedoMapIdx >= 0){
-                            let v0_uv: vec2f = vec2f(uvs[idx*6+0], uvs[idx*6+1]);
-                            let v1_uv: vec2f = vec2f(uvs[idx*6+2], uvs[idx*6+3]);
-                            let v2_uv: vec2f = vec2f(uvs[idx*6+4], uvs[idx*6+5]);
+                            (*hit_info).material.albedo = textureLoad(materialTextures, textureCoords, material.albedoMapIdx, 0).rgb;
+                        }
 
-                            var hit_UV: vec2f = (1 - res.y - res.z) * v0_uv + res.y * v1_uv + res.z * v2_uv;
-                            hit_UV = fract(hit_UV); // repeat the texture 
-                            hit_UV.y = 1 - hit_UV.y;
-                        
-                            let textureDims = textureDimensions(albedoTextures).xy;
-
-                            var textureCoords: vec2i;
-                            textureCoords.x = i32(round(hit_UV.x * f32(textureDims.x)));
-                            textureCoords.x = min(textureCoords.x, i32(textureDims.x)-1);
-                            textureCoords.y = i32(round(hit_UV.y * f32(textureDims.y)));
-                            textureCoords.y = min(textureCoords.y, i32(textureDims.y)-1);
-
-                            // TODO: do not change the original albedo
-                            (*hit_info).material.albedo = textureLoad(albedoTextures, textureCoords, material.albedoMapIdx, 0).rgb;
+                        // metallic + roughness
+                        if(material.metallicMapIdx >= 0) {
+                            let mr: vec2f = textureLoad(materialTextures, textureCoords, material.metallicMapIdx, 0).rg;
+                            (*hit_info).material.metallic = mr.x * mr.x;
+                            (*hit_info).material.roughness = mr.y * mr.y;
                         }
                     }             
                 }

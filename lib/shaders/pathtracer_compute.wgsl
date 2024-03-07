@@ -32,7 +32,7 @@ struct Material {
 @group(0) @binding(6) var<storage, read> blasNodes: array<BLASNode>;
 @group(0) @binding(7) var<storage, read> blasInstances: array<BLASInstance>;
 @group(0) @binding(8) var<storage, read> materials: array<Material>;
-@group(0) @binding(9) var albedoTextures: texture_2d_array<f32>;
+@group(0) @binding(9) var materialTextures: texture_2d_array<f32>;
 
 @compute @workgroup_size(16,16,1)
 fn main(@builtin(global_invocation_id) globalInvocationID : vec3u) {
@@ -113,7 +113,7 @@ fn hitWorld(ray: Ray, bestHit: ptr<function, HitInfo>){
     // Scene helper objects data // TODO: pass as buffer
     var sphere: Sphere = Sphere(vec3f(0.0,0.5,0.0), 0);
     var lightMaterial: Material = Material(vec3f(2), 1, vec3f(2), 0, -1, -1, -1, -1);
-    var floorY: f32 = -1;
+    var floorY: f32 = 0;
     var floorMaterial: Material = Material(vec3f(0.5,0.5,0.5), 0.2, vec3f(0,0,0), 0.5, -1, -1, -1, -1);
 
     intersectSphere(&sphere, &lightMaterial, ray, bestHit);

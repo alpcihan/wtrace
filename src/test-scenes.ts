@@ -217,35 +217,46 @@ export async function createMeetManScene(): Promise<wt.Scene> {
     // create the scene
     let scene: wt.Scene = new wt.Scene();
 
-    // load body
-    let bodyMesh: wt.Mesh | undefined = await wt.MeshLoader.load("assets/models/meetman/body.obj");
-    if (bodyMesh !== undefined) {
-        let mat: wt.Material = new wt.Material();
-        mat.albedoMap = await wt.TextureLoader.load("assets/textures/02_Body_Base_Color.jpg");
-        mat.baseColor = new THREE.Vector3(-1, 1, 1);
-        mat.roughness = 0.25;
-        mat.metallic = 0.75;
-
-        let mod: wt.MeshModel = new wt.MeshModel(bodyMesh, mat);
-        mod.scale = new THREE.Vector3(100, 100, 100);
-
-        scene.add(mod);
-    }
-
-    // load head
+    // load meshes
     let headMesh: wt.Mesh | undefined = await wt.MeshLoader.load("assets/models/meetman/head.obj");
-    if (headMesh !== undefined) {
-        let mat: wt.Material = new wt.Material();
-        mat.albedoMap = await wt.TextureLoader.load("assets/textures/01_Head_Base_Color.jpg");
-        mat.baseColor = new THREE.Vector3(-1, 1, 1);
-        mat.roughness = 0.25;
-        mat.metallic = 0.75;
+    let bodyMesh: wt.Mesh | undefined = await wt.MeshLoader.load("assets/models/meetman/body.obj");
+    if (headMesh === undefined) return scene;
+    if (bodyMesh === undefined) return scene;
 
-        let mod: wt.MeshModel = new wt.MeshModel(headMesh, mat);
-        mod.scale = new THREE.Vector3(100, 100, 100);
+    // load materials
+    let headMat: wt.Material = new wt.Material();
+    headMat.albedoMap = await wt.TextureLoader.load("assets/textures/01_Head_Base_Color.jpg");
+    headMat.metallicMap = await wt.TextureLoader.load("assets/textures/01_Head_MetallicRoughness.jpg");
 
-        scene.add(mod);
-    }
+    let bodyMat: wt.Material = new wt.Material();
+    bodyMat.albedoMap = await wt.TextureLoader.load("assets/textures/02_Body_Base_Color.jpg");
+    bodyMat.metallicMap = await wt.TextureLoader.load("assets/textures/02_Body_MetallicRoughness.jpg");
+
+    // create models
+    let headMod1: wt.MeshModel = new wt.MeshModel(headMesh, headMat);
+    headMod1.position = new THREE.Vector3(0, 0, -5);
+    headMod1.euler = new THREE.Euler(0, degToRad(-30), 0);
+    headMod1.scale = new THREE.Vector3(100, 100, 100);
+    scene.add(headMod1);
+
+    let bodyMod1: wt.MeshModel = new wt.MeshModel(bodyMesh, bodyMat);
+    bodyMod1.position = new THREE.Vector3(0, 0, -5);
+    bodyMod1.euler = new THREE.Euler(0, degToRad(-45), 0);
+    bodyMod1.scale = new THREE.Vector3(100, 100, 100);
+    scene.add(bodyMod1);
+
+    let headMod2: wt.MeshModel = new wt.MeshModel(headMesh, headMat);
+    headMod2.position = new THREE.Vector3(0, 0, 5);
+    headMod2.euler = new THREE.Euler(0, degToRad(45), 0);
+    headMod2.scale = new THREE.Vector3(100, 100, 100);
+    scene.add(headMod2);
+
+    let bodyMod2: wt.MeshModel = new wt.MeshModel(bodyMesh, bodyMat);
+    bodyMod2.position = new THREE.Vector3(0, 0, 5);
+    bodyMod2.euler = new THREE.Euler(0, degToRad(50), 0);
+    bodyMod2.scale = new THREE.Vector3(100, 100, 100);
+    scene.add(bodyMod2);
+    
 
     return scene;
 }

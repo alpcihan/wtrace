@@ -14,7 +14,7 @@ export const MATERIAL_BYTE_SIZE: number =
 export interface MaterialMap {
     albedoMapIdx: number;
     emissiveMapIdx: number;
-    specularMapIdx: number;
+    roughnessMapIdx: number;
     metallicMapIdx: number;
 }
 
@@ -29,7 +29,7 @@ class Material {
 
         this.albedoMap = undefined;
         this.emissiveMap = undefined;
-        this.specularMap = undefined;
+        this.roughnessMap = undefined;
         this.metallicMap = undefined;
     }
 
@@ -42,7 +42,7 @@ class Material {
 
     public albedoMap: Texture | undefined;
     public emissiveMap: Texture | undefined;
-    public specularMap: Texture | undefined;
+    public roughnessMap: Texture | undefined;
     public metallicMap: Texture | undefined;
 
     public writeToArray(target: ArrayBuffer, offset: number, m?: MaterialMap) {
@@ -61,7 +61,7 @@ class Material {
         
         metallicArrayF32.set([this.metallic]);
 
-        if (m) mapsI32.set([m.albedoMapIdx, m.emissiveMapIdx, m.metallicMapIdx, m.specularMapIdx]);
+        if (m) mapsI32.set([m.albedoMapIdx, m.emissiveMapIdx, m.roughnessMapIdx, m.metallicMapIdx]);
         else mapsI32.set([-1, -1, -1, -1]);
     }
 

@@ -21,9 +21,10 @@ class SceneDataManager {
         this.m_materialIDtoIdxMap = new Map<number, number>();
         this.m_meshIDtoBlasOffsetMap = new Map<number, number>();
 
+        this.m_totalMapCount = 0;
         this.m_albedoMapCount = 0;
         this.m_emissiveMapCount = 0;
-        this.m_specularMapCount = 0;
+        this.m_roughnessMapCount = 0;
         this.m_metallicMapCount = 0;
 
         this._updateVertexBuffer();
@@ -62,7 +63,7 @@ class SceneDataManager {
             format: this.m_texture.format,
             dimension: "2d-array",
             mipLevelCount: 1,
-            arrayLayerCount: this.m_albedoMapCount,
+            arrayLayerCount: this.m_totalMapCount,
         });
     }
 
@@ -128,9 +129,10 @@ class SceneDataManager {
     private m_blasInstanceArray: Array<BLASInstance>;
 
     private m_materials: Array<Material>;
+    private m_totalMapCount: number;
     private m_albedoMapCount: number;
     private m_emissiveMapCount: number;
-    private m_specularMapCount: number;
+    private m_roughnessMapCount: number;
     private m_metallicMapCount: number;
 
     private m_materialIDtoIdxMap: Map<number, number>;
@@ -219,11 +221,13 @@ class SceneDataManager {
 
         this.m_materials.forEach((material, i) => {
             material.writeToArray(materialArrayByte, MATERIAL_BYTE_SIZE * i, {
-                albedoMapIdx: material.albedoMap !== undefined ? this.m_albedoMapCount++ : -1,
-                emissiveMapIdx: material.emissiveMap !== undefined ? this.m_emissiveMapCount++ : -1,
-                metallicMapIdx: material.metallicMap !== undefined ? this.m_metallicMapCount++ : -1,
-                specularMapIdx: material.specularMap !== undefined ? this.m_specularMapCount++ : -1,
+                albedoMapIdx: material.albedoMap !== undefined ? this.m_totalMapCount++ : -1,
+                emissiveMapIdx: material.emissiveMap !== undefined ? this.m_totalMapCount++ : -1,
+                roughnessMapIdx: material.roughnessMap !== undefined ? this.m_totalMapCount++ : -1,
+                metallicMapIdx: material.metallicMap !== undefined ? this.m_totalMapCount++ : -1,
             });
+
+            console.log(material);
         });
 
         this.m_materialBuffer = IGPU.get().createBuffer({
@@ -240,7 +244,7 @@ class SceneDataManager {
             size: {
                 width: 2048, // TODO: make it generic
                 height: 2048, // TODO: make it generic
-                depthOrArrayLayers: this.m_albedoMapCount,
+                depthOrArrayLayers: this.m_totalMapCount,
             },
             format: "rgba8unorm", // TODO: read from the texture
             usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
@@ -248,15 +252,25 @@ class SceneDataManager {
 
         this.m_texture = IGPU.get().createTexture(texDescriptor);
 
-        let albedoMapCount: number = 0;
+        let textureCount: number = 0;
+        // NOTE: Texture copy order matters rn due to the use of total map count.
+        // TODO: Store texture indices.
         this.m_materials.forEach(mat => {
             const albedoTex: Texture | undefined = mat.albedoMap;
-
             if (albedoTex) {
                 IGPU.get().queue.copyExternalImageToTexture(
                     { source: albedoTex.data, flipY: false },
-                    { texture: this.m_texture, origin: { x: 0, y: 0, z: albedoMapCount++ } },
+                    { texture: this.m_texture, origin: { x: 0, y: 0, z: textureCount++ } },
                     { width: albedoTex.data.width, height: albedoTex.data.height, depthOrArrayLayers: 1 }
+                );
+            }
+
+            const metallicTex: Texture | undefined = mat.metallicMap;
+            if(metallicTex) {
+                IGPU.get().queue.copyExternalImageToTexture(
+                    { source: metallicTex.data, flipY: false },
+                    { texture: this.m_texture, origin: { x: 0, y: 0, z: textureCount++ } },
+                    { width: metallicTex.data.width, height: metallicTex.data.height, depthOrArrayLayers: 1 }
                 );
             }
         });

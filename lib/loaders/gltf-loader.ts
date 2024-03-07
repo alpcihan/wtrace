@@ -95,8 +95,8 @@ class WTGLTFLoader {
                 material.baseColor = new THREE.Vector3(-1, -1, -1);
             }
 
-            //if(threeMat.specularMap !== null) {
-            //    material.specularMap = new Texture(threeMat.specularMap.image);
+            //if(threeMat.roughnessMap !== null) {
+            //    material.roughnessMap = new Texture(threeMat.roughnessMap.image);
             //}
 
             console.log(threeMat.map);
