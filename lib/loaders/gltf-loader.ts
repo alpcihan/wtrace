@@ -92,7 +92,6 @@ class WTGLTFLoader {
             // load material textures
             if (threeMat.map !== null) {
                 material.albedoMap = new Texture(threeMat.map.image);
-                material.baseColor = new THREE.Vector3(-1, -1, -1);
             }
 
             // create model

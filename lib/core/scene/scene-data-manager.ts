@@ -1,5 +1,5 @@
 import { Texture } from "../../wtrace";
-import { MATERIAL_BYTE_SIZE, Material, MaterialMap } from "../material/material";
+import { MATERIAL_BYTE_SIZE, Material } from "../material/material";
 import { MeshModel } from "../objects/model/mesh-model";
 import { IGPU } from "../renderer/igpu";
 import { BLAS, BLAS_NODE_SIZE } from "./acceleration-structure/blas";
@@ -22,10 +22,6 @@ class SceneDataManager {
         this.m_meshIDtoBlasOffsetMap = new Map<number, number>();
 
         this.m_totalMapCount = 0;
-        this.m_albedoMapCount = 0;
-        this.m_emissiveMapCount = 0;
-        this.m_roughnessMapCount = 0;
-        this.m_metallicMapCount = 0;
 
         this._updateVertexBuffer();
     }
@@ -130,10 +126,6 @@ class SceneDataManager {
 
     private m_materials: Array<Material>;
     private m_totalMapCount: number;
-    private m_albedoMapCount: number;
-    private m_emissiveMapCount: number;
-    private m_roughnessMapCount: number;
-    private m_metallicMapCount: number;
 
     private m_materialIDtoIdxMap: Map<number, number>;
     private m_meshIDtoBlasOffsetMap: Map<number, number>;
