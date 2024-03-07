@@ -139,20 +139,9 @@ export async function createGLTFDamagedHelmet(): Promise<wt.Scene> {
     let scene: wt.Scene = new wt.Scene();
 
     // load the gltf model
-    //const meshModels: wt.MeshModel[] = await wt.WTGLTFLoader.load("assets/DamagedHelmet.glb");
-    //meshModels.forEach(meshModel => scene.add(meshModel));
+    const meshModels: wt.MeshModel[] = await wt.WTGLTFLoader.load("assets/DamagedHelmet.glb");
+    meshModels.forEach(meshModel => scene.add(meshModel));
 
-    let mesh: wt.Mesh | undefined = await wt.MeshLoader.load("assets/body.obj");
-    if (mesh !== undefined) {
-        let mat: wt.Material = new wt.Material();
-        mat.baseColor = new THREE.Vector3(1, 1, 1);
-        mat.roughness = 0.25;
-        mat.metallic = 0.75;
-        let mod: wt.MeshModel = new wt.MeshModel(mesh, mat);
-        mod.scale = new THREE.Vector3(100, 100, 100);
-        scene.add(mod);
-    }
-    /*
     // load the cube model (TODO: make async)
     let cubeMesh: wt.Mesh | undefined = await wt.MeshLoader.load("assets/cube.obj");
     if (cubeMesh === undefined) return scene;
@@ -220,6 +209,43 @@ export async function createGLTFDamagedHelmet(): Promise<wt.Scene> {
     lightMod.position = new THREE.Vector3(0, scale - 0.005 - 1, 0);
     lightMod.scale = new THREE.Vector3(scale * 0.3, 0.01 * scale, scale * 0.3);
     scene.add(lightMod);
-    */
+
+    return scene;
+}
+
+export async function createMeetManScene(): Promise<wt.Scene> {
+    // create the scene
+    let scene: wt.Scene = new wt.Scene();
+
+    // load body
+    let bodyMesh: wt.Mesh | undefined = await wt.MeshLoader.load("assets/models/meetman/body.obj");
+    if (bodyMesh !== undefined) {
+        let mat: wt.Material = new wt.Material();
+        mat.albedoMap = await wt.TextureLoader.load("assets/textures/02_Body_Base_Color.jpg");
+        mat.baseColor = new THREE.Vector3(-1, 1, 1);
+        mat.roughness = 0.25;
+        mat.metallic = 0.75;
+
+        let mod: wt.MeshModel = new wt.MeshModel(bodyMesh, mat);
+        mod.scale = new THREE.Vector3(100, 100, 100);
+
+        scene.add(mod);
+    }
+
+    // load head
+    let headMesh: wt.Mesh | undefined = await wt.MeshLoader.load("assets/models/meetman/head.obj");
+    if (headMesh !== undefined) {
+        let mat: wt.Material = new wt.Material();
+        mat.albedoMap = await wt.TextureLoader.load("assets/textures/01_Head_Base_Color.jpg");
+        mat.baseColor = new THREE.Vector3(-1, 1, 1);
+        mat.roughness = 0.25;
+        mat.metallic = 0.75;
+
+        let mod: wt.MeshModel = new wt.MeshModel(headMesh, mat);
+        mod.scale = new THREE.Vector3(100, 100, 100);
+
+        scene.add(mod);
+    }
+
     return scene;
 }

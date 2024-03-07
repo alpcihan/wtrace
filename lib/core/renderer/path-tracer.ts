@@ -207,11 +207,12 @@ class PathTracer {
                         },
                     },
                     {
-                        // Texture
+                        // albedo textures
                         binding : 9,
                         visibility: GPUShaderStage.COMPUTE,
                         texture: {
-                        },
+                            viewDimension: "2d-array"
+                        }
                     },
   
                 ],

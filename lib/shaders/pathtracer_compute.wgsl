@@ -12,7 +12,12 @@ struct Material {
     albedo: vec3f,
     roughness: f32,
     emissiveColor: vec3f,
-    metallic: f32
+    metallic: f32,
+
+    albedoMapIdx: i32,
+    emissiveMapIdx: i32,
+    roughnessMapIdx: i32,
+    metallicMapIdx: i32
 };
 
 //-------------------------------------------------------------------
@@ -27,8 +32,7 @@ struct Material {
 @group(0) @binding(6) var<storage, read> blasNodes: array<BLASNode>;
 @group(0) @binding(7) var<storage, read> blasInstances: array<BLASInstance>;
 @group(0) @binding(8) var<storage, read> materials: array<Material>;
-@group(0) @binding(9) var ourTexture: texture_2d<f32>;
-
+@group(0) @binding(9) var albedoTextures: texture_2d_array<f32>;
 
 @compute @workgroup_size(16,16,1)
 fn main(@builtin(global_invocation_id) globalInvocationID : vec3u) {
@@ -45,10 +49,10 @@ fn main(@builtin(global_invocation_id) globalInvocationID : vec3u) {
     
     let texelSize: vec2f = calculateUvSize();
     var uv: vec2f = (vec2f(texelCoord) / vec2f(resolution)) * 2 - 1;
-    uv += texelSize * 0.5;
+    // uv += texelSize * 0.5;
 
-    // uv.x += frand(&seed) * texelSize.x;
-    // uv.y += frand(&seed) * texelSize.y;
+    uv.x += frand(&seed) * texelSize.x;
+    uv.y += frand(&seed) * texelSize.y;
 
     var ray: Ray = createCameraRay(uv, uniforms.view_i, uniforms.projection_i);
     var pixel_color: vec3f = pathTrace(ray, &seed);
@@ -108,9 +112,9 @@ fn pathTrace(ray: Ray, seed: ptr<function,u32>) -> vec3f {
 fn hitWorld(ray: Ray, bestHit: ptr<function, HitInfo>){
     // Scene helper objects data // TODO: pass as buffer
     var sphere: Sphere = Sphere(vec3f(0.0,0.5,0.0), 0);
-    var lightMaterial: Material = Material(vec3f(2), 1, vec3f(2), 0);
+    var lightMaterial: Material = Material(vec3f(2), 1, vec3f(2), 0, -1, -1, -1, -1);
     var floorY: f32 = -1;
-    var floorMaterial: Material = Material(vec3f(0.5,0.5,0.5), 0.2, vec3f(0,0,0), 0.5);
+    var floorMaterial: Material = Material(vec3f(0.5,0.5,0.5), 0.2, vec3f(0,0,0), 0.5, -1, -1, -1, -1);
 
     intersectSphere(&sphere, &lightMaterial, ray, bestHit);
     intersectXZPlane(floorY, &floorMaterial, ray, bestHit);

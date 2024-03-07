@@ -222,23 +222,28 @@ fn intersectBVH(r: Ray, instanceIdx: u32, hit_info: ptr<function, HitInfo>){
                         (*hit_info).normal = normalize((instance.transform * vec4f(n_os, 0)).xyz);
 
                         // record hit material
-                        (*hit_info).material = materials[instance.materialIdx];
+                        let material: Material = materials[instance.materialIdx];
+                        (*hit_info).material = material;
 
-                        if(materials[instance.materialIdx].albedo.x < 0.0){
+                        if(material.albedoMapIdx >= 0){
                             let v0_uv: vec2f = vec2f(uvs[idx*6+0], uvs[idx*6+1]);
                             let v1_uv: vec2f = vec2f(uvs[idx*6+2], uvs[idx*6+3]);
                             let v2_uv: vec2f = vec2f(uvs[idx*6+4], uvs[idx*6+5]);
 
                             var hit_UV: vec2f = (1 - res.y - res.z) * v0_uv + res.y * v1_uv + res.z * v2_uv;
                             hit_UV = fract(hit_UV); // repeat the texture 
+                            hit_UV.y = 1 - hit_UV.y;
                         
-                            let textureDims = textureDimensions(ourTexture).xy;
+                            let textureDims = textureDimensions(albedoTextures).xy;
+
                             var textureCoords: vec2i;
                             textureCoords.x = i32(round(hit_UV.x * f32(textureDims.x)));
                             textureCoords.x = min(textureCoords.x, i32(textureDims.x)-1);
                             textureCoords.y = i32(round(hit_UV.y * f32(textureDims.y)));
                             textureCoords.y = min(textureCoords.y, i32(textureDims.y)-1);
-                            (*hit_info).material.albedo = textureLoad(ourTexture,textureCoords,0).rgb;
+
+                            // TODO: do not change the original albedo
+                            (*hit_info).material.albedo = textureLoad(albedoTextures, textureCoords, material.albedoMapIdx, 0).rgb;
                         }
                     }             
                 }
