@@ -78,9 +78,9 @@ fn pathTrace(ray: Ray, seed: ptr<function,u32>) -> vec3f {
 
         // skybox
         if(hitInfo.t > 1000000) {               // TODO: add max render distance
-            let dir: vec3f = r.direction;
-            var a: f32 = 0.5*(dir.y + 1.0);
-            acc += mix(vec3f(1.0, 1.0, 1.0),vec3f(0.5, 0.7, 1.0), a) * abso;
+            // let dir: vec3f = r.direction;
+            // var a: f32 = 0.5*(dir.y + 1.0);
+            // acc += mix(vec3f(1.0, 1.0, 1.0),vec3f(0.5, 0.7, 1.0), a) * abso;
             return acc;
         }
 
