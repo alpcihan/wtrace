@@ -4,6 +4,7 @@ import { MeshModel } from "../objects/model/mesh-model";
 import { IGPU } from "../renderer/igpu";
 import { BLAS, BLAS_NODE_SIZE } from "./acceleration-structure/blas";
 import { BLASInstance, BLAS_INSTANCE_BYTE_SIZE } from "./acceleration-structure/blas-instance";
+import { TLAS, TLAS_NODE_SIZE } from "./acceleration-structure/tlas";
 
 class SceneDataManager {
     public constructor() {
@@ -20,6 +21,7 @@ class SceneDataManager {
         this.m_materials = new Array<Material>();
         this.m_materialIDtoIdxMap = new Map<number, number>();
         this.m_meshIDtoBlasOffsetMap = new Map<number, number>();
+        this.m_blasOffsetToMeshIDMap = new Map<number, number>();
 
         this.m_totalMapCount = 0;
 
@@ -52,6 +54,10 @@ class SceneDataManager {
 
     public get materialBuffer(): Readonly<GPUBuffer> {
         return this.m_materialBuffer;
+    }
+
+    public get tlasBuffer(): Readonly<GPUBuffer>{
+        return this.m_tlasBuffer;
     }
 
     public get textureView(): Readonly<GPUTextureView> {
@@ -89,6 +95,7 @@ class SceneDataManager {
                 this.m_blasNodeCount += blas.nodes.length;
 
                 this.m_meshIDtoBlasOffsetMap.set(model.mesh.id, blasNodeOffset);
+                this.m_blasOffsetToMeshIDMap.set(blasNodeOffset, model.mesh.id);
             }
 
             // add material
@@ -108,11 +115,14 @@ class SceneDataManager {
             );
             this.m_blasInstanceArray.push(instance);
         });
-
+        
         this._updateVertexBuffer();
         this._updateBLASBuffers();
         this._updateMaterialBuffer();
         this._updateTextures();
+
+        this.m_tlas = new TLAS(this.m_blasArray, this.m_blasInstanceArray, this.m_blasOffsetToMeshIDMap);
+        this._updateTLASBuffer();
     }
 
     private m_points: Float32Array;
@@ -123,12 +133,14 @@ class SceneDataManager {
     private m_blasArray: Array<BLAS>;
     private m_blasNodeCount: number; // total node count
     private m_blasInstanceArray: Array<BLASInstance>;
+    private m_tlas: TLAS;
 
     private m_materials: Array<Material>;
     private m_totalMapCount: number;
 
     private m_materialIDtoIdxMap: Map<number, number>;
     private m_meshIDtoBlasOffsetMap: Map<number, number>;
+    private m_blasOffsetToMeshIDMap: Map<number, number>;
 
     private m_vertexBuffer: GPUBuffer;
     private m_normalBuffer: GPUBuffer;
@@ -137,6 +149,7 @@ class SceneDataManager {
     private m_triangleIdxBuffer: GPUBuffer;
     private m_blasInstanceBuffer: GPUBuffer;
     private m_blasBuffer: GPUBuffer; // blas array
+    private m_tlasBuffer: GPUBuffer; // tlas array
     private m_materialBuffer: GPUBuffer;
     private m_texture: GPUTexture;
 
@@ -226,6 +239,18 @@ class SceneDataManager {
         });
 
         IGPU.get().queue.writeBuffer(this.m_materialBuffer, 0, materialArrayByte);
+    }
+
+    private _updateTLASBuffer(): void{
+        const tlasArrayByte: ArrayBuffer = new ArrayBuffer(TLAS_NODE_SIZE*999);
+        this.m_tlas.writeNodesToArray(tlasArrayByte);
+
+        this.m_tlasBuffer = IGPU.get().createBuffer({
+            size: TLAS_NODE_SIZE*999,
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+        });
+
+        IGPU.get().queue.writeBuffer(this.m_tlasBuffer, 0, tlasArrayByte);
     }
 
     private _updateTextures(): void {

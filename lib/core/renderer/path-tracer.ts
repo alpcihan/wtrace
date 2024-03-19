@@ -214,7 +214,14 @@ class PathTracer {
                             viewDimension: "2d-array"
                         }
                     },
-  
+                    {   
+                        //tlas
+                        binding: 10,
+                        visibility: GPUShaderStage.COMPUTE,
+                        buffer: {
+                            type: "uniform",
+                        },
+                    },  
                 ],
             });
 
@@ -261,7 +268,10 @@ class PathTracer {
                         binding: 9,
                         resource: SceneManager.scene.sceneDataManager.textureView,
                     },
-              
+                    {
+                        binding: 10,
+                        resource: { buffer: SceneManager.scene.sceneDataManager.tlasBuffer },
+                    },
                 ],
             });
             const pathTracingPipelineLayout = IGPU.get().createPipelineLayout({

@@ -175,6 +175,32 @@ fn intersectAccelerationStructure(r: Ray, hit_info: ptr<function, HitInfo>) {
     }
 }
 
+fn intersectTLAS(r: Ray, hit_info: ptr<function, HitInfo>) {
+    var s: array<u32, 64>;
+    var _stackPtr: i32 = 0;
+
+    s[_stackPtr] = 0;
+    _stackPtr = _stackPtr + 1;
+
+    while(_stackPtr > 0) {
+        _stackPtr = _stackPtr - 1; // pop node from stack
+        let nodeIdx: u32 = s[_stackPtr];
+        let node: TLASNode = tlasNodes.nodes[nodeIdx];
+
+        if(intersectAABB(r, node.aabbMins.xyz, node.aabbMaxs.xyz)) {
+            if(node.left == 0 && node.right == 0){ // leaf node
+                let instanceIdx: u32 = node.instanceIdx;
+                intersectBVH(r, instanceIdx, hit_info);
+            } else { // not leaf node
+                 s[_stackPtr] = node.left;
+                _stackPtr = _stackPtr + 1;
+                s[_stackPtr] = node.right;
+                _stackPtr = _stackPtr + 1;
+            }
+        }
+    }
+}
+
 fn intersectBVH(r: Ray, instanceIdx: u32, hit_info: ptr<function, HitInfo>){
     let instance: BLASInstance = blasInstances[instanceIdx];
 
@@ -231,7 +257,6 @@ fn intersectBVH(r: Ray, instanceIdx: u32, hit_info: ptr<function, HitInfo>){
                         let v2_uv: vec2f = vec2f(uvs[idx*6+4], uvs[idx*6+5]);
                         var hit_UV: vec2f = (1 - res.y - res.z) * v0_uv + res.y * v1_uv + res.z * v2_uv;
                         hit_UV = fract(hit_UV); // repeat the texture 
-                        hit_UV.y = 1 - hit_UV.y;
 
                         let textureDims = textureDimensions(materialTextures).xy;
                         var textureCoords: vec2i;
