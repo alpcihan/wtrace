@@ -134,6 +134,18 @@ export async function createBoxScene(): Promise<wt.Scene> {
     return scene;
 }
 
+export async function createGLTFSponza(): Promise<wt.Scene> {
+
+    // create the scene
+    let scene: wt.Scene = new wt.Scene();
+
+    // load the gltf model
+    const meshModels: wt.MeshModel[] = await wt.WTGLTFLoader.load("assets/sponza-gltf-pbr/sponza.glb");
+    meshModels.forEach(meshModel => scene.add(meshModel));
+
+    return scene;
+}
+
 export async function createGLTFDamagedHelmet(): Promise<wt.Scene> {
     // create the scene
     let scene: wt.Scene = new wt.Scene();
