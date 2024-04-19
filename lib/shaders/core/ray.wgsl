@@ -231,7 +231,6 @@ fn intersectBVH(r: Ray, instanceIdx: u32, hit_info: ptr<function, HitInfo>){
                         let v2_uv: vec2f = vec2f(uvs[idx*6+4], uvs[idx*6+5]);
                         var hit_UV: vec2f = (1 - res.y - res.z) * v0_uv + res.y * v1_uv + res.z * v2_uv;
                         hit_UV = fract(hit_UV); // repeat the texture 
-                        hit_UV.y = 1 - hit_UV.y;
 
                         let textureDims = textureDimensions(materialTextures).xy;
                         var textureCoords: vec2i;

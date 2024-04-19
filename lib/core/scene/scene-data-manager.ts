@@ -232,8 +232,8 @@ class SceneDataManager {
         const texDescriptor: GPUTextureDescriptor = {
             label: "material.texture",
             size: {
-                width: 2048, // TODO: make it generic
-                height: 2048, // TODO: make it generic
+                width: 1024, // TODO: make it generic
+                height: 1024, // TODO: make it generic
                 depthOrArrayLayers: this.m_totalMapCount,
             },
             format: "rgba8unorm", // TODO: read from the texture

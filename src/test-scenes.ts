@@ -226,12 +226,12 @@ export async function createMeetManScene(): Promise<wt.Scene> {
 
     // load materials
     let headMat: wt.Material = new wt.Material();
-    headMat.albedoMap = await wt.TextureLoader.load("assets/textures/01_Head_Base_Color.jpg");
-    headMat.metallicMap = await wt.TextureLoader.load("assets/textures/01_Head_MetallicRoughness.jpg");
+    headMat.albedoMap = await wt.TextureLoader.load("assets/textures/01_Head_Base_Color.jpg", true);
+    headMat.metallicMap = await wt.TextureLoader.load("assets/textures/01_Head_MetallicRoughness.jpg", true);
 
     let bodyMat: wt.Material = new wt.Material();
-    bodyMat.albedoMap = await wt.TextureLoader.load("assets/textures/02_Body_Base_Color.jpg");
-    bodyMat.metallicMap = await wt.TextureLoader.load("assets/textures/02_Body_MetallicRoughness.jpg");
+    bodyMat.albedoMap = await wt.TextureLoader.load("assets/textures/02_Body_Base_Color.jpg", true);
+    bodyMat.metallicMap = await wt.TextureLoader.load("assets/textures/02_Body_MetallicRoughness.jpg", true);
 
     let xyzMat: wt.Material = new wt.Material();
     xyzMat.baseColor = new THREE.Vector3(0.8, 0.3, 0.3);
@@ -276,10 +276,29 @@ export async function createMeetManScene(): Promise<wt.Scene> {
     scene.add(xyzMod);
 
     let lightMod: wt.MeshModel = new wt.MeshModel(cubeMesh, lightMat);
-    lightMod.position = new THREE.Vector3(0, 30, -40);
-    lightMod.euler = new THREE.Euler(degToRad(45), 0, 0);
-    lightMod.scale = new THREE.Vector3(90, 0.05, 35);
+    lightMod.position = new THREE.Vector3(0, 40, -40);
+    lightMod.euler = new THREE.Euler(degToRad(-45), 0, 0);
+    lightMod.scale = new THREE.Vector3(110, 0.05, 50);
     scene.add(lightMod);
     
+    return scene;
+}
+
+export async function createSpotScene(): Promise<wt.Scene> {
+    
+    let scene: wt.Scene = new wt.Scene();   
+    let spotMesh: wt.Mesh | undefined = await wt.MeshLoader.load("assets/models/spot_triangulated.obj");
+    if(spotMesh === undefined) return scene;
+
+    let spotMaterial = new wt.Material();
+    spotMaterial.albedoMap = await wt.TextureLoader.load("assets/textures/spot_texture.png");
+
+    let spotModel = new wt.MeshModel(spotMesh, spotMaterial);
+    spotModel.position = new THREE.Vector3(0,2,0);
+    spotModel.euler = new THREE.Euler(0,degToRad(90),0);
+    spotModel.scale = new THREE.Vector3(2.5,2.5,2.5);
+
+    scene.add(spotModel);
+
     return scene;
 }
