@@ -224,14 +224,14 @@ export async function createMeetManScene(): Promise<wt.Scene> {
     let cubeMesh: wt.Mesh | undefined = await wt.MeshLoader.load("assets/cube.obj");
     if (xyzMesh === undefined || headMesh === undefined || bodyMesh === undefined || cubeMesh === undefined ) return scene;
 
-    // load materials
+    // load materials, true
     let headMat: wt.Material = new wt.Material();
-    headMat.albedoMap = await wt.TextureLoader.load("assets/textures/01_Head_Base_Color.jpg");
-    headMat.metallicMap = await wt.TextureLoader.load("assets/textures/01_Head_MetallicRoughness.jpg");
+    headMat.albedoMap = await wt.TextureLoader.load("assets/textures/01_Head_Base_Color.jpg", true);
+    headMat.metallicMap = await wt.TextureLoader.load("assets/textures/01_Head_MetallicRoughness.jpg", true);
 
     let bodyMat: wt.Material = new wt.Material();
-    bodyMat.albedoMap = await wt.TextureLoader.load("assets/textures/02_Body_Base_Color.jpg");
-    bodyMat.metallicMap = await wt.TextureLoader.load("assets/textures/02_Body_MetallicRoughness.jpg");
+    bodyMat.albedoMap = await wt.TextureLoader.load("assets/textures/02_Body_Base_Color.jpg", true);
+    bodyMat.metallicMap = await wt.TextureLoader.load("assets/textures/02_Body_MetallicRoughness.jpg", true);
 
     let xyzMat: wt.Material = new wt.Material();
     xyzMat.baseColor = new THREE.Vector3(0.8, 0.3, 0.3);
@@ -277,7 +277,7 @@ export async function createMeetManScene(): Promise<wt.Scene> {
 
     let lightMod: wt.MeshModel = new wt.MeshModel(cubeMesh, lightMat);
     lightMod.position = new THREE.Vector3(0, 30, -40);
-    lightMod.euler = new THREE.Euler(degToRad(45), 0, 0);
+    lightMod.euler = new THREE.Euler(degToRad(-45), 0, 0);
     lightMod.scale = new THREE.Vector3(90, 0.05, 35);
     scene.add(lightMod);
     
