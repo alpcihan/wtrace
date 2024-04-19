@@ -224,7 +224,7 @@ export async function createMeetManScene(): Promise<wt.Scene> {
     let cubeMesh: wt.Mesh | undefined = await wt.MeshLoader.load("assets/cube.obj");
     if (xyzMesh === undefined || headMesh === undefined || bodyMesh === undefined || cubeMesh === undefined ) return scene;
 
-    // load materials, true
+    // load materials
     let headMat: wt.Material = new wt.Material();
     headMat.albedoMap = await wt.TextureLoader.load("assets/textures/01_Head_Base_Color.jpg", true);
     headMat.metallicMap = await wt.TextureLoader.load("assets/textures/01_Head_MetallicRoughness.jpg", true);
