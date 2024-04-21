@@ -36,7 +36,7 @@ class WTGLTFLoader {
             );
         });
 
-        return this._gltfSceneToMeshModels(gltf.scene);
+        return await this._gltfSceneToMeshModels(gltf.scene);
     }
 
     private static _populateF32ArrPerIndex(
@@ -55,55 +55,64 @@ class WTGLTFLoader {
         return populated;
     }
 
-    private static _gltfSceneToMeshModels(gltfScene: THREE.Group): MeshModel[] {
-        let meshModels: MeshModel[] = [];
-
+    private static async _gltfSceneToMeshModels(gltfScene: THREE.Group): Promise<MeshModel[]> {
+        const objects: any[] = [];
         gltfScene.traverse((object: any) => {
-            if (!object.isMesh) return;
-
+            if (object.isMesh) {
+                objects.push(object);
+            }
+        });
+    
+        const meshModels: Promise<MeshModel>[] = objects.map(async (object: any) => {
             let initialPoints = new Float32Array(object.geometry.attributes.position.array);
             let indices = new Uint32Array(object.geometry.index.array);
-
+    
             // create mesh
             let mesh = new Mesh();
-
+    
             mesh.points = this._populateF32ArrPerIndex(initialPoints, indices, 3);
-
+    
             if (object.geometry.attributes.normal)
                 mesh.normals = this._populateF32ArrPerIndex(
                     object.geometry.attributes.normal.array,
                     indices,
                     3
                 );
-
+    
             if (object.geometry.attributes.uv)
                 mesh.uvs = this._populateF32ArrPerIndex(
                     object.geometry.attributes.uv.array,
                     indices,
                     2
                 );
-
+    
             // create material
             let material: Material = new Material();
             let threeMat = (
                 Array.isArray(object.material) ? object.material[0] : object.material
             ) as THREE.MeshBasicMaterial;
-
+    
             // load material textures
             if (threeMat.map !== null) {
-                material.albedoMap = new Texture(threeMat.map.image);
+                const imageData: ImageBitmap = await createImageBitmap(threeMat.map.image, {
+                    // resizeQuality: ResizeQuality;
+                    resizeHeight: 1024,
+                    resizeWidth: 1024,
+                }); 
+                
+                material.albedoMap = new Texture(imageData);
             }
-
+    
             // create model
             const model = new MeshModel(mesh, material);
             model.position = object.position;
             model.euler = object.rotation;
             model.scale = object.scale;
-
-            meshModels.push(model);
+    
+            return model;
         });
-
-        return meshModels;
+    
+        return Promise.all(meshModels);
     }
 
     private static m_loader: GLTFLoader;
