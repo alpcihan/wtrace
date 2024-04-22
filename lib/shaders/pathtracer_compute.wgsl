@@ -80,7 +80,7 @@ fn pathTrace(ray: Ray, seed: ptr<function,u32>) -> vec3f {
     
     for(var i: u32 = 0; i < 3; i++) {
         createHitInfo(&hitInfo);
-        hitWorld(r, &hitInfo);
+        var tlasColor = hitWorld(r, &hitInfo);
 
         // skybox
         if(hitInfo.t > 1000000) {               // TODO: add max render distance
@@ -100,7 +100,7 @@ fn pathTrace(ray: Ray, seed: ptr<function,u32>) -> vec3f {
             seed);
 
         // add emission
-        acc += hitInfo.material.emissiveColor * abso;
+        acc += hitInfo.material.emissiveColor * abso + tlasColor;
 
         // absorption
         if (brdf.w > 0.0) {
@@ -115,7 +115,7 @@ fn pathTrace(ray: Ray, seed: ptr<function,u32>) -> vec3f {
     return acc;
 }
 
-fn hitWorld(ray: Ray, bestHit: ptr<function, HitInfo>){
+fn hitWorld(ray: Ray, bestHit: ptr<function, HitInfo>)-> vec3f{
     // Scene helper objects data // TODO: pass as buffer
     var sphere: Sphere = Sphere(vec3f(0.0,0.5,0.0), 0);
     var lightMaterial: Material = Material(vec3f(2), 1, vec3f(2), 0, -1, -1, -1, -1);
@@ -125,5 +125,7 @@ fn hitWorld(ray: Ray, bestHit: ptr<function, HitInfo>){
     intersectSphere(&sphere, &lightMaterial, ray, bestHit);
     intersectXZPlane(floorY, &floorMaterial, ray, bestHit);
     //intersectAccelerationStructure(ray, bestHit);
-    intersectTLAS(ray, bestHit);
+    var tlasColor = intersectTLAS(ray, bestHit);
+
+    return tlasColor;
 }

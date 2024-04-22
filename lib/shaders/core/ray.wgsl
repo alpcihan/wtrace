@@ -175,12 +175,13 @@ fn intersectAccelerationStructure(r: Ray, hit_info: ptr<function, HitInfo>) {
     }
 }
 
-fn intersectTLAS(r: Ray, hit_info: ptr<function, HitInfo>) {
+fn intersectTLAS(r: Ray, hit_info: ptr<function, HitInfo>) -> vec3f{
     var s: array<u32, 64>;
     var _stackPtr: i32 = 0;
 
     s[_stackPtr] = 0;
     _stackPtr = _stackPtr + 1;
+    var tlasColor: vec3f = vec3f(0,0,0);
 
     while(_stackPtr > 0) {
         _stackPtr = _stackPtr - 1; // pop node from stack
@@ -188,6 +189,7 @@ fn intersectTLAS(r: Ray, hit_info: ptr<function, HitInfo>) {
         let node: TLASNode = tlasNodes.nodes[nodeIdx];
 
         if(intersectAABB(r, node.aabbMins.xyz, node.aabbMaxs.xyz)) {
+            tlasColor += vec3f(0,0.1,0);
             if(node.left == 0 && node.right == 0){ // leaf node
                 let instanceIdx: u32 = node.instanceIdx;
                 intersectBVH(r, instanceIdx, hit_info);
@@ -199,6 +201,7 @@ fn intersectTLAS(r: Ray, hit_info: ptr<function, HitInfo>) {
             }
         }
     }
+    return tlasColor;
 }
 
 fn intersectBVH(r: Ray, instanceIdx: u32, hit_info: ptr<function, HitInfo>){
