@@ -186,10 +186,11 @@ fn intersectTLAS(r: Ray, hit_info: ptr<function, HitInfo>) -> vec3f{
     while(_stackPtr > 0) {
         _stackPtr = _stackPtr - 1; // pop node from stack
         let nodeIdx: u32 = s[_stackPtr];
-        let node: TLASNode = tlasNodes.nodes[nodeIdx];
+        let node: TLASNode = tlasNodes[nodeIdx];
 
         if(intersectAABB(r, node.aabbMins.xyz, node.aabbMaxs.xyz)) {
-            tlasColor += vec3f(0,0.1,0);
+            var seed: u32 = nodeIdx;
+            tlasColor += 0.1*frand3(&seed);
             if(node.left == 0 && node.right == 0){ // leaf node
                 let instanceIdx: u32 = node.instanceIdx;
                 intersectBVH(r, instanceIdx, hit_info);

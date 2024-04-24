@@ -33,12 +33,7 @@ struct Material {
 @group(0) @binding(7) var<storage, read> blasInstances: array<BLASInstance>;
 @group(0) @binding(8) var<storage, read> materials: array<Material>;
 @group(0) @binding(9) var materialTextures: texture_2d_array<f32>;
-
-struct TLASWrap{
-    nodes: array<TLASNode,999>,
-};
-
-@group(0) @binding(10)var<uniform> tlasNodes: TLASWrap;
+@group(1) @binding(0) var<storage, read> tlasNodes: array<TLASNode>;
 
 @compute @workgroup_size(16,16,1)
 fn main(@builtin(global_invocation_id) globalInvocationID : vec3u) {

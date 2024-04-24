@@ -242,12 +242,13 @@ class SceneDataManager {
     }
 
     private _updateTLASBuffer(): void{
-        const tlasArrayByte: ArrayBuffer = new ArrayBuffer(TLAS_NODE_SIZE*999);
+        let arraySize = TLAS_NODE_SIZE*(this.m_blasInstanceArray.length*2);
+        const tlasArrayByte: ArrayBuffer = new ArrayBuffer(arraySize);
         this.m_tlas.writeNodesToArray(tlasArrayByte);
 
         this.m_tlasBuffer = IGPU.get().createBuffer({
-            size: TLAS_NODE_SIZE*999,
-            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+            size: arraySize,
+            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
         });
 
         IGPU.get().queue.writeBuffer(this.m_tlasBuffer, 0, tlasArrayByte);

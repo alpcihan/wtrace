@@ -302,23 +302,17 @@ export async function createSuzannes(): Promise<wt.Scene> {
     let scene: wt.Scene = new wt.Scene();
 
     // load the gltf model
-    const meshModels: wt.MeshModel[] = await wt.WTGLTFLoader.load("assets/Avocado.glb");
-    meshModels.forEach(meshModel => {
-        meshModel.scale= new THREE.Vector3(100,100,100);
-        meshModel.position = new THREE.Vector3(0,2,0);
-        scene.add(meshModel);
-    });
-
-    let suzanneMesh: wt.Mesh | undefined = await wt.MeshLoader.load("assets/suzanne.obj");
-    if(suzanneMesh === undefined) return scene;
-    let suzanneMaterial = new wt.Material();
-    suzanneMaterial.baseColor = new THREE.Vector3(1,0,0);
-
+    const meshModels: wt.MeshModel[] = await wt.WTGLTFLoader.load("assets/DamagedHelmet.glb");
     
-    for(let i = 0; i< 20; ++i){
-        let suzanneModel = new wt.MeshModel(suzanneMesh,suzanneMaterial);
-        suzanneModel.position = new THREE.Vector3(i*10,0,0); 
-        scene.add(suzanneModel);
+    for(let i = 0; i< 10; ++i){
+
+        for(let j = 0; j<10; ++j){
+            let newModel: wt.MeshModel = new wt.MeshModel(meshModels[0].mesh,meshModels[0].material);
+            newModel.position = new THREE.Vector3(i*5,0,j*5); 
+            newModel.euler = meshModels[0].euler;
+            scene.add(newModel);
+        }
     }
+
     return scene;
 }
