@@ -152,7 +152,10 @@ export async function createGLTFDamagedHelmet(): Promise<wt.Scene> {
 
     // load the gltf model
     const meshModels: wt.MeshModel[] = await wt.WTGLTFLoader.load("assets/DamagedHelmet.glb");
-    meshModels.forEach(meshModel => scene.add(meshModel));
+    meshModels.forEach(meshModel => {
+            meshModel.position = new THREE.Vector3(0,2,0);
+            scene.add(meshModel);
+        });
 
     // load the cube model (TODO: make async)
     let cubeMesh: wt.Mesh | undefined = await wt.MeshLoader.load("assets/cube.obj");
@@ -167,7 +170,7 @@ export async function createGLTFDamagedHelmet(): Promise<wt.Scene> {
     bottomWallMat.roughness = 0.25;
     bottomWallMat.metallic = 0.75;
     let bottomWallMod: wt.MeshModel = new wt.MeshModel(cubeMesh, bottomWallMat);
-    bottomWallMod.position = new THREE.Vector3(0, -1, 0);
+    bottomWallMod.position = new THREE.Vector3(0, 0, 0);
     bottomWallMod.scale = new THREE.Vector3(scale, 0.01 * scale, scale);
     scene.add(bottomWallMod);
 
@@ -177,7 +180,7 @@ export async function createGLTFDamagedHelmet(): Promise<wt.Scene> {
     rightWallMat.roughness = 0.75;
     rightWallMat.metallic = 0.25;
     let rightWallMod: wt.MeshModel = new wt.MeshModel(cubeMesh, rightWallMat);
-    rightWallMod.position = new THREE.Vector3(0.5 * scale, 0.5 * scale - 1, 0);
+    rightWallMod.position = new THREE.Vector3(0.5 * scale, 0.5 * scale , 0);
     rightWallMod.scale = new THREE.Vector3(0.01 * scale, scale, scale);
     scene.add(rightWallMod);
 
@@ -187,7 +190,7 @@ export async function createGLTFDamagedHelmet(): Promise<wt.Scene> {
     leftWallMat.roughness = 0.75;
     leftWallMat.metallic = 0.25;
     let leftWallMod: wt.MeshModel = new wt.MeshModel(cubeMesh, leftWallMat);
-    leftWallMod.position = new THREE.Vector3(-0.5 * scale, 0.5 * scale - 1, 0);
+    leftWallMod.position = new THREE.Vector3(-0.5 * scale, 0.5 * scale, 0);
     leftWallMod.scale = new THREE.Vector3(0.01 * scale, scale, scale);
     scene.add(leftWallMod);
 
@@ -197,7 +200,7 @@ export async function createGLTFDamagedHelmet(): Promise<wt.Scene> {
     topWallMat.roughness = 0.75;
     topWallMat.metallic = 0.25;
     let topWallMod: wt.MeshModel = new wt.MeshModel(cubeMesh, topWallMat);
-    topWallMod.position = new THREE.Vector3(0, scale - 1, 0);
+    topWallMod.position = new THREE.Vector3(0, scale, 0);
     topWallMod.scale = new THREE.Vector3(scale, 0.01 * scale, scale);
     scene.add(topWallMod);
 
@@ -207,7 +210,7 @@ export async function createGLTFDamagedHelmet(): Promise<wt.Scene> {
     backWallMat.roughness = 0.75;
     backWallMat.metallic = 0.25;
     let backWallMod: wt.MeshModel = new wt.MeshModel(cubeMesh, backWallMat);
-    backWallMod.position = new THREE.Vector3(0, 0.5 * scale - 1, -0.5 * scale);
+    backWallMod.position = new THREE.Vector3(0, 0.5 * scale, -0.5 * scale);
     backWallMod.scale = new THREE.Vector3(scale, scale, 0.01 * scale);
     scene.add(backWallMod);
 
@@ -218,7 +221,7 @@ export async function createGLTFDamagedHelmet(): Promise<wt.Scene> {
     lightMat.baseColor = new THREE.Vector3(1, 1, 1);
     lightMat.emissiveColor = new THREE.Vector3(20, 20, 20);
     let lightMod: wt.MeshModel = new wt.MeshModel(cubeMesh, lightMat);
-    lightMod.position = new THREE.Vector3(0, scale - 0.005 - 1, 0);
+    lightMod.position = new THREE.Vector3(0, scale - 0.005, 0);
     lightMod.scale = new THREE.Vector3(scale * 0.3, 0.01 * scale, scale * 0.3);
     scene.add(lightMod);
 
@@ -315,4 +318,24 @@ export async function createSuzannes(): Promise<wt.Scene> {
     }
 
     return scene;
-}
+}export async function createTestScene(): Promise<wt.Scene> {
+    let scene: wt.Scene = new wt.Scene();
+    let mesh: wt.Mesh | undefined = await wt.MeshLoader.load("assets/cube.obj");
+    if (mesh === undefined) return scene;
+
+    let material: wt.Material = new wt.Material();
+    material.albedoMap = await wt.TextureLoader.load("assets/spot_texture.png", true);
+
+    let model: wt.MeshModel = new wt.MeshModel(mesh, material);
+    model.position = new THREE.Vector3(0, 2, 0);
+    model.scale = new THREE.Vector3(1, 1, 1);
+    scene.add(model);
+
+    const meshModels: wt.MeshModel[] = await wt.WTGLTFLoader.load("assets/Avocado.glb");
+    meshModels.forEach(meshModel => {
+            meshModel.position = new THREE.Vector3(0,2,0);
+            scene.add(meshModel);
+        });
+
+    return scene;
+}   

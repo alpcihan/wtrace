@@ -11,8 +11,7 @@ class SceneDataManager {
         this.m_models = new Array<MeshModel>();
 
         this.m_points = new Float32Array();
-        this.m_normals = new Float32Array();
-        this.m_uvs = new Float32Array();
+        this.m_vertexInfo = new Float32Array();
 
         this.m_blasNodeCount = 0;
         this.m_blasArray = new Array<BLAS>();
@@ -32,12 +31,8 @@ class SceneDataManager {
         return this.m_vertexBuffer;
     }
 
-    public get normalBuffer(): Readonly<GPUBuffer> {
-        return this.m_normalBuffer;
-    }
-
-    public get uvBuffer(): Readonly<GPUBuffer> {
-        return this.m_uvBuffer;
+    public get vertexInfoBuffer(): Readonly<GPUBuffer> {
+        return this.m_vertexInfoBuffer;
     }
 
     public get triangleIdxBuffer(): Readonly<GPUBuffer> {
@@ -86,8 +81,20 @@ class SceneDataManager {
                 // if the mesh is not created -> create and SET its index
                 // add vertex data
                 this.m_points = new Float32Array([...this.m_points, ...model.mesh.points]);
-                this.m_normals = new Float32Array([...this.m_normals, ...model.mesh.normals]);
-                this.m_uvs = new Float32Array([...this.m_uvs, ...model.mesh.uvs]);
+
+                let numberOfVertices = model.mesh.points.length / 3;
+                let newVertexInfo = new Float32Array(numberOfVertices * 8); // 3 normals, 2 uvs, 3 padding
+                for (let i = 0; i < numberOfVertices; i++) {
+                    newVertexInfo[i * 8 + 0] = model.mesh.normals[i * 3 + 0];
+                    newVertexInfo[i * 8 + 1] = model.mesh.normals[i * 3 + 1];
+                    newVertexInfo[i * 8 + 2] = model.mesh.normals[i * 3 + 2];
+                    newVertexInfo[i * 8 + 3] = 0; // padding
+                    newVertexInfo[i * 8 + 4] = model.mesh.uvs[i * 2 + 0];
+                    newVertexInfo[i * 8 + 5] = model.mesh.uvs[i * 2 + 1];
+                    newVertexInfo[i * 8 + 6] = 0; // padding
+                    newVertexInfo[i * 8 + 7] = 0; // padding
+                }
+                this.m_vertexInfo = new Float32Array([...this.m_vertexInfo, ...newVertexInfo]);
 
                 // add blas
                 const blas: BLAS = new BLAS(model.mesh.points);
@@ -126,8 +133,7 @@ class SceneDataManager {
     }
 
     private m_points: Float32Array;
-    private m_uvs: Float32Array;
-    private m_normals: Float32Array;
+    private m_vertexInfo: Float32Array; //normals and uvs
 
     private m_models: Array<MeshModel>;
     private m_blasArray: Array<BLAS>;
@@ -143,8 +149,7 @@ class SceneDataManager {
     private m_blasOffsetToMeshIDMap: Map<number, number>;
 
     private m_vertexBuffer: GPUBuffer;
-    private m_normalBuffer: GPUBuffer;
-    private m_uvBuffer: GPUBuffer;
+    private m_vertexInfoBuffer: GPUBuffer;
 
     private m_triangleIdxBuffer: GPUBuffer;
     private m_blasInstanceBuffer: GPUBuffer;
@@ -159,19 +164,13 @@ class SceneDataManager {
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
         });
 
-        this.m_normalBuffer = IGPU.get().createBuffer({
-            size: this.m_normals.byteLength,
-            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-        });
-
-        this.m_uvBuffer = IGPU.get().createBuffer({
-            size: this.m_uvs.byteLength,
+        this.m_vertexInfoBuffer = IGPU.get().createBuffer({
+            size: this.m_vertexInfo.byteLength,
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
         });
 
         IGPU.get().queue.writeBuffer(this.m_vertexBuffer, 0, this.m_points);
-        IGPU.get().queue.writeBuffer(this.m_normalBuffer, 0, this.m_normals);
-        IGPU.get().queue.writeBuffer(this.m_uvBuffer, 0, this.m_uvs);
+        IGPU.get().queue.writeBuffer(this.m_vertexInfoBuffer, 0, this.m_vertexInfo);
     }
 
     private _updateBLASBuffers(): void {
