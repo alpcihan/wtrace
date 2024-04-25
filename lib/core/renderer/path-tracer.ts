@@ -151,16 +151,8 @@ class PathTracer {
                         },
                     },
                     {
-                        // normals
+                        // vertex info (normals, uvs)
                         binding: 2,
-                        visibility: GPUShaderStage.COMPUTE,
-                        buffer: {
-                            type: "read-only-storage",
-                        },
-                    },
-                    {
-                        // uv
-                        binding: 3,
                         visibility: GPUShaderStage.COMPUTE,
                         buffer: {
                             type: "read-only-storage",
@@ -231,11 +223,7 @@ class PathTracer {
                     },
                     {
                         binding: 2,
-                        resource: { buffer: SceneManager.scene.sceneDataManager.normalBuffer},
-                    },
-                    {
-                        binding: 3,
-                        resource: { buffer: SceneManager.scene.sceneDataManager.uvBuffer},
+                        resource: { buffer: SceneManager.scene.sceneDataManager.vertexInfoBuffer},
                     },
                     {
                         binding: 4,

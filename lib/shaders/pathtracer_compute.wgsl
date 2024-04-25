@@ -20,13 +20,18 @@ struct Material {
     metallicMapIdx: i32
 };
 
+struct VertexInfo {
+    normal: vec4f,
+    uv: vec4f
+};
+
 //-------------------------------------------------------------------
 // Bindings
 //-------------------------------------------------------------------
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var<storage, read> points: array<f32>;
-@group(0) @binding(2) var<storage, read> normals: array<f32>;
-@group(0) @binding(3) var<storage, read> uvs: array<f32>;
+@group(0) @binding(2) var<storage, read> vertexInfo: array<VertexInfo>;
+
 @group(0) @binding(4) var<storage, read_write> accumulationInfo: array<vec4f>; // TODO: replace with storage texture
 @group(0) @binding(5) var<storage, read> triIdxInfo: array<u32>;
 @group(0) @binding(6) var<storage, read> blasNodes: array<BLASNode>;
@@ -78,9 +83,9 @@ fn pathTrace(ray: Ray, seed: ptr<function,u32>) -> vec3f {
 
         // skybox
         if(hitInfo.t > 1000000) {               // TODO: add max render distance
-            // let dir: vec3f = r.direction;
-            // var a: f32 = 0.5*(dir.y + 1.0);
-            // acc += mix(vec3f(1.0, 1.0, 1.0),vec3f(0.5, 0.7, 1.0), a) * abso;
+            let dir: vec3f = r.direction;
+            var a: f32 = 0.5*(dir.y + 1.0);
+            acc += mix(vec3f(1.0, 1.0, 1.0),vec3f(0.5, 0.7, 1.0), a) * abso;
             return acc;
         }
 
