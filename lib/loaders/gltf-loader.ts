@@ -5,6 +5,7 @@ import { Mesh } from "../wtrace";
 import { Material } from "../wtrace";
 import { Texture } from "../wtrace";
 import * as THREE from "three";
+import * as utils from './load_utils';
 
 class WTGLTFLoader {
     public static async load(path: string): Promise<MeshModel[]> {
@@ -78,6 +79,8 @@ class WTGLTFLoader {
                     indices,
                     3
                 );
+            else
+                await utils.populateNormals(mesh);
     
             if (object.geometry.attributes.uv)
                 mesh.uvs = this._populateF32ArrPerIndex(

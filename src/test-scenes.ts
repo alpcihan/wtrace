@@ -286,3 +286,24 @@ export async function createMeetManScene(): Promise<wt.Scene> {
     
     return scene;
 }
+export async function createNormalGenerationTest(): Promise<wt.Scene> {
+    let scene: wt.Scene = new wt.Scene();
+    let mesh: wt.Mesh | undefined = await wt.MeshLoader.load("assets/cube.obj");
+    if (mesh === undefined) return scene;
+
+    let material: wt.Material = new wt.Material();
+    material.albedoMap = await wt.TextureLoader.load("assets/spot_texture.png", true);
+
+    let model: wt.MeshModel = new wt.MeshModel(mesh, material);
+    model.position = new THREE.Vector3(0, 0, 0);
+    model.scale = new THREE.Vector3(1, 1, 1);
+    scene.add(model);
+
+    const meshModels: wt.MeshModel[] = await wt.WTGLTFLoader.load("assets/Avocado.glb");
+    meshModels.forEach(meshModel => {
+            meshModel.position = new THREE.Vector3(0,2,0);
+            scene.add(meshModel);
+        });
+
+    return scene;
+}   
