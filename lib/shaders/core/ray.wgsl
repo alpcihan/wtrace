@@ -215,9 +215,9 @@ fn intersectBVH(r: Ray, instanceIdx: u32, hit_info: ptr<function, HitInfo>){
                         (*hit_info).t = res.x;
 
                         // record hit normal
-                        let v0_n: vec3f = vec3f(normals[idx*9+0], normals[idx*9+1], normals[idx*9+2]);
-                        let v1_n: vec3f = vec3f(normals[idx*9+3], normals[idx*9+4], normals[idx*9+5]);
-                        let v2_n: vec3f = vec3f(normals[idx*9+6], normals[idx*9+7], normals[idx*9+8]);
+                        let v0_n: vec3f = vertexInfo[idx*3 + 0].normal.xyz;
+                        let v1_n: vec3f = vertexInfo[idx*3 + 1].normal.xyz;
+                        let v2_n: vec3f = vertexInfo[idx*3 + 2].normal.xyz;
                         let n_os: vec3f = (1 - res.y - res.z) * v0_n + res.y * v1_n + res.z * v2_n;
                         (*hit_info).normal = normalize((instance.transform * vec4f(n_os, 0)).xyz);
 
@@ -226,9 +226,9 @@ fn intersectBVH(r: Ray, instanceIdx: u32, hit_info: ptr<function, HitInfo>){
                         (*hit_info).material = material;
 
                         // get hit uv
-                        let v0_uv: vec2f = vec2f(uvs[idx*6+0], uvs[idx*6+1]);
-                        let v1_uv: vec2f = vec2f(uvs[idx*6+2], uvs[idx*6+3]);
-                        let v2_uv: vec2f = vec2f(uvs[idx*6+4], uvs[idx*6+5]);
+                        let v0_uv: vec2f = vertexInfo[idx*3 + 0].uv.xy;
+                        let v1_uv: vec2f = vertexInfo[idx*3 + 1].uv.xy;
+                        let v2_uv: vec2f = vertexInfo[idx*3 + 2].uv.xy;
                         var hit_UV: vec2f = (1 - res.y - res.z) * v0_uv + res.y * v1_uv + res.z * v2_uv;
                         hit_UV = fract(hit_UV); // repeat the texture 
 
