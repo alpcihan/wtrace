@@ -162,7 +162,7 @@ class PathTracer {
                     },
                     {
                         // render image (as storage buffer)
-                        binding: 4,
+                        binding: 3,
                         visibility: GPUShaderStage.COMPUTE,
                         buffer: {
                             type: "storage",
@@ -170,7 +170,7 @@ class PathTracer {
                     },
                     {
                         // triangle indices
-                        binding: 5,
+                        binding: 4,
                         visibility: GPUShaderStage.COMPUTE,
                         buffer: {
                             type: "read-only-storage",
@@ -178,7 +178,7 @@ class PathTracer {
                     },
                     {
                         // blas nodes
-                        binding: 6,
+                        binding: 5,
                         visibility: GPUShaderStage.COMPUTE,
                         buffer: {
                             type: "read-only-storage",
@@ -186,7 +186,7 @@ class PathTracer {
                     },
                     {
                         // blas instances
-                        binding: 7,
+                        binding: 6,
                         visibility: GPUShaderStage.COMPUTE,
                         buffer: {
                             type: "read-only-storage",
@@ -194,7 +194,7 @@ class PathTracer {
                     },
                     {
                         // materials
-                        binding: 8,
+                        binding: 7,
                         visibility: GPUShaderStage.COMPUTE,
                         buffer: {
                             type: "read-only-storage",
@@ -202,7 +202,7 @@ class PathTracer {
                     },
                     {
                         // maps
-                        binding : 9,
+                        binding : 8,
                         visibility: GPUShaderStage.COMPUTE,
                         texture: {
                             viewDimension: "2d-array"
@@ -240,27 +240,27 @@ class PathTracer {
                         resource: { buffer: SceneManager.scene.sceneDataManager.vertexInfoBuffer},
                     },
                     {
-                        binding: 4,
+                        binding: 3,
                         resource: { buffer: this.m_accumulationBuffer },
                     },
                     {
-                        binding: 5,
+                        binding: 4,
                         resource: { buffer: SceneManager.scene.sceneDataManager.triangleIdxBuffer },
                     },
                     {
-                        binding: 6,
+                        binding: 5,
                         resource: { buffer: SceneManager.scene.sceneDataManager.blasBuffer },
                     },
                     {
-                        binding: 7,
+                        binding: 6,
                         resource: { buffer: SceneManager.scene.sceneDataManager.blasInstanceBuffer },
                     },
                     {
-                        binding: 8,
+                        binding: 7,
                         resource: { buffer: SceneManager.scene.sceneDataManager.materialBuffer },
                     },
                     {
-                        binding: 9,
+                        binding: 8,
                         resource: SceneManager.scene.sceneDataManager.textureView,
                     },
                 ],

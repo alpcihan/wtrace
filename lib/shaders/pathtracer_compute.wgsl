@@ -32,12 +32,12 @@ struct VertexInfo {
 @group(0) @binding(1) var<storage, read> points: array<f32>;
 @group(0) @binding(2) var<storage, read> vertexInfo: array<VertexInfo>;
 
-@group(0) @binding(4) var<storage, read_write> accumulationInfo: array<vec4f>; // TODO: replace with storage texture
-@group(0) @binding(5) var<storage, read> triIdxInfo: array<u32>;
-@group(0) @binding(6) var<storage, read> blasNodes: array<BLASNode>;
-@group(0) @binding(7) var<storage, read> blasInstances: array<BLASInstance>;
-@group(0) @binding(8) var<storage, read> materials: array<Material>;
-@group(0) @binding(9) var materialTextures: texture_2d_array<f32>;
+@group(0) @binding(3) var<storage, read_write> accumulationInfo: array<vec4f>; // TODO: replace with storage texture
+@group(0) @binding(4) var<storage, read> triIdxInfo: array<u32>;
+@group(0) @binding(5) var<storage, read> blasNodes: array<BLASNode>;
+@group(0) @binding(6) var<storage, read> blasInstances: array<BLASInstance>;
+@group(0) @binding(7) var<storage, read> materials: array<Material>;
+@group(0) @binding(8) var materialTextures: texture_2d_array<f32>;
 @group(1) @binding(0) var<storage, read> tlasNodes: array<TLASNode>;
 
 @compute @workgroup_size(16,16,1)
@@ -80,7 +80,7 @@ fn pathTrace(ray: Ray, seed: ptr<function,u32>) -> vec3f {
     
     for(var i: u32 = 0; i < 3; i++) {
         createHitInfo(&hitInfo);
-        var tlasColor = hitWorld(r, &hitInfo);
+        hitWorld(r, &hitInfo);
 
         // skybox
         if(hitInfo.t > 1000000) {               // TODO: add max render distance
@@ -100,7 +100,7 @@ fn pathTrace(ray: Ray, seed: ptr<function,u32>) -> vec3f {
             seed);
 
         // add emission
-        acc += hitInfo.material.emissiveColor * abso + tlasColor;
+        acc += hitInfo.material.emissiveColor * abso;
 
         // absorption
         if (brdf.w > 0.0) {
@@ -115,7 +115,7 @@ fn pathTrace(ray: Ray, seed: ptr<function,u32>) -> vec3f {
     return acc;
 }
 
-fn hitWorld(ray: Ray, bestHit: ptr<function, HitInfo>)-> vec3f{
+fn hitWorld(ray: Ray, bestHit: ptr<function, HitInfo>){
     // Scene helper objects data // TODO: pass as buffer
     var sphere: Sphere = Sphere(vec3f(0.0,0.5,0.0), 0);
     var lightMaterial: Material = Material(vec3f(2), 1, vec3f(2), 0, -1, -1, -1, -1);
@@ -125,7 +125,5 @@ fn hitWorld(ray: Ray, bestHit: ptr<function, HitInfo>)-> vec3f{
     intersectSphere(&sphere, &lightMaterial, ray, bestHit);
     intersectXZPlane(floorY, &floorMaterial, ray, bestHit);
     //intersectAccelerationStructure(ray, bestHit);
-    var tlasColor = intersectTLAS(ray, bestHit);
-
-    return tlasColor;
+    intersectTLAS(ray, bestHit);
 }

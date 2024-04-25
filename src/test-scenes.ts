@@ -140,7 +140,7 @@ export async function createGLTFSponza(): Promise<wt.Scene> {
     let scene: wt.Scene = new wt.Scene();
 
     // load the gltf model
-    const meshModels: wt.MeshModel[] = await wt.WTGLTFLoader.load("assets/sponza-gltf-pbr/sponza.glb");
+    const meshModels: wt.MeshModel[] = await wt.WTGLTFLoader.load("assets/sponza.glb");
     meshModels.forEach(meshModel => scene.add(meshModel));
 
     return scene;
@@ -300,16 +300,15 @@ export async function createMeetManScene(): Promise<wt.Scene> {
 }
 
 
-export async function createSuzannes(): Promise<wt.Scene> {
+export async function create10kDamagedHelmet(): Promise<wt.Scene> {
     
     let scene: wt.Scene = new wt.Scene();
 
     // load the gltf model
     const meshModels: wt.MeshModel[] = await wt.WTGLTFLoader.load("assets/DamagedHelmet.glb");
     
-    for(let i = 0; i< 10; ++i){
-
-        for(let j = 0; j<10; ++j){
+    for(let i = 0; i< 100; ++i){
+        for(let j = 0; j<100; ++j){
             let newModel: wt.MeshModel = new wt.MeshModel(meshModels[0].mesh,meshModels[0].material);
             newModel.position = new THREE.Vector3(i*5,0,j*5); 
             newModel.euler = meshModels[0].euler;
@@ -318,7 +317,9 @@ export async function createSuzannes(): Promise<wt.Scene> {
     }
 
     return scene;
-}export async function createTestScene(): Promise<wt.Scene> {
+}
+
+export async function createTestScene(): Promise<wt.Scene> {
     let scene: wt.Scene = new wt.Scene();
     let mesh: wt.Mesh | undefined = await wt.MeshLoader.load("assets/cube.obj");
     if (mesh === undefined) return scene;
