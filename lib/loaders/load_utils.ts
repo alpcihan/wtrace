@@ -1,7 +1,7 @@
 import { Mesh } from '../wtrace';
 import * as THREE from 'three';
 
-
+//TODO: Remove this function (it's not used)
 export async function populateNormals(mesh: Mesh) {
     mesh.normals = new Float32Array(mesh.points.length);
     for(let i = 0; i < mesh.points.length; i+=9) {
