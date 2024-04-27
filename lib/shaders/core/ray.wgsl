@@ -188,7 +188,7 @@ fn intersectTLAS(r: Ray_fp, hit_info: ptr<function, HitInfo>){
         _stackPtr = _stackPtr - 1; // pop node from stack
         let nodeIdx: u32 = s[_stackPtr];
 
-        if(intersectTLASAABB(r, tlasNodes[nodeIdx].aabbMins.xyz, tlasNodes[nodeIdx].aabbMaxs.xyz,&hit_info.t)) {
+        if(intersectAABB(r, tlasNodes[nodeIdx].aabbMins.xyz, tlasNodes[nodeIdx].aabbMaxs.xyz,hit_info)) {
             if(tlasNodes[nodeIdx].left == 0 && tlasNodes[nodeIdx].right == 0){ // leaf node
                 let instanceIdx: u32 = tlasNodes[nodeIdx].instanceIdx;
                 intersectBVH(r, instanceIdx, hit_info);
@@ -223,7 +223,7 @@ fn intersectBVH(r: Ray_fp, instanceIdx: u32, hit_info: ptr<function, HitInfo>){
         let aabbMin: vec3f = node.aabbMins.xyz;
         let aabbMax: vec3f = node.aabbMaxs.xyz;
 
-        if(intersectAABB(&ray, aabbMin, aabbMax)) {
+        if(intersectAABB(&ray, aabbMin, aabbMax, hit_info)) {
             let triCount: u32 = u32(node.triangleCount);
             let lFirst: u32 = u32(node.leftFirst);
             if(triCount > 0) { // if triangle count > 0 means leaf node (leftFirst gives first triangleIdx)
@@ -288,7 +288,7 @@ fn intersectBVH(r: Ray_fp, instanceIdx: u32, hit_info: ptr<function, HitInfo>){
     }
 }
 
-fn intersectTLASAABB(ray: Ray_fp, aabbMin: vec3f, aabbMax: vec3f, minBvhHit: ptr<function,f32>)-> bool{
+fn intersectAABB(ray: Ray_fp, aabbMin: vec3f, aabbMax: vec3f, hitInfo: ptr<function,HitInfo>)-> bool{
     let invDirection: vec3f = 1.0 / ray.direction;
     let t1: vec3f = (aabbMin - ray.origin) * invDirection;
     let t2: vec3f = (aabbMax - ray.origin) * invDirection;
@@ -298,17 +298,5 @@ fn intersectTLASAABB(ray: Ray_fp, aabbMin: vec3f, aabbMax: vec3f, minBvhHit: ptr
 
     let tenter: f32 = max(max(tmin.x, tmin.y), tmin.z);
     let texit: f32 = min(min(tmax.x, tmax.y), tmax.z);
-    return (tenter <= texit) && (texit > 0.0) && (tenter < *minBvhHit); //If there is an error try to change this
-}
-fn intersectAABB(ray: Ray_fp, aabbMin: vec3f, aabbMax: vec3f)-> bool{
-    let invDirection: vec3f = 1.0 / ray.direction;
-    let t1: vec3f = (aabbMin - ray.origin) * invDirection;
-    let t2: vec3f = (aabbMax - ray.origin) * invDirection;
-
-    let tmin: vec3f = min(t1, t2);
-    let tmax: vec3f = max(t1, t2);
-
-    let tenter: f32 = max(max(tmin.x, tmin.y), tmin.z);
-    let texit: f32 = min(min(tmax.x, tmax.y), tmax.z);
-    return (tenter <= texit) && (texit > 0.0);
+    return (tenter <= texit) && (texit > 0.0) && (tenter < (*hitInfo).t); //If there is an error try to change this
 }
