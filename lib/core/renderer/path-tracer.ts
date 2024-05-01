@@ -38,6 +38,7 @@ class PathTracer {
             const pathTracerPass: GPUComputePassEncoder = cmd.beginComputePass();
             pathTracerPass.setPipeline(this.m_pathTracingPipeline);
             pathTracerPass.setBindGroup(0, this.m_pathTracingPipelineBindGroup);
+            pathTracerPass.setBindGroup(1, this.m_tlasBindGroup);
             pathTracerPass.dispatchWorkgroups(
                 Math.floor((this.m_canvas.width + 15) / 16),
                 Math.floor((this.m_canvas.height + 15) / 16),
@@ -80,6 +81,7 @@ class PathTracer {
     // passes
     private m_pathTracingPipeline: GPUComputePipeline;
     private m_pathTracingPipelineBindGroup: GPUBindGroup;
+    private m_tlasBindGroup: GPUBindGroup;
     private m_screenPipeline: GPURenderPipeline;
     private m_screenPipelineBindGroup: GPUBindGroup;
 
@@ -160,7 +162,7 @@ class PathTracer {
                     },
                     {
                         // render image (as storage buffer)
-                        binding: 4,
+                        binding: 3,
                         visibility: GPUShaderStage.COMPUTE,
                         buffer: {
                             type: "storage",
@@ -168,7 +170,7 @@ class PathTracer {
                     },
                     {
                         // triangle indices
-                        binding: 5,
+                        binding: 4,
                         visibility: GPUShaderStage.COMPUTE,
                         buffer: {
                             type: "read-only-storage",
@@ -176,7 +178,7 @@ class PathTracer {
                     },
                     {
                         // blas nodes
-                        binding: 6,
+                        binding: 5,
                         visibility: GPUShaderStage.COMPUTE,
                         buffer: {
                             type: "read-only-storage",
@@ -184,7 +186,7 @@ class PathTracer {
                     },
                     {
                         // blas instances
-                        binding: 7,
+                        binding: 6,
                         visibility: GPUShaderStage.COMPUTE,
                         buffer: {
                             type: "read-only-storage",
@@ -192,7 +194,7 @@ class PathTracer {
                     },
                     {
                         // materials
-                        binding: 8,
+                        binding: 7,
                         visibility: GPUShaderStage.COMPUTE,
                         buffer: {
                             type: "read-only-storage",
@@ -200,15 +202,27 @@ class PathTracer {
                     },
                     {
                         // maps
-                        binding : 9,
+                        binding : 8,
                         visibility: GPUShaderStage.COMPUTE,
                         texture: {
                             viewDimension: "2d-array"
                         }
-                    },
-  
+                    }, 
                 ],
             });
+            const tlasBindGroupLayout = IGPU.get().createBindGroupLayout({
+                entries:[
+                    {
+                        //tlas
+                        binding: 0,
+                        visibility: GPUShaderStage.COMPUTE,
+                        buffer: {
+                            type: "read-only-storage"
+                        }
+                    },
+                ],
+            });
+
 
             this.m_pathTracingPipelineBindGroup = IGPU.get().createBindGroup({
                 layout: pathTracingBindGroupLayout,
@@ -226,34 +240,45 @@ class PathTracer {
                         resource: { buffer: SceneManager.scene.sceneDataManager.vertexInfoBuffer},
                     },
                     {
-                        binding: 4,
+                        binding: 3,
                         resource: { buffer: this.m_accumulationBuffer },
                     },
                     {
-                        binding: 5,
+                        binding: 4,
                         resource: { buffer: SceneManager.scene.sceneDataManager.triangleIdxBuffer },
                     },
                     {
-                        binding: 6,
+                        binding: 5,
                         resource: { buffer: SceneManager.scene.sceneDataManager.blasBuffer },
                     },
                     {
-                        binding: 7,
+                        binding: 6,
                         resource: { buffer: SceneManager.scene.sceneDataManager.blasInstanceBuffer },
                     },
                     {
-                        binding: 8,
+                        binding: 7,
                         resource: { buffer: SceneManager.scene.sceneDataManager.materialBuffer },
                     },
                     {
-                        binding: 9,
+                        binding: 8,
                         resource: SceneManager.scene.sceneDataManager.textureView,
                     },
-              
                 ],
             });
+
+            this.m_tlasBindGroup = IGPU.get().createBindGroup({
+                layout: tlasBindGroupLayout,
+
+                entries: [
+                    {
+                        binding: 0,
+                        resource: { buffer: SceneManager.scene.sceneDataManager.tlasBuffer },
+                    },
+                ],
+            });
+
             const pathTracingPipelineLayout = IGPU.get().createPipelineLayout({
-                bindGroupLayouts: [pathTracingBindGroupLayout],
+                bindGroupLayouts: [pathTracingBindGroupLayout,tlasBindGroupLayout],
             });
 
             const pathTracingShader =   math_shader

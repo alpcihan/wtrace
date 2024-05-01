@@ -6,6 +6,8 @@ struct Ray {
     origin: vec3f,
 };
 
+alias Ray_fp = ptr<function,Ray>;
+
 struct HitInfo {
     t: f32,
     normal: vec3f,
@@ -33,7 +35,7 @@ fn createCameraRay(uv: vec2f, view_i: mat4x4f, projection_i: mat4x4f) -> Ray {
     return ray;
 } 
 
-fn rayAt(ray: Ray, t: f32) -> vec3f {
+fn rayAt(ray: Ray_fp, t: f32) -> vec3f {
     return ray.origin + ray.direction * t;
 }
 
@@ -50,7 +52,7 @@ fn createHitInfo(hitInfo: ptr<function, HitInfo>){
 //-------------------------------------------------------------------
 // intersection tests
 //-------------------------------------------------------------------
-fn hitTriangle(ray: Ray, v0: vec3<f32>, v1: vec3<f32>, v2: vec3<f32>) -> vec3f {
+fn hitTriangle(ray: Ray_fp, v0: vec3<f32>, v1: vec3<f32>, v2: vec3<f32>) -> vec3f {
     let v1v0: vec3f = v1 - v0;
     let v2v0: vec3f = v2 - v0;
     let roV0: vec3f = ray.origin - v0;
@@ -72,7 +74,7 @@ fn hitTriangle(ray: Ray, v0: vec3<f32>, v1: vec3<f32>, v2: vec3<f32>) -> vec3f {
 fn intersectXZPlane(
     y: f32,
     material: ptr<function, Material>,
-    ray: Ray,
+    ray: Ray_fp,
     bestHit: ptr<function, HitInfo>) {
 
     var xzPlane: XZPlane;
@@ -90,7 +92,7 @@ fn intersectXZPlane(
 fn intersectSphere(
     sphere: ptr<function, Sphere>,
     material: ptr<function, Material>,
-    ray: Ray,
+    ray: Ray_fp,
     bestHit: ptr<function, HitInfo>) {
 
     let a: f32 = dot(ray.direction, ray.direction);
@@ -114,7 +116,7 @@ fn intersectSphere(
     }
 }
 
-fn intersectTriangles(ray: Ray, bestHit: ptr<function, HitInfo>) {
+fn intersectTriangles(ray: Ray_fp, bestHit: ptr<function, HitInfo>) {
     const EPSILON: f32 = 0.0000001;
     let vertexCount : u32 = arrayLength(&points);
     for(var i: u32 = 0; i < vertexCount ; i+=9) {
@@ -168,14 +170,39 @@ fn intersectTriangles(ray: Ray, bestHit: ptr<function, HitInfo>) {
     }
 }
 
-fn intersectAccelerationStructure(r: Ray, hit_info: ptr<function, HitInfo>) {
+fn intersectAccelerationStructure(r: Ray_fp, hit_info: ptr<function, HitInfo>) {
     let instanceCount: u32 = arrayLength(&blasInstances);
     for(var i: u32 = 0; i < instanceCount; i++) {
         intersectBVH(r, i, hit_info);
     }
 }
 
-fn intersectBVH(r: Ray, instanceIdx: u32, hit_info: ptr<function, HitInfo>){
+fn intersectTLAS(r: Ray_fp, hit_info: ptr<function, HitInfo>){
+    var s: array<u32, 64>;
+    var _stackPtr: i32 = 0;
+
+    s[_stackPtr] = 0;
+    _stackPtr = _stackPtr + 1;
+
+    while(_stackPtr > 0) {
+        _stackPtr = _stackPtr - 1; // pop node from stack
+        let nodeIdx: u32 = s[_stackPtr];
+
+        if(intersectAABB(r, tlasNodes[nodeIdx].aabbMins.xyz, tlasNodes[nodeIdx].aabbMaxs.xyz,hit_info)) {
+            if(tlasNodes[nodeIdx].left == 0 && tlasNodes[nodeIdx].right == 0){ // leaf node
+                let instanceIdx: u32 = tlasNodes[nodeIdx].instanceIdx;
+                intersectBVH(r, instanceIdx, hit_info);
+            } else { // not leaf node
+                 s[_stackPtr] = tlasNodes[nodeIdx].left;
+                _stackPtr = _stackPtr + 1;
+                s[_stackPtr] = tlasNodes[nodeIdx].right;
+                _stackPtr = _stackPtr + 1;
+            }
+        }
+    }
+}
+
+fn intersectBVH(r: Ray_fp, instanceIdx: u32, hit_info: ptr<function, HitInfo>){
     let instance: BLASInstance = blasInstances[instanceIdx];
 
     var ray: Ray;
@@ -196,7 +223,7 @@ fn intersectBVH(r: Ray, instanceIdx: u32, hit_info: ptr<function, HitInfo>){
         let aabbMin: vec3f = node.aabbMins.xyz;
         let aabbMax: vec3f = node.aabbMaxs.xyz;
 
-        if(intersectAABB(ray, aabbMin, aabbMax)) {
+        if(intersectAABB(&ray, aabbMin, aabbMax, hit_info)) {
             let triCount: u32 = u32(node.triangleCount);
             let lFirst: u32 = u32(node.leftFirst);
             if(triCount > 0) { // if triangle count > 0 means leaf node (leftFirst gives first triangleIdx)
@@ -209,7 +236,7 @@ fn intersectBVH(r: Ray, instanceIdx: u32, hit_info: ptr<function, HitInfo>){
                     let v1: vec3f = vec3f(points[idx*9+3], points[idx*9+4], points[idx*9+5]);
                     let v2: vec3f = vec3f(points[idx*9+6], points[idx*9+7], points[idx*9+8]);
 
-                    let res: vec3f = hitTriangle(ray, v0, v1, v2);
+                    let res: vec3f = hitTriangle(&ray, v0, v1, v2);
                     if(res.x < (*hit_info).t && res.x > 0.0) {
                         // record hit distance
                         (*hit_info).t = res.x;
@@ -261,7 +288,7 @@ fn intersectBVH(r: Ray, instanceIdx: u32, hit_info: ptr<function, HitInfo>){
     }
 }
 
-fn intersectAABB(ray: Ray, aabbMin: vec3f, aabbMax: vec3f)-> bool{
+fn intersectAABB(ray: Ray_fp, aabbMin: vec3f, aabbMax: vec3f, hitInfo: ptr<function,HitInfo>)-> bool{
     let invDirection: vec3f = 1.0 / ray.direction;
     let t1: vec3f = (aabbMin - ray.origin) * invDirection;
     let t2: vec3f = (aabbMax - ray.origin) * invDirection;
@@ -271,6 +298,5 @@ fn intersectAABB(ray: Ray, aabbMin: vec3f, aabbMax: vec3f)-> bool{
 
     let tenter: f32 = max(max(tmin.x, tmin.y), tmin.z);
     let texit: f32 = min(min(tmax.x, tmax.y), tmax.z);
-
-    return (tenter <= texit) && (texit > 0.0);
+    return (tenter <= texit) && (texit > 0.0) && (tenter < (*hitInfo).t); //If there is an error try to change this
 }

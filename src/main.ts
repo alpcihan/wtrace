@@ -24,7 +24,7 @@ const main = async () => {
     // init the application
     await wt.Application.init(canvas);
 
-    let scene: wt.Scene = await test.createMeetManScene();
+    let scene: wt.Scene = await test.create10kDamagedHelmet();
     
     // load the scene
     wt.SceneManager.loadScene(scene);

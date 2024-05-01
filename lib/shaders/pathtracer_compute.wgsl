@@ -32,16 +32,17 @@ struct VertexInfo {
 @group(0) @binding(1) var<storage, read> points: array<f32>;
 @group(0) @binding(2) var<storage, read> vertexInfo: array<VertexInfo>;
 
-@group(0) @binding(4) var<storage, read_write> accumulationInfo: array<vec4f>; // TODO: replace with storage texture
-@group(0) @binding(5) var<storage, read> triIdxInfo: array<u32>;
-@group(0) @binding(6) var<storage, read> blasNodes: array<BLASNode>;
-@group(0) @binding(7) var<storage, read> blasInstances: array<BLASInstance>;
-@group(0) @binding(8) var<storage, read> materials: array<Material>;
-@group(0) @binding(9) var materialTextures: texture_2d_array<f32>;
+@group(0) @binding(3) var<storage, read_write> accumulationInfo: array<vec4f>; // TODO: replace with storage texture
+@group(0) @binding(4) var<storage, read> triIdxInfo: array<u32>;
+@group(0) @binding(5) var<storage, read> blasNodes: array<BLASNode>;
+@group(0) @binding(6) var<storage, read> blasInstances: array<BLASInstance>;
+@group(0) @binding(7) var<storage, read> materials: array<Material>;
+@group(0) @binding(8) var materialTextures: texture_2d_array<f32>;
+@group(1) @binding(0) var<storage, read> tlasNodes: array<TLASNode>;
 
 @compute @workgroup_size(16,16,1)
 fn main(@builtin(global_invocation_id) globalInvocationID : vec3u) {
-    var resolution: vec2i = vec2i(uniforms.resolution);
+    let resolution: vec2i = vec2i(uniforms.resolution);
 
     let texelCoord : vec2i = vec2i(i32(globalInvocationID.x), i32(globalInvocationID.y));
     if (texelCoord.x >= resolution.x || texelCoord.y >= resolution.y) {
@@ -54,13 +55,12 @@ fn main(@builtin(global_invocation_id) globalInvocationID : vec3u) {
     
     let texelSize: vec2f = calculateUvSize();
     var uv: vec2f = (vec2f(texelCoord) / vec2f(resolution)) * 2 - 1;
-    // uv += texelSize * 0.5;
 
-    uv.x += frand(&seed) * texelSize.x;
+    uv.x += frand(&seed) * texelSize.x; //TODO: Make seed storage pointer
     uv.y += frand(&seed) * texelSize.y;
 
     var ray: Ray = createCameraRay(uv, uniforms.view_i, uniforms.projection_i);
-    var pixel_color: vec3f = pathTrace(ray, &seed);
+    var pixel_color: vec3f = pathTrace(&ray, &seed);
 
     var state: vec4f = accumulationInfo[texelCoord.y * resolution.x + texelCoord.x];
     var weight: f32 = 1.0 / (state.a + 1);
@@ -69,10 +69,9 @@ fn main(@builtin(global_invocation_id) globalInvocationID : vec3u) {
     accumulationInfo[texelCoord.y * resolution.x + texelCoord.x] = vec4f(finalColor, state.a + 1);
 }
 
-fn pathTrace(ray: Ray, seed: ptr<function,u32>) -> vec3f {
+fn pathTrace(r: Ray_fp, seed: ptr<function,u32>) -> vec3f {
 
     var hitInfo: HitInfo;
-    var r: Ray = ray;
     
     var acc: vec3f = vec3f(0.0, 0.0, 0.0);
     var abso: vec3f = vec3f(1.0, 1.0, 1.0);
@@ -114,14 +113,14 @@ fn pathTrace(ray: Ray, seed: ptr<function,u32>) -> vec3f {
     return acc;
 }
 
-fn hitWorld(ray: Ray, bestHit: ptr<function, HitInfo>){
+fn hitWorld(ray: Ray_fp, bestHit: ptr<function, HitInfo>){
     // Scene helper objects data // TODO: pass as buffer
     var sphere: Sphere = Sphere(vec3f(0.0,0.5,0.0), 0);
     var lightMaterial: Material = Material(vec3f(2), 1, vec3f(2), 0, -1, -1, -1, -1);
-    var floorY: f32 = 0;
+    var floorY: f32 = -1;
     var floorMaterial: Material = Material(vec3f(0.5,0.5,0.5), 0.2, vec3f(0,0,0), 0.5, -1, -1, -1, -1);
 
     intersectSphere(&sphere, &lightMaterial, ray, bestHit);
     intersectXZPlane(floorY, &floorMaterial, ray, bestHit);
-    intersectAccelerationStructure(ray, bestHit);
+    intersectTLAS(ray, bestHit);
 }
