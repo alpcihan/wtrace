@@ -11,6 +11,7 @@ import screen_shader from "../../shaders/screen_shader.wgsl";
 
 import { IGPU } from "./igpu";
 import { SceneManager } from "../scene/scene-manager";
+import { Scene } from "../scene/scene";
 
 class PathTracer {
     constructor(canvasContext: GPUCanvasContext) {
@@ -183,8 +184,16 @@ class PathTracer {
                         },
                     },
                     {
-                        // materials
+                        // tlas
                         binding: 7,
+                        visibility: GPUShaderStage.COMPUTE,
+                        buffer: {
+                            type: "read-only-storage"
+                        }
+                    },
+                    {
+                        // materials
+                        binding: 8,
                         visibility: GPUShaderStage.COMPUTE,
                         buffer: {
                             type: "read-only-storage",
@@ -192,7 +201,7 @@ class PathTracer {
                     },
                     {
                         // maps
-                        binding : 8,
+                        binding : 9,
                         visibility: GPUShaderStage.COMPUTE,
                         texture: {
                             viewDimension: "2d-array"
@@ -200,19 +209,6 @@ class PathTracer {
                     }, 
                 ],
             });
-            const tlasBindGroupLayout = IGPU.get().createBindGroupLayout({
-                entries:[
-                    {
-                        //tlas
-                        binding: 0,
-                        visibility: GPUShaderStage.COMPUTE,
-                        buffer: {
-                            type: "read-only-storage"
-                        }
-                    },
-                ],
-            });
-
 
             this.m_pathTracingPipelineBindGroup = IGPU.get().createBindGroup({
                 layout: pathTracingBindGroupLayout,
@@ -247,28 +243,21 @@ class PathTracer {
                     },
                     {
                         binding: 7,
-                        resource: { buffer: SceneManager.scene.sceneDataManager.materialBuffer },
+                        resource: { buffer: SceneManager.scene.sceneDataManager.tlasBuffer },
                     },
                     {
                         binding: 8,
+                        resource: { buffer: SceneManager.scene.sceneDataManager.materialBuffer },
+                    },
+                    {
+                        binding: 9,
                         resource: SceneManager.scene.sceneDataManager.textureView,
                     },
                 ],
             });
 
-            this.m_tlasBindGroup = IGPU.get().createBindGroup({
-                layout: tlasBindGroupLayout,
-
-                entries: [
-                    {
-                        binding: 0,
-                        resource: { buffer: SceneManager.scene.sceneDataManager.tlasBuffer },
-                    },
-                ],
-            });
-
             const pathTracingPipelineLayout = IGPU.get().createPipelineLayout({
-                bindGroupLayouts: [pathTracingBindGroupLayout,tlasBindGroupLayout],
+                bindGroupLayouts: [pathTracingBindGroupLayout],
             });
 
             const pathTracingShader =   math_shader
