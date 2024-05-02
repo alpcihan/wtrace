@@ -132,6 +132,29 @@ class SceneDataManager {
         this._updateTLASBuffer();
     }
 
+    public clear() {
+        this.m_points = new Float32Array();
+        this.m_vertexInfo = new Float32Array();
+        
+        this.m_blasNodeCount = 0;
+        this.m_blasArray = new Array<BLAS>();
+        this.m_blasInstanceArray = new Array<BLASInstance>();
+        this.m_materials = new Array<Material>();
+        this.m_materialIDtoIdxMap = new Map<number, number>();
+        this.m_meshIDtoBlasOffsetMap = new Map<number, number>();
+        this.m_totalMapCount = 0;
+        // TODO: currently tlas cpu side does not get cleared
+
+        this.m_vertexBuffer.destroy();
+        this.m_vertexInfoBuffer.destroy();
+        this.m_triangleIdxBuffer.destroy();
+        this.m_tlasBuffer.destroy();
+        this.m_blasInstanceBuffer.destroy();
+        this.m_blasBuffer.destroy(); 
+        this.m_materialBuffer.destroy();
+        this.m_texture.destroy();
+    }
+
     private m_points: Float32Array;
     private m_vertexInfo: Float32Array; //normals and uvs
 

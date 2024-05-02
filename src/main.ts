@@ -29,6 +29,8 @@ const main = async () => {
     // load the scene
     wt.SceneManager.loadScene(scene);
 
+    // run the application
     wt.Application.run(onUpdate);
 };
+
 main();

@@ -3,6 +3,7 @@ import { CameraController } from "./camera/camera-controller";
 import { InputSystem } from "./input-system/input-system";
 import { PathTracer } from "./renderer/path-tracer";
 import { IGPU } from "./renderer/igpu";
+import { SceneManager, setOnSceneLoadCallback } from "./scene/scene-manager";
 
 class Application {
     public static async init(canvas: HTMLCanvasElement) {
@@ -19,12 +20,15 @@ class Application {
         // camera
         this.m_camera = new THREE.PerspectiveCamera(45, canvas.width / canvas.height, 0.01, 1000);
         this.m_cameraController = new CameraController({ camera: this.m_camera });
+
+        // set scene load callback
+        setOnSceneLoadCallback(Application._onSceneLoad);
+
+        // init path tracer
+        this.m_pathTracer = new PathTracer(this.m_canvasContext);
     }
 
     public static run(onUpdate: () => void) {
-        // path tracer
-        this.m_pathTracer = new PathTracer(this.m_canvasContext);
-
         const applicationLoop = (): void => {
             Application.m_deltaTime = (performance.now() - this.m_time) * 0.001;
             this.m_time = performance.now();
@@ -58,6 +62,10 @@ class Application {
     private static m_camera: THREE.PerspectiveCamera;
     private static m_cameraController: CameraController;
     private static m_pathTracer: PathTracer;
+
+    private static _onSceneLoad() {
+        Application.m_pathTracer.setScene(SceneManager.scene);
+    }
 
     private constructor() {}
 }
