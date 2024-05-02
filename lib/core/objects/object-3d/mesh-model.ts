@@ -1,7 +1,7 @@
-import { Material } from "../../material/material";
-import { Object3D } from "../object-3d";
-import { Object3DType } from "../object-types";
-import { Mesh } from "./mesh";
+import { Material } from "../material";
+import { Object3D } from "./object-3d";
+import { Object3DType } from "./object-3d-types";
+import { Mesh } from "../mesh";
 
 class MeshModel extends Object3D {
     public constructor(mesh: Mesh, material: Material) {

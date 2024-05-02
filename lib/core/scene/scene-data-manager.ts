@@ -1,6 +1,6 @@
 import { Texture } from "../../wtrace";
-import { MATERIAL_BYTE_SIZE, Material } from "../material/material";
-import { MeshModel } from "../objects/model/mesh-model";
+import { MATERIAL_BYTE_SIZE, Material } from "../objects/material";
+import { MeshModel } from "../objects/object-3d/mesh-model";
 import { IGPU } from "../renderer/igpu";
 import { BLAS, BLAS_NODE_SIZE } from "./acceleration-structure/blas";
 import { BLASInstance, BLAS_INSTANCE_BYTE_SIZE } from "./acceleration-structure/blas-instance";
@@ -130,6 +130,29 @@ class SceneDataManager {
 
         this.m_tlas = new TLAS(this.m_blasArray, this.m_blasInstanceArray, this.m_blasOffsetToMeshIDMap);
         this._updateTLASBuffer();
+    }
+
+    public clear() {
+        this.m_points = new Float32Array();
+        this.m_vertexInfo = new Float32Array();
+        
+        this.m_blasNodeCount = 0;
+        this.m_blasArray = new Array<BLAS>();
+        this.m_blasInstanceArray = new Array<BLASInstance>();
+        this.m_materials = new Array<Material>();
+        this.m_materialIDtoIdxMap = new Map<number, number>();
+        this.m_meshIDtoBlasOffsetMap = new Map<number, number>();
+        this.m_totalMapCount = 0;
+        // TODO: currently tlas cpu side does not get cleared
+
+        this.m_vertexBuffer.destroy();
+        this.m_vertexInfoBuffer.destroy();
+        this.m_triangleIdxBuffer.destroy();
+        this.m_tlasBuffer.destroy();
+        this.m_blasInstanceBuffer.destroy();
+        this.m_blasBuffer.destroy(); 
+        this.m_materialBuffer.destroy();
+        this.m_texture.destroy();
     }
 
     private m_points: Float32Array;

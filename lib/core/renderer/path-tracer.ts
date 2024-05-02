@@ -10,22 +10,20 @@ import pathtracer_compute from "../../shaders/pathtracer_compute.wgsl";
 import screen_shader from "../../shaders/screen_shader.wgsl";
 
 import { IGPU } from "./igpu";
-import { SceneManager } from "../scene/scene-manager";
+import { Scene } from "../scene/scene";
 
 class PathTracer {
-    constructor(canvas: HTMLCanvasElement) {
+    constructor(canvasContext: GPUCanvasContext) {
         // TODO: create a scene loader + model system, instead of passing raw vertices in constructor
-        this.m_canvas = canvas;
+        this.m_context = canvasContext;
 
-        this._initContext();
-        this._initAssets();
-        SceneManager.scene.sceneDataManager.buildSceneData(); // TODO: find a better place
+        this._initResources();
         this._initPipelines();
     }
 
-    public reset(): void {
-        const frameInfo = new Float32Array(this.m_canvas.height * this.m_canvas.width * 4).fill(0);
-        IGPU.get().queue.writeBuffer(this.m_accumulationBuffer, 0, frameInfo);
+    public setScene(scene: Scene): void {        
+        this._bindSceneData(scene);
+        this.resetAccumulation();
     }
 
     public render(camera: THREE.PerspectiveCamera): void {
@@ -38,10 +36,9 @@ class PathTracer {
             const pathTracerPass: GPUComputePassEncoder = cmd.beginComputePass();
             pathTracerPass.setPipeline(this.m_pathTracingPipeline);
             pathTracerPass.setBindGroup(0, this.m_pathTracingPipelineBindGroup);
-            pathTracerPass.setBindGroup(1, this.m_tlasBindGroup);
             pathTracerPass.dispatchWorkgroups(
-                Math.floor((this.m_canvas.width + 15) / 16),
-                Math.floor((this.m_canvas.height + 15) / 16),
+                Math.floor((this.m_context.canvas.width + 15) / 16),
+                Math.floor((this.m_context.canvas.height + 15) / 16),
                 1
             );
             pathTracerPass.end();
@@ -70,18 +67,23 @@ class PathTracer {
         this.m_frameIndex++;
     }
 
+    public resetAccumulation(): void {
+        const frameInfo = new Float32Array(this.m_context.canvas.height * this.m_context.canvas.width * 4).fill(0);
+        IGPU.get().queue.writeBuffer(this.m_accumulationBuffer, 0, frameInfo);
+    }
+
     public terminate(): void {
         throw new Error("Function is not implemented.");
     }
 
     // canvas
-    private m_canvas: HTMLCanvasElement;
     private m_context: GPUCanvasContext;
 
     // passes
     private m_pathTracingPipeline: GPUComputePipeline;
+    private m_pathTracingBindGroupLayout: GPUBindGroupLayout;
     private m_pathTracingPipelineBindGroup: GPUBindGroup;
-    private m_tlasBindGroup: GPUBindGroup;
+
     private m_screenPipeline: GPURenderPipeline;
     private m_screenPipelineBindGroup: GPUBindGroup;
 
@@ -93,15 +95,7 @@ class PathTracer {
     private m_accumulationBuffer: GPUBuffer;
     private m_frameIndex: number = 0;
 
-    private _initContext() {
-        this.m_context = this.m_canvas.getContext("webgpu") as GPUCanvasContext;
-        this.m_context.configure({
-            device: IGPU.get(),
-            format: "bgra8unorm" as GPUTextureFormat,
-        });
-    }
-
-    private _initAssets() {
+    private _initResources() {
         // uniform buffer
         {
             //Holds the size of each element in the uniform buffer (in floats)
@@ -125,7 +119,7 @@ class PathTracer {
         // accumulation buffer
         {
             this.m_accumulationBuffer = IGPU.get().createBuffer({
-                size: this.m_canvas.width * this.m_canvas.height * 4 * 4,
+                size: this.m_context.canvas.width * this.m_context.canvas.height * 4 * 4,
                 usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
             });
         }
@@ -134,7 +128,8 @@ class PathTracer {
     private _initPipelines() {
         // path tracer pass
         {
-            const pathTracingBindGroupLayout = IGPU.get().createBindGroupLayout({
+            // create bind group layout
+            this.m_pathTracingBindGroupLayout = IGPU.get().createBindGroupLayout({
                 entries: [
                     {
                         // uniform
@@ -193,8 +188,16 @@ class PathTracer {
                         },
                     },
                     {
-                        // materials
+                        // tlas
                         binding: 7,
+                        visibility: GPUShaderStage.COMPUTE,
+                        buffer: {
+                            type: "read-only-storage"
+                        }
+                    },
+                    {
+                        // materials
+                        binding: 8,
                         visibility: GPUShaderStage.COMPUTE,
                         buffer: {
                             type: "read-only-storage",
@@ -202,7 +205,7 @@ class PathTracer {
                     },
                     {
                         // maps
-                        binding : 8,
+                        binding : 9,
                         visibility: GPUShaderStage.COMPUTE,
                         texture: {
                             viewDimension: "2d-array"
@@ -210,76 +213,14 @@ class PathTracer {
                     }, 
                 ],
             });
-            const tlasBindGroupLayout = IGPU.get().createBindGroupLayout({
-                entries:[
-                    {
-                        //tlas
-                        binding: 0,
-                        visibility: GPUShaderStage.COMPUTE,
-                        buffer: {
-                            type: "read-only-storage"
-                        }
-                    },
-                ],
-            });
-
-
-            this.m_pathTracingPipelineBindGroup = IGPU.get().createBindGroup({
-                layout: pathTracingBindGroupLayout,
-                entries: [
-                    {
-                        binding: 0,
-                        resource: { buffer: this.m_uniformBuffer },
-                    },
-                    {
-                        binding: 1,
-                        resource: { buffer: SceneManager.scene.sceneDataManager.vertexBuffer },
-                    },
-                    {
-                        binding: 2,
-                        resource: { buffer: SceneManager.scene.sceneDataManager.vertexInfoBuffer},
-                    },
-                    {
-                        binding: 3,
-                        resource: { buffer: this.m_accumulationBuffer },
-                    },
-                    {
-                        binding: 4,
-                        resource: { buffer: SceneManager.scene.sceneDataManager.triangleIdxBuffer },
-                    },
-                    {
-                        binding: 5,
-                        resource: { buffer: SceneManager.scene.sceneDataManager.blasBuffer },
-                    },
-                    {
-                        binding: 6,
-                        resource: { buffer: SceneManager.scene.sceneDataManager.blasInstanceBuffer },
-                    },
-                    {
-                        binding: 7,
-                        resource: { buffer: SceneManager.scene.sceneDataManager.materialBuffer },
-                    },
-                    {
-                        binding: 8,
-                        resource: SceneManager.scene.sceneDataManager.textureView,
-                    },
-                ],
-            });
-
-            this.m_tlasBindGroup = IGPU.get().createBindGroup({
-                layout: tlasBindGroupLayout,
-
-                entries: [
-                    {
-                        binding: 0,
-                        resource: { buffer: SceneManager.scene.sceneDataManager.tlasBuffer },
-                    },
-                ],
-            });
 
             const pathTracingPipelineLayout = IGPU.get().createPipelineLayout({
-                bindGroupLayouts: [pathTracingBindGroupLayout,tlasBindGroupLayout],
+                bindGroupLayouts: [this.m_pathTracingBindGroupLayout],
             });
+
+            // Reminder:
+            // PathTracingBindGroup bindings happens with
+            // this._bindSceneData(Scene) method call.
 
             const pathTracingShader =   math_shader
                                       + rng_shader 
@@ -323,6 +264,10 @@ class PathTracer {
                 ],
             });
 
+            const screenPipelineLayout = IGPU.get().createPipelineLayout({
+                bindGroupLayouts: [screenBindGroupLayout],
+            });
+
             this.m_screenPipelineBindGroup = IGPU.get().createBindGroup({
                 layout: screenBindGroupLayout,
                 entries: [
@@ -335,10 +280,6 @@ class PathTracer {
                         resource: { buffer: this.m_accumulationBuffer },
                     },
                 ],
-            });
-
-            const screenPipelineLayout = IGPU.get().createPipelineLayout({
-                bindGroupLayouts: [screenBindGroupLayout],
             });
 
             this.m_screenPipeline = IGPU.get().createRenderPipeline({
@@ -370,6 +311,54 @@ class PathTracer {
         }
     }
 
+    private _bindSceneData(scene: Scene): void {
+        this.m_pathTracingPipelineBindGroup = IGPU.get().createBindGroup({
+            layout: this.m_pathTracingBindGroupLayout,
+            entries: [
+                {
+                    binding: 0,
+                    resource: { buffer: this.m_uniformBuffer },
+                },
+                {
+                    binding: 1,
+                    resource: { buffer: scene.sceneDataManager.vertexBuffer },
+                },
+                {
+                    binding: 2,
+                    resource: { buffer: scene.sceneDataManager.vertexInfoBuffer},
+                },
+                {
+                    binding: 3,
+                    resource: { buffer: this.m_accumulationBuffer },
+                },
+                {
+                    binding: 4,
+                    resource: { buffer: scene.sceneDataManager.triangleIdxBuffer },
+                },
+                {
+                    binding: 5,
+                    resource: { buffer: scene.sceneDataManager.blasBuffer },
+                },
+                {
+                    binding: 6,
+                    resource: { buffer: scene.sceneDataManager.blasInstanceBuffer },
+                },
+                {
+                    binding: 7,
+                    resource: { buffer: scene.sceneDataManager.tlasBuffer },
+                },
+                {
+                    binding: 8,
+                    resource: { buffer: scene.sceneDataManager.materialBuffer },
+                },
+                {
+                    binding: 9,
+                    resource: scene.sceneDataManager.textureView,
+                },
+            ],
+        });
+    }
+
     private _updateUniforms(camera: THREE.PerspectiveCamera) {
         // TODO: calculate the offsets automatically
         let offset = 0;
@@ -377,7 +366,7 @@ class PathTracer {
         offset += this.m_uniformElementCount[0];
         this.m_uniformCPU.set(camera.projectionMatrixInverse.toArray(), offset);
         offset += this.m_uniformElementCount[1];
-        this.m_uniformCPU.set([this.m_canvas.width, this.m_canvas.height], offset);
+        this.m_uniformCPU.set([this.m_context.canvas.width, this.m_context.canvas.height], offset);
         offset += this.m_uniformElementCount[2];
         this.m_uniformCPU.set([this.m_frameIndex], offset);
         offset += this.m_uniformElementCount[3];
