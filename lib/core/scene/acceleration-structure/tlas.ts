@@ -19,9 +19,9 @@ interface TLASNode {
 
 class TLAS {
     public constructor(
-        blasList: Array<BLAS> = new Array<BLAS>(),
-        blasInstances: Array<BLASInstance> = new Array<BLASInstance>(),
-        blasOffsetToMeshId: Map<number, number> = new Map<number, number>()) {
+        blasList: Array<BLAS>,
+        blasInstances: Array<BLASInstance>,
+        blasOffsetToMeshId: Map<number, number>) {
         
         this.m_blasList = blasList;
         this.m_blasInstances = blasInstances;
