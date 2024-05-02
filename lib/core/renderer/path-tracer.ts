@@ -13,18 +13,17 @@ import { IGPU } from "./igpu";
 import { SceneManager } from "../scene/scene-manager";
 
 class PathTracer {
-    constructor(canvas: HTMLCanvasElement) {
+    constructor(canvasContext: GPUCanvasContext) {
         // TODO: create a scene loader + model system, instead of passing raw vertices in constructor
-        this.m_canvas = canvas;
+        this.m_context = canvasContext;
 
-        this._initContext();
         this._initAssets();
         SceneManager.scene.sceneDataManager.buildSceneData(); // TODO: find a better place
         this._initPipelines();
     }
 
     public reset(): void {
-        const frameInfo = new Float32Array(this.m_canvas.height * this.m_canvas.width * 4).fill(0);
+        const frameInfo = new Float32Array(this.m_context.canvas.height * this.m_context.canvas.width * 4).fill(0);
         IGPU.get().queue.writeBuffer(this.m_accumulationBuffer, 0, frameInfo);
     }
 
@@ -40,8 +39,8 @@ class PathTracer {
             pathTracerPass.setBindGroup(0, this.m_pathTracingPipelineBindGroup);
             pathTracerPass.setBindGroup(1, this.m_tlasBindGroup);
             pathTracerPass.dispatchWorkgroups(
-                Math.floor((this.m_canvas.width + 15) / 16),
-                Math.floor((this.m_canvas.height + 15) / 16),
+                Math.floor((this.m_context.canvas.width + 15) / 16),
+                Math.floor((this.m_context.canvas.height + 15) / 16),
                 1
             );
             pathTracerPass.end();
@@ -75,7 +74,6 @@ class PathTracer {
     }
 
     // canvas
-    private m_canvas: HTMLCanvasElement;
     private m_context: GPUCanvasContext;
 
     // passes
@@ -92,14 +90,6 @@ class PathTracer {
 
     private m_accumulationBuffer: GPUBuffer;
     private m_frameIndex: number = 0;
-
-    private _initContext() {
-        this.m_context = this.m_canvas.getContext("webgpu") as GPUCanvasContext;
-        this.m_context.configure({
-            device: IGPU.get(),
-            format: "bgra8unorm" as GPUTextureFormat,
-        });
-    }
 
     private _initAssets() {
         // uniform buffer
@@ -125,7 +115,7 @@ class PathTracer {
         // accumulation buffer
         {
             this.m_accumulationBuffer = IGPU.get().createBuffer({
-                size: this.m_canvas.width * this.m_canvas.height * 4 * 4,
+                size: this.m_context.canvas.width * this.m_context.canvas.height * 4 * 4,
                 usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
             });
         }
@@ -377,7 +367,7 @@ class PathTracer {
         offset += this.m_uniformElementCount[0];
         this.m_uniformCPU.set(camera.projectionMatrixInverse.toArray(), offset);
         offset += this.m_uniformElementCount[1];
-        this.m_uniformCPU.set([this.m_canvas.width, this.m_canvas.height], offset);
+        this.m_uniformCPU.set([this.m_context.canvas.width, this.m_context.canvas.height], offset);
         offset += this.m_uniformElementCount[2];
         this.m_uniformCPU.set([this.m_frameIndex], offset);
         offset += this.m_uniformElementCount[3];

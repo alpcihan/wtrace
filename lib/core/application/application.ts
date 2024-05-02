@@ -6,10 +6,12 @@ import { IGPU } from "../renderer/igpu";
 
 class Application {
     public static async init(canvas: HTMLCanvasElement) {
-        this.m_canvas = canvas;
-
-        // context
+        // init GPU context (TODO: take it from the client)
         await IGPU.init();
+
+        // init canvas context
+        this.m_canvasContext = canvas.getContext("webgpu") as GPUCanvasContext;
+        this.m_canvasContext.configure({device: IGPU.get(), format: "bgra8unorm" as GPUTextureFormat});
 
         // input system
         InputSystem.init();
@@ -21,7 +23,7 @@ class Application {
 
     public static run(onUpdate: () => void) {
         // path tracer
-        this.m_pathTracer = new PathTracer(this.m_canvas);
+        this.m_pathTracer = new PathTracer(this.m_canvasContext);
 
         const applicationLoop = (): void => {
             Application.m_deltaTime = (performance.now() - this.m_time) * 0.001;
@@ -52,7 +54,7 @@ class Application {
     private static m_time: number = 0;
     private static m_deltaTime: number;
     
-    private static m_canvas: HTMLCanvasElement;
+    private static m_canvasContext: GPUCanvasContext;
     private static m_camera: THREE.PerspectiveCamera;
     private static m_cameraController: CameraController;
     private static m_pathTracer: PathTracer;

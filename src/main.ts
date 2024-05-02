@@ -2,9 +2,13 @@ import "./main.css";
 import * as wt from "../lib/wtrace";
 import * as test from "./test-scenes";
 
-var canvas: HTMLCanvasElement;
-var fpsElement: HTMLTextAreaElement;
-var fpsDisplayTimer: number;
+// UI elements
+let canvas: HTMLCanvasElement =         document.getElementById("wt_canvas-webgpu") as HTMLCanvasElement;
+let fpsElement: HTMLTextAreaElement =   document.getElementById("wt_fps") as HTMLTextAreaElement;
+
+// global variables
+let fpsDisplayTimer: number = 0;
+let scene: wt.Scene;
 
 const onUpdate = () => {
     if (fpsDisplayTimer > 0.1) {
@@ -16,16 +20,12 @@ const onUpdate = () => {
 };
 
 const main = async () => {
-    canvas = document.getElementById("wt_canvas-webgpu") as HTMLCanvasElement;
-
-    fpsElement = document.getElementById("wt_fps") as HTMLTextAreaElement;
-    fpsDisplayTimer = 0;
-
     // init the application
     await wt.Application.init(canvas);
 
-    let scene: wt.Scene = await test.create10kDamagedHelmet();
-    
+    // create scene
+    scene = await test.create10kDamagedHelmet();
+
     // load the scene
     wt.SceneManager.loadScene(scene);
 
