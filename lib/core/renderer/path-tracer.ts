@@ -22,11 +22,6 @@ class PathTracer {
         this._initPipelines();
     }
 
-    public reset(): void {
-        const frameInfo = new Float32Array(this.m_context.canvas.height * this.m_context.canvas.width * 4).fill(0);
-        IGPU.get().queue.writeBuffer(this.m_accumulationBuffer, 0, frameInfo);
-    }
-
     public render(camera: THREE.PerspectiveCamera): void {
         this._updateUniforms(camera);
 
@@ -67,6 +62,11 @@ class PathTracer {
 
         IGPU.get().queue.submit([cmd.finish()]);
         this.m_frameIndex++;
+    }
+
+    public resetAccumulation(): void {
+        const frameInfo = new Float32Array(this.m_context.canvas.height * this.m_context.canvas.width * 4).fill(0);
+        IGPU.get().queue.writeBuffer(this.m_accumulationBuffer, 0, frameInfo);
     }
 
     public terminate(): void {

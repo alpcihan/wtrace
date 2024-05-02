@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { Object3DType } from "./object-types";
+import { Object3DType } from "./object-3d-types";
 
 abstract class Object3D {
     public constructor() {

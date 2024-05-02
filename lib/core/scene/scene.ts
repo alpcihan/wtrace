@@ -1,6 +1,6 @@
-import { MeshModel } from "../objects/model/mesh-model";
-import { Object3D } from "../objects/object-3d";
-import { Object3DType } from "../objects/object-types";
+import { MeshModel } from "../objects/object-3d/mesh-model";
+import { Object3D } from "../objects/object-3d/object-3d";
+import { Object3DType } from "../objects/object-3d/object-3d-types";
 import { SceneDataManager } from "./scene-data-manager";
 
 class Scene {

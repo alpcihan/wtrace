@@ -1,6 +1,6 @@
 import { Texture } from "../../wtrace";
-import { MATERIAL_BYTE_SIZE, Material } from "../material/material";
-import { MeshModel } from "../objects/model/mesh-model";
+import { MATERIAL_BYTE_SIZE, Material } from "../objects/material";
+import { MeshModel } from "../objects/object-3d/mesh-model";
 import { IGPU } from "../renderer/igpu";
 import { BLAS, BLAS_NODE_SIZE } from "./acceleration-structure/blas";
 import { BLASInstance, BLAS_INSTANCE_BYTE_SIZE } from "./acceleration-structure/blas-instance";

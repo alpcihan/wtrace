@@ -1,8 +1,8 @@
 import * as THREE from "three";
-import { CameraController } from "../camera/camera-controller";
-import { InputSystem } from "../input/input-system";
-import { PathTracer } from "../renderer/path-tracer";
-import { IGPU } from "../renderer/igpu";
+import { CameraController } from "./camera/camera-controller";
+import { InputSystem } from "./input-system/input-system";
+import { PathTracer } from "./renderer/path-tracer";
+import { IGPU } from "./renderer/igpu";
 
 class Application {
     public static async init(canvas: HTMLCanvasElement) {
@@ -37,7 +37,7 @@ class Application {
 
             // update path tracer
             if (this.m_cameraController.isUpdated()) {
-                this.m_pathTracer.reset();
+                this.m_pathTracer.resetAccumulation();
             }
             this.m_pathTracer.render(this.m_camera);
 
