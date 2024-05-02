@@ -8,7 +8,6 @@ let fpsElement: HTMLTextAreaElement =   document.getElementById("wt_fps") as HTM
 
 // global variables
 let fpsDisplayTimer: number = 0;
-let scene: wt.Scene;
 
 const onUpdate = () => {
     if (fpsDisplayTimer > 0.1) {
@@ -24,7 +23,7 @@ const main = async () => {
     await wt.Application.init(canvas);
 
     // create scene
-    scene = await test.create10kDamagedHelmet();
+    let scene: wt.Scene = await test.create10kDamagedHelmet();
 
     // load the scene
     wt.SceneManager.loadScene(scene);
