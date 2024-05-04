@@ -6,6 +6,8 @@ import { BLAS, BLAS_NODE_SIZE } from "./acceleration-structure/blas";
 import { BLASInstance, BLAS_INSTANCE_BYTE_SIZE } from "./acceleration-structure/blas-instance";
 import { TLAS, TLAS_NODE_SIZE } from "./acceleration-structure/tlas";
 
+const meshIDToBLASMap = new Map<number, BLAS>();
+
 class SceneDataManager {
     public constructor() {
         this.m_models = new Array<MeshModel>();
@@ -97,7 +99,10 @@ class SceneDataManager {
                 this.m_vertexInfo = new Float32Array([...this.m_vertexInfo, ...newVertexInfo]);
 
                 // add blas
-                const blas: BLAS = new BLAS(model.mesh.points);
+                const blas: BLAS = meshIDToBLASMap.has(model.mesh.id) 
+                                    ? meshIDToBLASMap.get(model.mesh.id) as BLAS
+                                    : new BLAS(model.mesh.points);
+
                 this.m_blasArray.push(blas);
                 this.m_blasNodeCount += blas.nodes.length;
 
