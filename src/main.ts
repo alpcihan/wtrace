@@ -2,23 +2,10 @@ import "./main.css";
 import * as wt from "../lib/wtrace";
 import * as test from "./test-scenes";
 
-// UI elements
-let canvas: HTMLCanvasElement =         document.getElementById("wt_canvas-webgpu") as HTMLCanvasElement;
-let fpsElement: HTMLTextAreaElement =   document.getElementById("wt_fps") as HTMLTextAreaElement;
+async function init() {
+    // get the target canvas
+    const canvas: HTMLCanvasElement = document.getElementById("wt_canvas-webgpu") as HTMLCanvasElement;
 
-// global variables
-let fpsDisplayTimer: number = 0;
-
-const onUpdate = () => {
-    if (fpsDisplayTimer > 0.1) {
-        fpsElement!.innerText = `FPS: ${Math.floor(1 / wt.Application.getDeltaTime())}`;
-        fpsDisplayTimer = 0;
-    }
-
-    fpsDisplayTimer += wt.Application.getDeltaTime();
-};
-
-const main = async () => {
     // init the application
     await wt.Application.init(canvas);
 
@@ -28,8 +15,15 @@ const main = async () => {
     // load the scene
     wt.SceneManager.loadScene(scene);
 
-    // run the application
-    wt.Application.run(onUpdate);
-};
+    // application loop
+    animate();
+} 
 
-main();
+function animate(): void {
+    
+    // next frame
+    requestAnimationFrame(animate);
+    wt.Application.onNextFrame();
+}
+
+init();

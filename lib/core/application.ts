@@ -28,27 +28,16 @@ class Application {
         this.m_pathTracer = new PathTracer(this.m_canvasContext);
     }
 
-    public static run(onUpdate: () => void) {
-        const applicationLoop = (): void => {
-            Application.m_deltaTime = (performance.now() - this.m_time) * 0.001;
-            this.m_time = performance.now();
+    public static onNextFrame() {
+        Application.m_deltaTime = (performance.now() - this.m_time) * 0.001;
+        this.m_time = performance.now();
 
-            // client callback
-            onUpdate();
+        // update path tracer
+        if (this.m_cameraController.update(this.m_deltaTime)) {
+            this.m_pathTracer.resetAccumulation();
+        }
 
-            // update camera controller
-            this.m_cameraController.update(this.m_deltaTime);
-
-            // update path tracer
-            if (this.m_cameraController.isUpdated()) {
-                this.m_pathTracer.resetAccumulation();
-            }
-            this.m_pathTracer.render(this.m_camera);
-
-            requestAnimationFrame(applicationLoop);
-        };
-
-        applicationLoop();
+        this.m_pathTracer.render(this.m_camera);
     }
 
     public static getDeltaTime(): number {

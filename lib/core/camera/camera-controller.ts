@@ -46,20 +46,17 @@ class CameraController {
     public speed: number = 5;
     public rotationSpeed: number = 90;
 
-    public update(deltaTime: number) {
-        this.m_isUpdated = this._processInputs(deltaTime);
+    public update(deltaTime: number): boolean {
+        const isUpdated: boolean = this._processInputs(deltaTime);
 
-        if (!this.m_isUpdated) return;
+        if (isUpdated) {
+            this.m_camera.updateMatrixWorld(true);
+        };
 
-        this.m_camera.updateMatrixWorld(true);
-    }
-
-    public isUpdated(): boolean {
-        return this.m_isUpdated;
+        return isUpdated;
     }
 
     private m_camera: THREE.PerspectiveCamera;
-    private m_isUpdated: boolean;
     private m_euler: THREE.Vector3;
 
     private _processInputs(deltaTime: number): boolean {
