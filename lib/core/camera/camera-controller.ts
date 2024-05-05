@@ -6,7 +6,7 @@ import { clamp } from "three/src/math/MathUtils";
 const CAMERA_CONTROLLER_PITCH_LIMIT: number = 89 * THREE.MathUtils.DEG2RAD;
 
 interface CameraControllerProps {
-    camera: THREE.PerspectiveCamera;
+    camera: THREE.Camera;
 }
 
 interface CameraControllerInputs {
@@ -56,7 +56,7 @@ class CameraController {
         return isUpdated;
     }
 
-    private m_camera: THREE.PerspectiveCamera;
+    private m_camera: THREE.Camera;
     private m_euler: THREE.Vector3;
 
     private _processInputs(deltaTime: number): boolean {

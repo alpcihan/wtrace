@@ -11,6 +11,7 @@ import screen_shader from "../../shaders/screen_shader.wgsl";
 
 import { IGPU } from "./igpu";
 import { Scene } from "../scene/scene";
+import { SceneManager } from "../scene/scene-manager";
 
 class PathTracer {
     constructor(canvasContext: GPUCanvasContext) {
@@ -26,8 +27,8 @@ class PathTracer {
         this.resetAccumulation();
     }
 
-    public render(camera: THREE.PerspectiveCamera): void {
-        this._updateUniforms(camera);
+    public render(): void {
+        this._updateUniforms(SceneManager.scene.camera);
 
         const cmd: GPUCommandEncoder = IGPU.get().createCommandEncoder();
 
@@ -359,7 +360,7 @@ class PathTracer {
         });
     }
 
-    private _updateUniforms(camera: THREE.PerspectiveCamera) {
+    private _updateUniforms(camera: THREE.Camera) {
         // TODO: calculate the offsets automatically
         let offset = 0;
         this.m_uniformCPU.set(camera.matrixWorld.toArray(), offset);
