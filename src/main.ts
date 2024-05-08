@@ -1,35 +1,44 @@
 import "./main.css";
 import * as wt from "../lib/wtrace";
+import * as THREE from "three";
 import * as test from "./test-scenes";
 
-// UI elements
-let canvas: HTMLCanvasElement =         document.getElementById("wt_canvas-webgpu") as HTMLCanvasElement;
-let fpsElement: HTMLTextAreaElement =   document.getElementById("wt_fps") as HTMLTextAreaElement;
+// camera controller
+let cameraController: wt.CameraController;
 
-// global variables
-let fpsDisplayTimer: number = 0;
+async function init() {
+    // get the target canvas
+    const canvas: HTMLCanvasElement = document.getElementById("wt_canvas-webgpu") as HTMLCanvasElement;
 
-const onUpdate = () => {
-    if (fpsDisplayTimer > 0.1) {
-        fpsElement!.innerText = `FPS: ${Math.floor(1 / wt.Application.getDeltaTime())}`;
-        fpsDisplayTimer = 0;
-    }
-
-    fpsDisplayTimer += wt.Application.getDeltaTime();
-};
-
-const main = async () => {
     // init the application
     await wt.Application.init(canvas);
 
+    // create camera and camera controller
+    let camera: THREE.Camera = new THREE.PerspectiveCamera(45, canvas.width / canvas.height, 0.01, 1000);
+    cameraController = new wt.CameraController({ camera: camera });
+
     // create scene
     let scene: wt.Scene = await test.create10kDamagedHelmet();
+    scene.camera = camera;
 
     // load the scene
     wt.SceneManager.loadScene(scene);
 
-    // run the application
-    wt.Application.run(onUpdate);
-};
+    // application loop
+    animate();
+} 
 
-main();
+function animate() {
+    // get the next frame
+    requestAnimationFrame(animate);
+
+    // call the camera controller update and inform the application that a change has occurred in the scene
+    if (cameraController.update(wt.Application.deltaTime)) {
+        wt.Application.updateScene();
+    }
+
+    // render the scene
+    wt.Application.onNextFrame();
+}
+
+init();

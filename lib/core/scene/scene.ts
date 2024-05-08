@@ -8,14 +8,17 @@ class Scene {
         this.m_sceneDataManager = new SceneDataManager();
     }
 
+    public camera: THREE.Camera;
+
+    // TODO: do not expose to client side
+    public get sceneDataManager(): SceneDataManager {
+        return this.m_sceneDataManager;
+    }
+
     public add(object: Object3D): void {
         switch (object.type) {
             case Object3DType.MeshModel: { this._addMeshModel(object as MeshModel); break; }
         }
-    }
-
-    public get sceneDataManager(): SceneDataManager {
-        return this.m_sceneDataManager;
     }
 
     private m_sceneDataManager: SceneDataManager;
