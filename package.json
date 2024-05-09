@@ -1,32 +1,26 @@
 {
   "name": "wtrace",
+  "private": true,
   "version": "0.0.1",
-  "description": "",
-  "main": "main.ts",
+  "type": "module",
+  "main": "dist/wtrace.js",
+  "typings": "dist/wtrace.d.ts",
   "scripts": {
-    "tsc": "tsc",
-    "tscw": "tsc --watch",
-    "dev": "webpack --mode development"
+    "dev": "vite",
+    "build": "tsc && vite build"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "@types/node": "14.14.20",
-    "@types/three": "^0.159.0",
-    "@webgpu/types": "^0.1.21",
-    "css-loader": "^5.2.0",
-    "jshint": "^2.12.0",
-    "path": "^0.12.7",
-    "style-loader": "^3.3.1",
-    "three": "^0.139.2",
-    "ts-loader": "^8.1.0",
-    "ts-shader-loader": "^1.0.6",
-    "typescript": "^4.2.3",
-    "webpack": "^5.18.0",
-    "webpack-cli": "^4.6.0"
+    "three": "^0.139.2"
   },
   "devDependencies": {
-    "push-dir": "^0.4.1"
+    "@types/three": "^0.159.0",
+    "@webgpu/types": "^0.1.21",
+    "@types/node": "^20.5.0",
+    
+    "ts-node": "^10.9.1",
+    "typescript": "^5.1.6",
+    "vite": "^4.4.9",
+    "vite-plugin-dts": "^3.9.1",
+    "vite-raw-plugin": "^1.0.2"
   }
 }

@@ -1,7 +1,6 @@
 import { Mesh } from "../core/objects/mesh";
 import { OBJLoader } from "./obj-loader";
 import * as utils from './load_utils';
-import { Console } from "console";
 
 class MeshLoader {
     public static async load(path: string): Promise<Mesh | undefined> {
