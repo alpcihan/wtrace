@@ -17,3 +17,5 @@ jobs:
       run: rm -rf dist
     - name: build
       run: npm run build
+    - name: create-build
+      run: mv dist $GITHUB_WORKSPACE
