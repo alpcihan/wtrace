@@ -2,27 +2,11 @@
 
 Realtime WebGPU path tracer (WIP)
 
-Description and screenshots will be added soon.
-
 ![wtrace](https://github.com/alpcihan/wtrace/assets/37274614/03900352-f8b5-44da-bb95-3d8ead83b607)
 
 ## Adding to a project
 1) Use ```npm run build``` to build the project.
 2) Add wtrace to the package.json of your project as a dependency and run ```npm install```.
-
-## Features
-- [x] GPU path-tracing with compute shaders
-- [x] Acceleration structures
-- [x] Instanced geometry
-- [x] BRDF importance sampling
-- [x] Scene system 
-- [x] Material system
-- [x] GLTF support
-- [x] OBJ support
-- [ ] Multi importance sampling
-- [ ] Dielectrics
-- [ ] Caustics
-- [ ] Denoising
 
 ## Example usage
 ### Simple GLTF scene
@@ -74,3 +58,18 @@ function animate() {
 
 init();
 ```
+
+## Features
+- [x] GPU path-tracing with compute shaders
+- [x] Acceleration structures
+- [x] Instanced geometry
+- [x] BRDF importance sampling
+- [x] GGX surface models
+- [x] Texture maps 
+- [x] Scene system 
+- [x] Material system
+- [x] GLTF support
+- [x] OBJ support
+
+*More features and detailed documentation are in progress.*
+
