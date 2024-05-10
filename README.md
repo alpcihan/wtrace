@@ -63,7 +63,7 @@ function animate() {
     // get the next frame
     requestAnimationFrame(animate);
 
-    // call the camera controller's update function and set the refresh flag if a change occurs.
+    // call the camera controller's update function and set the refresh flag if a change occurs
     if (cameraController.update(wt.Application.deltaTime)) {
         wt.Application.refresh();
     }
