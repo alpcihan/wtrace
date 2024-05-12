@@ -13,6 +13,6 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: install-dependencies
-      run: yarn install
-    - name: build-dev
-      run: yarn dev
+      run: npm install
+    #- name: dev
+    #run: npm run dev

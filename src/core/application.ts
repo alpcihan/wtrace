@@ -27,21 +27,21 @@ class Application {
         this.m_time = performance.now();
 
         // update path tracer
-        if (this.m_updateScene) {
+        if (this.m_refresh) {
             this.m_pathTracer.resetAccumulation();
         }
 
         this.m_pathTracer.render();
 
-        this.m_updateScene = false;
+        this.m_refresh = false;
     }
 
     public static get deltaTime(): number {
         return Application.m_deltaTime;
     }
 
-    public static updateScene(): void {
-        this.m_updateScene = true;
+    public static refresh(): void {
+        this.m_refresh = true;
     }
 
     private static m_time: number = 0;
@@ -50,7 +50,7 @@ class Application {
     private static m_canvasContext: GPUCanvasContext;
     private static m_pathTracer: PathTracer;
 
-    private static m_updateScene: boolean;
+    private static m_refresh: boolean;
 
     private static _onSceneLoad() {
         Application.m_pathTracer.setScene(SceneManager.scene);

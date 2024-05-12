@@ -3,7 +3,7 @@ import * as THREE from "three";
 // shaders (TODO: preprocess)
 import math_shader from "../../shaders/core/math.wgsl";
 import ray_shader from "../../shaders/core/ray.wgsl";
-import bvh_shader from "../../shaders/core/bvh.glsl";
+import bvh_shader from "../../shaders/core/bvh.wgsl";
 import bsdf_shader from "../../shaders/core/bsdf.wgsl";
 import rng_shader from "../../shaders/core/rng.wgsl";
 import pathtracer_compute from "../../shaders/pathtracer_compute.wgsl";
