@@ -7,8 +7,10 @@ export const setOnSceneLoadCallback = (callback: Function): void => { onSceneLoa
 class SceneManager {
     public static loadScene(scene: Scene): void {
         // clear the previous scene
-        if(this.m_scene) scene.sceneDataManager.clear();
-        
+        if (this.m_scene) {
+            this.m_scene.sceneDataManager.clear();
+        }
+
         // load the new scene
         this.m_scene = scene;
         this.m_scene.sceneDataManager.buildSceneData();

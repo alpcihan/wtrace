@@ -19,15 +19,15 @@ interface TLASNode {
 
 class TLAS {
     public constructor(
-        blasList: Array<BLAS>,
         blasInstances: Array<BLASInstance>,
-        blasOffsetToMeshId: Map<number, number>) {
+        blasOffsetToMeshId: Map<number, number>,
+        meshIDToBLAS: Map<number, BLAS>) {
         
-        this.m_blasList = blasList;
         this.m_blasInstances = blasInstances;
         this.m_tlasNodes = new Array<TLASNode>(blasInstances.length * 2);
         this.m_nodeUsed = 1; // keep root node empty()
         this.m_offsetToMeshId = blasOffsetToMeshId;
+        this.m_meshIDtoBLAS = meshIDToBLAS;
         this._build();
     }
 
@@ -77,9 +77,11 @@ class TLAS {
         let nodeIdx: Uint32Array = new Uint32Array(nodeIndices);
         for(let i=0; i< this.m_blasInstances.length; ++i){
             nodeIdx[i] = this.m_nodeUsed;
-            let blasIdx = this.m_offsetToMeshId.get(this.m_blasInstances[i].blasOffset);
-            if(blasIdx === undefined) throw new Error("BLAS index not found");
-            let blasAABB = this.m_blasList[blasIdx].nodes[0].aabb.clone();
+            let meshID = this.m_offsetToMeshId.get(this.m_blasInstances[i].blasOffset);
+            if(meshID === undefined) throw new Error("Mesh ID not found");
+            let blas = this.m_meshIDtoBLAS.get(meshID);
+            if(blas === undefined) throw new Error("BLAS not found");
+            let blasAABB = blas.nodes[0].aabb.clone();
             let transform = this.m_blasInstances[i].transform.clone();
             blasAABB.applyMatrix4(transform);
 
@@ -119,11 +121,11 @@ class TLAS {
         this.m_tlasNodes[0] = this.m_tlasNodes[nodeIdx[A]];
     }
     
-    private m_blasList: Array<BLAS>;  
     private m_tlasNodes: Array<TLASNode>;
     private m_offsetToMeshId: Map<number, number>;
     private m_nodeUsed: number;
     private m_blasInstances: Array<BLASInstance>;
+    private m_meshIDtoBLAS: Map<number, BLAS>;
 }
 
 export { TLAS, TLAS_NODE_SIZE };
