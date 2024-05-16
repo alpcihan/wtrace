@@ -6,8 +6,6 @@ import { BLAS, BLAS_NODE_SIZE } from "./acceleration-structure/blas";
 import { BLASInstance, BLAS_INSTANCE_BYTE_SIZE } from "./acceleration-structure/blas-instance";
 import { TLAS, TLAS_NODE_SIZE } from "./acceleration-structure/tlas";
 
-const meshIDToBLASMap = new Map<number, BLAS>();
-
 class SceneDataManager {
     public constructor() {
         this.m_models = new Array<MeshModel>();
@@ -23,6 +21,7 @@ class SceneDataManager {
         this.m_materialIDtoIdxMap = new Map<number, number>();
         this.m_meshIDtoBlasOffsetMap = new Map<number, number>();
         this.m_blasOffsetToMeshIDMap = new Map<number, number>();
+        this.m_meshIDToBLAS = new Map<number, BLAS>();
 
         this.m_totalMapCount = 0;
 
@@ -99,15 +98,14 @@ class SceneDataManager {
                 this.m_vertexInfo = new Float32Array([...this.m_vertexInfo, ...newVertexInfo]);
 
                 // add blas
-                const blas: BLAS = meshIDToBLASMap.has(model.mesh.id) 
-                                    ? meshIDToBLASMap.get(model.mesh.id) as BLAS
-                                    : new BLAS(model.mesh.points);
+                const blas: BLAS = new BLAS(model.mesh.points);
 
                 this.m_blasArray.push(blas);
                 this.m_blasNodeCount += blas.nodes.length;
 
                 this.m_meshIDtoBlasOffsetMap.set(model.mesh.id, blasNodeOffset);
                 this.m_blasOffsetToMeshIDMap.set(blasNodeOffset, model.mesh.id);
+                this.m_meshIDToBLAS.set(model.mesh.id, blas);
             }
 
             // add material
@@ -133,21 +131,25 @@ class SceneDataManager {
         this._updateMaterialBuffer();
         this._updateTextures();
 
-        this.m_tlas = new TLAS(this.m_blasArray, this.m_blasInstanceArray, this.m_blasOffsetToMeshIDMap);
+        this.m_tlas = new TLAS(this.m_blasInstanceArray, this.m_blasOffsetToMeshIDMap, this.m_meshIDToBLAS);
         this._updateTLASBuffer();
     }
 
     public clear() {
+        this.m_models = new Array<MeshModel>();
+
         this.m_points = new Float32Array();
         this.m_vertexInfo = new Float32Array();
-        
+
         this.m_blasNodeCount = 0;
         this.m_blasArray = new Array<BLAS>();
         this.m_blasInstanceArray = new Array<BLASInstance>();
+
         this.m_materials = new Array<Material>();
         this.m_materialIDtoIdxMap = new Map<number, number>();
         this.m_meshIDtoBlasOffsetMap = new Map<number, number>();
-        this.m_totalMapCount = 0;
+        this.m_blasOffsetToMeshIDMap = new Map<number, number>();
+        this.m_meshIDToBLAS = new Map<number, BLAS>();
         // TODO: currently tlas cpu side does not get cleared
 
         this.m_vertexBuffer.destroy();
@@ -175,6 +177,7 @@ class SceneDataManager {
     private m_materialIDtoIdxMap: Map<number, number>;
     private m_meshIDtoBlasOffsetMap: Map<number, number>;
     private m_blasOffsetToMeshIDMap: Map<number, number>;
+    private m_meshIDToBLAS: Map<number, BLAS>;
 
     private m_vertexBuffer: GPUBuffer;
     private m_vertexInfoBuffer: GPUBuffer;
