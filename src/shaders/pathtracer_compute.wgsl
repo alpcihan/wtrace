@@ -113,13 +113,5 @@ fn pathTrace(r: Ray_fp, seed: ptr<function,u32>) -> vec3f {
 }
 
 fn hitWorld(ray: Ray_fp, bestHit: ptr<function, HitInfo>){
-    // Scene helper objects data // TODO: pass as buffer
-    var sphere: Sphere = Sphere(vec3f(0.0,0.5,0.0), 0);
-    var lightMaterial: Material = Material(vec3f(2), 1, vec3f(2), 0, -1, -1, -1, -1);
-    var floorY: f32 = 0;
-    var floorMaterial: Material = Material(vec3f(0.5,0.5,0.5), 0.2, vec3f(0,0,0), 0.5, -1, -1, -1, -1);
-
-    intersectSphere(&sphere, &lightMaterial, ray, bestHit);
-    intersectXZPlane(floorY, &floorMaterial, ray, bestHit);
     intersectTLAS(ray, bestHit);
 }
