@@ -37,17 +37,19 @@ class TLAS {
 
     public writeNodesToArray(target: ArrayBuffer){
         this.m_tlasNodes.forEach((node, idx) => {
-            let aabbMinArrayF32: Float32Array = new Float32Array(target, idx * TLAS_NODE_SIZE + 0, 4); // padding
-            let aabbMaxArrayF32: Float32Array = new Float32Array(target, idx * TLAS_NODE_SIZE + 16, 4);// padding
-            let leftArrayU32: Uint32Array = new Uint32Array(target, idx * TLAS_NODE_SIZE + 32, 1);
-            let rightArrayU32: Uint32Array = new Uint32Array(target, idx * TLAS_NODE_SIZE + 36, 1);
-            let blasIdxArrayU32: Uint32Array = new Uint32Array(target, idx * TLAS_NODE_SIZE + 40, 2); // padding
-
-            aabbMinArrayF32.set([node.aabb.min.x, node.aabb.min.y, node.aabb.min.z, 0]);
-            aabbMaxArrayF32.set([node.aabb.max.x, node.aabb.max.y, node.aabb.max.z, 0]);
-            leftArrayU32.set([node.left]);
-            rightArrayU32.set([node.right]);
-            blasIdxArrayU32.set([node.blas, 0]);
+            if (node != undefined) {
+                let aabbMinArrayF32: Float32Array = new Float32Array(target, idx * TLAS_NODE_SIZE + 0, 4); // padding
+                let aabbMaxArrayF32: Float32Array = new Float32Array(target, idx * TLAS_NODE_SIZE + 16, 4);// padding
+                let leftArrayU32: Uint32Array = new Uint32Array(target, idx * TLAS_NODE_SIZE + 32, 1);
+                let rightArrayU32: Uint32Array = new Uint32Array(target, idx * TLAS_NODE_SIZE + 36, 1);
+                let blasIdxArrayU32: Uint32Array = new Uint32Array(target, idx * TLAS_NODE_SIZE + 40, 2); // padding
+    
+                aabbMinArrayF32.set([node.aabb.min.x, node.aabb.min.y, node.aabb.min.z, 0]);
+                aabbMaxArrayF32.set([node.aabb.max.x, node.aabb.max.y, node.aabb.max.z, 0]);
+                leftArrayU32.set([node.left]);
+                rightArrayU32.set([node.right]);
+                blasIdxArrayU32.set([node.blas, 0]);
+            }
         });
     }
 
