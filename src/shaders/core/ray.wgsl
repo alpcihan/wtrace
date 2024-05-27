@@ -71,6 +71,7 @@ fn hitTriangle(ray: Ray_fp, v0: vec3<f32>, v1: vec3<f32>, v2: vec3<f32>) -> vec3
     return vec3f(t,u,v);
 }
 
+/*
 fn intersectXZPlane(
     y: f32,
     material: ptr<function, Material>,
@@ -115,6 +116,7 @@ fn intersectSphere(
         (*bestHit).material = (*material); // TODO: reference directly or use index
     }
 }
+*/
 
 fn intersectTriangles(ray: Ray_fp, bestHit: ptr<function, HitInfo>) {
     const EPSILON: f32 = 0.0000001;
