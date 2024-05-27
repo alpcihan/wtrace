@@ -190,12 +190,12 @@ class SceneDataManager {
     private m_texture: GPUTexture;
 
     private _updateVertexBuffer(): void {
-        this.m_vertexBuffer = IGPU.get().createBuffer({
+        this.m_vertexBuffer = IGPU.createBuffer({
             size: this.m_points.byteLength,
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
         });
 
-        this.m_vertexInfoBuffer = IGPU.get().createBuffer({
+        this.m_vertexInfoBuffer = IGPU.createBuffer({
             size: this.m_vertexInfo.byteLength,
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
         });
@@ -229,19 +229,19 @@ class SceneDataManager {
         });
 
         // create gpu resources
-        this.m_blasBuffer = IGPU.get().createBuffer({
+        this.m_blasBuffer = IGPU.createBuffer({
             size: blasArrayF32.byteLength,
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
         });
         IGPU.get().queue.writeBuffer(this.m_blasBuffer, 0, blasArrayF32);
 
-        this.m_triangleIdxBuffer = IGPU.get().createBuffer({
+        this.m_triangleIdxBuffer = IGPU.createBuffer({
             size: triangleIdxArrayU32.byteLength,
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
         });
         IGPU.get().queue.writeBuffer(this.m_triangleIdxBuffer, 0, triangleIdxArrayU32);
 
-        this.m_blasInstanceBuffer = IGPU.get().createBuffer({
+        this.m_blasInstanceBuffer = IGPU.createBuffer({
             size: blasInstanceArrayByte.byteLength,
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
         });
@@ -263,7 +263,7 @@ class SceneDataManager {
             });
         });
 
-        this.m_materialBuffer = IGPU.get().createBuffer({
+        this.m_materialBuffer = IGPU.createBuffer({
             size: materialArrayByte.byteLength,
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
         });
@@ -276,7 +276,7 @@ class SceneDataManager {
         const tlasArrayByte: ArrayBuffer = new ArrayBuffer(arraySize);
         this.m_tlas.writeNodesToArray(tlasArrayByte);
 
-        this.m_tlasBuffer = IGPU.get().createBuffer({
+        this.m_tlasBuffer = IGPU.createBuffer({
             size: arraySize,
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
         });
