@@ -71,53 +71,6 @@ fn hitTriangle(ray: Ray_fp, v0: vec3<f32>, v1: vec3<f32>, v2: vec3<f32>) -> vec3
     return vec3f(t,u,v);
 }
 
-/*
-fn intersectXZPlane(
-    y: f32,
-    material: ptr<function, Material>,
-    ray: Ray_fp,
-    bestHit: ptr<function, HitInfo>) {
-
-    var xzPlane: XZPlane;
-    xzPlane.normal = vec3f(0.0, 1.0, 0.0);
-    xzPlane.distance = -y;
-
-    let t: f32 = -(dot(ray.origin, xzPlane.normal) + xzPlane.distance) / dot(ray.direction, xzPlane.normal);
-    if (t > 0.0 && t < (*bestHit).t) {
-        (*bestHit).t = t;
-        (*bestHit).normal = vec3f(0.0, 1.0, 0.0);
-        (*bestHit).material = *(material); // TODO: reference directly or use index
-    }
-}
-
-fn intersectSphere(
-    sphere: ptr<function, Sphere>,
-    material: ptr<function, Material>,
-    ray: Ray_fp,
-    bestHit: ptr<function, HitInfo>) {
-
-    let a: f32 = dot(ray.direction, ray.direction);
-    let b: f32 = 2.0 * dot(ray.direction, ray.origin - (*sphere).center);
-    let c: f32 = dot(ray.origin - (*sphere).center, ray.origin - (*sphere).center) - (*sphere).radius * (*sphere).radius;
-    let discriminant: f32 = b * b - 4.0 * a * c;
-
-    if(discriminant < 0.0) {
-        return;
-    }
-
-    let t0: f32 = (-b - sqrt(discriminant)) / (2.0 * a);
-    let t1: f32 = (-b + sqrt(discriminant)) / (2.0 * a);
-
-    let t: f32 = min(t0, t1);
-
-    if (t > 0.0 && t < (*bestHit).t) {
-        (*bestHit).t = t;
-        (*bestHit).normal = normalize(rayAt(ray, t) - (*sphere).center);
-        (*bestHit).material = (*material); // TODO: reference directly or use index
-    }
-}
-*/
-
 fn intersectTriangles(ray: Ray_fp, bestHit: ptr<function, HitInfo>) {
     const EPSILON: f32 = 0.0000001;
     let vertexCount : u32 = arrayLength(&points);
