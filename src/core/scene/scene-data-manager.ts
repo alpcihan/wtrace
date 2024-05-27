@@ -23,7 +23,8 @@ class SceneDataManager {
         this.m_blasOffsetToMeshIDMap = new Map<number, number>();
         this.m_meshIDToBLAS = new Map<number, BLAS>();
 
-        this.m_totalMapCount = 0;
+        //dummy texture
+        this.m_totalMapCount = 1;
 
         this._updateVertexBuffer();
     }
@@ -151,6 +152,8 @@ class SceneDataManager {
         this.m_blasOffsetToMeshIDMap = new Map<number, number>();
         this.m_meshIDToBLAS = new Map<number, BLAS>();
         // TODO: currently tlas cpu side does not get cleared
+
+        this.m_totalMapCount = 1;
 
         this.m_vertexBuffer.destroy();
         this.m_vertexInfoBuffer.destroy();
@@ -298,7 +301,7 @@ class SceneDataManager {
 
         this.m_texture = IGPU.get().createTexture(texDescriptor);
 
-        let textureCount: number = 0;
+        let textureCount: number = 1;
         // NOTE: Texture copy order matters rn due to the use of total map count.
         // TODO: Store texture indices.
         this.m_materials.forEach(mat => {
