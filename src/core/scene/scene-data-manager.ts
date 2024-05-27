@@ -23,7 +23,8 @@ class SceneDataManager {
         this.m_blasOffsetToMeshIDMap = new Map<number, number>();
         this.m_meshIDToBLAS = new Map<number, BLAS>();
 
-        this.m_totalMapCount = 0;
+        //dummy texture
+        this.m_totalMapCount = 1;
 
         this._updateVertexBuffer();
     }
@@ -152,6 +153,8 @@ class SceneDataManager {
         this.m_meshIDToBLAS = new Map<number, BLAS>();
         // TODO: currently tlas cpu side does not get cleared
 
+        this.m_totalMapCount = 1;
+
         this.m_vertexBuffer.destroy();
         this.m_vertexInfoBuffer.destroy();
         this.m_triangleIdxBuffer.destroy();
@@ -190,12 +193,12 @@ class SceneDataManager {
     private m_texture: GPUTexture;
 
     private _updateVertexBuffer(): void {
-        this.m_vertexBuffer = IGPU.get().createBuffer({
+        this.m_vertexBuffer = IGPU.createBuffer({
             size: this.m_points.byteLength,
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
         });
 
-        this.m_vertexInfoBuffer = IGPU.get().createBuffer({
+        this.m_vertexInfoBuffer = IGPU.createBuffer({
             size: this.m_vertexInfo.byteLength,
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
         });
@@ -229,19 +232,19 @@ class SceneDataManager {
         });
 
         // create gpu resources
-        this.m_blasBuffer = IGPU.get().createBuffer({
+        this.m_blasBuffer = IGPU.createBuffer({
             size: blasArrayF32.byteLength,
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
         });
         IGPU.get().queue.writeBuffer(this.m_blasBuffer, 0, blasArrayF32);
 
-        this.m_triangleIdxBuffer = IGPU.get().createBuffer({
+        this.m_triangleIdxBuffer = IGPU.createBuffer({
             size: triangleIdxArrayU32.byteLength,
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
         });
         IGPU.get().queue.writeBuffer(this.m_triangleIdxBuffer, 0, triangleIdxArrayU32);
 
-        this.m_blasInstanceBuffer = IGPU.get().createBuffer({
+        this.m_blasInstanceBuffer = IGPU.createBuffer({
             size: blasInstanceArrayByte.byteLength,
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
         });
@@ -263,7 +266,7 @@ class SceneDataManager {
             });
         });
 
-        this.m_materialBuffer = IGPU.get().createBuffer({
+        this.m_materialBuffer = IGPU.createBuffer({
             size: materialArrayByte.byteLength,
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
         });
@@ -276,7 +279,7 @@ class SceneDataManager {
         const tlasArrayByte: ArrayBuffer = new ArrayBuffer(arraySize);
         this.m_tlas.writeNodesToArray(tlasArrayByte);
 
-        this.m_tlasBuffer = IGPU.get().createBuffer({
+        this.m_tlasBuffer = IGPU.createBuffer({
             size: arraySize,
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
         });
@@ -298,7 +301,7 @@ class SceneDataManager {
 
         this.m_texture = IGPU.get().createTexture(texDescriptor);
 
-        let textureCount: number = 0;
+        let textureCount: number = 1;
         // NOTE: Texture copy order matters rn due to the use of total map count.
         // TODO: Store texture indices.
         this.m_materials.forEach(mat => {

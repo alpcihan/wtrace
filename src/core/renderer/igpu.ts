@@ -20,6 +20,15 @@ class IGPU {
         return this.m_device;
     }
 
+    public static createBuffer(descriptor: GPUBufferDescriptor): GPUBuffer {
+        //create a small buffer in case requested size is 0
+        if (descriptor.size == 0) {
+            descriptor.size = 1024;
+        }
+
+        return this.m_device.createBuffer(descriptor);
+    }
+
     private static m_device: GPUDevice;
 
     private constructor() {}
