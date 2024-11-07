@@ -326,7 +326,7 @@ class PathTracer {
                 },
                 {
                     binding: 2,
-                    resource: { buffer: scene.sceneDataManager.vertexInfoBuffer},
+                    resource: { buffer: scene.sceneDataManager.normalBuffer},
                 },
                 {
                     binding: 3,
@@ -334,7 +334,7 @@ class PathTracer {
                 },
                 {
                     binding: 4,
-                    resource: { buffer: scene.sceneDataManager.triangleIdxBuffer },
+                    resource: { buffer: scene.sceneDataManager.indexBuffer },
                 },
                 {
                     binding: 5,

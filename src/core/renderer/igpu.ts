@@ -13,6 +13,14 @@ class IGPU {
         //    return;
         //}
 
+        if(true)
+        {
+            const feature: GPUFeatureName = "subgroups" as GPUFeatureName;
+            if (!adapter.features.has(feature)) throw new Error("chromium-experimental-subgroups support is not available");
+            this.m_device = await adapter.requestDevice({ requiredFeatures: [feature] }) as GPUDevice;
+            return;
+        }
+
         this.m_device = (await adapter.requestDevice()) as GPUDevice;
     }
 
