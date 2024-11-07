@@ -18,7 +18,7 @@ class TextureLoader {
             imageOrientation: flipY ? "flipY" : "none"
         }); 
         
-        return new Texture(imageData);
+        return new Texture(path, imageData);
     }
 }
 

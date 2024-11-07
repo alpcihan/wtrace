@@ -69,8 +69,7 @@ class WTGLTFLoader {
             let indices = new Uint32Array(object.geometry.index.array);
     
             // create mesh
-            let mesh = new Mesh();
-    
+            let mesh = new Mesh(object.name);
             mesh.points = this._populateF32ArrPerIndex(initialPoints, indices, 3);
     
             if (object.geometry.attributes.normal)
@@ -90,7 +89,7 @@ class WTGLTFLoader {
                 );
     
             // create material
-            let material: Material = new Material();
+            // let material: Material = new Material();
             let threeMat = (
                 Array.isArray(object.material) ? object.material[0] : object.material
             ) as THREE.MeshBasicMaterial;
@@ -103,11 +102,11 @@ class WTGLTFLoader {
                     resizeWidth: 1024,
                 }); 
                 
-                material.albedoMap = new Texture(imageData);
+                //material.albedoMap = new Texture("",imageData);
             }
     
             // create model
-            const model = new MeshModel(mesh, material);
+            const model = new MeshModel(0, 0, 0, 0);
             model.position = object.position;
             model.euler = object.rotation;
             model.scale = object.scale;
