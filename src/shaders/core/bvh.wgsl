@@ -1,12 +1,14 @@
 //-------------------------------------------------------------------
 // structs
 //-------------------------------------------------------------------
-struct BLASNode {        // TODO: use uint for "leftFirst" and "triangleCount"
-    leftFirst: f32,      // if triCount == 0 represents leftChild, if triCount > 0 represents first triangleIdx
-    triangleCount: f32,
-
+struct BLASNode {
     aabbMins: vec4f,
     aabbMaxs: vec4f,
+
+    isLeaf:u32,
+    left: f32,
+    right:f32,
+    posOffset:u32
 };
 
 struct BLASInstance {
@@ -22,8 +24,8 @@ struct TLASNode {
     aabbMins: vec4f,
     aabbMaxs: vec4f,
 
-    left: u32,  //left tlas index
-    right: u32, //right tlas index
-    instanceIdx: u32 // blas node offset
-    //4 bytes padding
+    isLeaf: u32,
+    left: u32,
+    right: u32,
+    instanceIdx: u32
 };

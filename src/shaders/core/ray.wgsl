@@ -179,64 +179,63 @@ fn intersectBVH(r: Ray_fp, instanceIdx: u32, hit_info: ptr<function, HitInfo>){
         let aabbMax: vec3f = node.aabbMaxs.xyz;
 
         if(intersectAABB(&ray, aabbMin, aabbMax, hit_info)) {
-            let triCount: u32 = u32(node.triangleCount);
-            let lFirst: u32 = u32(node.leftFirst);
-            if(triCount > 0) { // if triangle count > 0 means leaf node (leftFirst gives first triangleIdx)
-                for(var i: u32 = 0; i < triCount; i = i + 1) {
-                    
-                    let idx: u32 = triIdxInfo[lFirst + i];
-                    
-                    // check triangle intersection
-                    let v0: vec3f = vec3f(points[idx*9+0], points[idx*9+1], points[idx*9+2]);
-                    let v1: vec3f = vec3f(points[idx*9+3], points[idx*9+4], points[idx*9+5]);
-                    let v2: vec3f = vec3f(points[idx*9+6], points[idx*9+7], points[idx*9+8]);
+            let left: u32 = u32(node.left);
+            let right: u32 = u32(node.right);
+            let posOffset: u32 = u32(node.posOffset);
+            if(node.isLeaf == 1) {
+                let idx1: u32 = triIdxInfo[left+0] * 3 + posOffset;
+                let idx2: u32 = triIdxInfo[left+1] * 3 + posOffset;
+                let idx3: u32 = triIdxInfo[left+2] * 3 + posOffset;
+                
+                // check triangle intersection
+                let v0: vec3f = vec3f(points[idx1 + 0], points[idx1 + 1], points[idx1 + 2]);
+                let v1: vec3f = vec3f(points[idx2 + 0], points[idx2 + 1], points[idx2 + 2]);
+                let v2: vec3f = vec3f(points[idx3 + 0], points[idx3 + 1], points[idx3 + 2]);
 
-                    let res: vec3f = hitTriangle(&ray, v0, v1, v2);
-                    if(res.x < (*hit_info).t && res.x > 0.0) {
-                        // record hit distance
-                        (*hit_info).t = res.x;
+                let res: vec3f = hitTriangle(&ray, v0, v1, v2);
+                if(res.x < (*hit_info).t && res.x > 0.0) {
+                    // record hit distance
+                    (*hit_info).t = res.x;
 
-                        // record hit normal
-                        let v0_n: vec3f = vertexInfo[idx*3 + 0].normal.xyz;
-                        let v1_n: vec3f = vertexInfo[idx*3 + 1].normal.xyz;
-                        let v2_n: vec3f = vertexInfo[idx*3 + 2].normal.xyz;
-                        let n_os: vec3f = (1 - res.y - res.z) * v0_n + res.y * v1_n + res.z * v2_n;
-                        (*hit_info).normal = normalize((instance.transform * vec4f(n_os, 0)).xyz);
+                    // record hit normal
+                    let v0_n: vec3f = vec3f(normals[idx1 + 0], normals[idx1 + 1], normals[idx1 + 2]);
+                    let v1_n: vec3f = vec3f(normals[idx2 + 0], normals[idx2 + 1], normals[idx2 + 2]);
+                    let v2_n: vec3f = vec3f(normals[idx3 + 0], normals[idx3 + 1], normals[idx3 + 2]);
+                    let n_os: vec3f = (1 - res.y - res.z) * v0_n + res.y * v1_n + res.z * v2_n;
+                    (*hit_info).normal = normalize((instance.transform * vec4f(n_os, 0)).xyz);
 
-                        // record hit material
-                        let material: Material = materials[instance.materialIdx];
-                        (*hit_info).material = material;
+                    // record hit material
+                    let material: Material = materials[instance.materialIdx];
+                    (*hit_info).material = material;
 
-                        // get hit uv
-                        let v0_uv: vec2f = vertexInfo[idx*3 + 0].uv.xy;
-                        let v1_uv: vec2f = vertexInfo[idx*3 + 1].uv.xy;
-                        let v2_uv: vec2f = vertexInfo[idx*3 + 2].uv.xy;
-                        var hit_UV: vec2f = (1 - res.y - res.z) * v0_uv + res.y * v1_uv + res.z * v2_uv;
-                        hit_UV = fract(hit_UV); // repeat the texture 
+                    // get hit uv
+                    let v0_uv: vec2f = vec2f(0);
+                    let v1_uv: vec2f = vec2f(0);
+                    let v2_uv: vec2f = vec2f(0);
+                    var hit_UV: vec2f = (1 - res.y - res.z) * v0_uv + res.y * v1_uv + res.z * v2_uv;
+                    hit_UV = fract(hit_UV); // repeat the texture 
 
-                        let textureDims = textureDimensions(materialTextures).xy;
-                        var textureCoords: vec2i;
-                        textureCoords.x = i32(round(hit_UV.x * f32(textureDims.x)));
-                        textureCoords.y = i32(round(hit_UV.y * f32(textureDims.y)));
+                    let textureDims = textureDimensions(materialTextures).xy;
+                    var textureCoords: vec2i;
+                    textureCoords.x = i32(round(hit_UV.x * f32(textureDims.x)));
+                    textureCoords.y = i32(round(hit_UV.y * f32(textureDims.y)));
 
-                        // albedo
-                        if(material.albedoMapIdx >= 0){
-                            (*hit_info).material.albedo = textureLoad(materialTextures, textureCoords, material.albedoMapIdx, 0).rgb;
-                        }
+                    // albedo
+                    if(material.albedoMapIdx >= 0){
+                        (*hit_info).material.albedo = textureLoad(materialTextures, textureCoords, material.albedoMapIdx, 0).rgb;
+                    }
 
-                        // metallic + roughness
-                        if(material.metallicMapIdx >= 0) {
-                            let mr: vec2f = textureLoad(materialTextures, textureCoords, material.metallicMapIdx, 0).rg;
-                            (*hit_info).material.metallic = mr.x * mr.x;
-                            (*hit_info).material.roughness = mr.y * mr.y;
-                        }
-                    }             
+                    // metallic + roughness
+                    if(material.metallicMapIdx >= 0) {
+                        let mr: vec2f = textureLoad(materialTextures, textureCoords, material.metallicMapIdx, 0).rg;
+                        (*hit_info).material.metallic = mr.x * mr.x;
+                        (*hit_info).material.roughness = mr.y * mr.y;
+                    }
                 }
-
-            } else{ // if triangle count = 0 not leaf node (leftFirst gives leftChild node)
-                s[_stackPtr] = lFirst;
+            } else{
+                s[_stackPtr] = left;
                 _stackPtr = _stackPtr + 1;
-                s[_stackPtr] = lFirst + 1; // right child is always left+1
+                s[_stackPtr] = right;
                 _stackPtr = _stackPtr + 1;
             }
         }
