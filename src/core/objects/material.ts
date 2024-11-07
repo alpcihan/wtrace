@@ -19,31 +19,40 @@ export interface MaterialMap {
 }
 
 class Material {
-    public constructor() {
-        this.id = Material._id++;
+    public constructor(
+        baseColor:THREE.Vector3 = new THREE.Vector3(0, 0, 0), 
+        emissiveColor:THREE.Vector3 = new THREE.Vector3(0, 0, 0), 
+        roughness:number = 0.5, metallic:number = 0.5,
+        albedoID: number|undefined , emissiveID: number|undefined,
+        roughnessID: number|undefined, metallicID: number|undefined) {
+        this.baseColor = baseColor;
+        this.emissiveColor = emissiveColor;
 
-        this.baseColor = new THREE.Vector3(1, 1, 1);
-        this.emissiveColor = new THREE.Vector3(0, 0, 0);
-        this.roughness = 0.5;
-        this.metallic = 0.5;
+        this.roughness = roughness;
+        this.metallic = metallic;
 
-        this.albedoMap = undefined;
-        this.emissiveMap = undefined;
-        this.roughnessMap = undefined;
-        this.metallicMap = undefined;
+        this.albedoMapID = albedoID;
+        this.emissiveMapID = emissiveID;
+        this.roughnessMapID = roughnessID;
+        this.metallicMapID = metallicID;
+        
+        this.id = "" + this.baseColor.toArray() + this.emissiveColor.toArray() +
+                    this.roughness + this.metallic +
+                    this.albedoMapID + this.emissiveMapID +
+                    this.roughnessMapID + this.metallicMapID;
     }
 
-    public readonly id: number;
+    public readonly id: string;
 
-    public baseColor: THREE.Vector3;
-    public emissiveColor: THREE.Vector3;
-    public roughness: number;
-    public metallic: number;
+    public readonly baseColor: THREE.Vector3;
+    public readonly emissiveColor: THREE.Vector3;
+    public readonly roughness: number;
+    public readonly metallic: number;
 
-    public albedoMap: Texture | undefined;
-    public emissiveMap: Texture | undefined;
-    public roughnessMap: Texture | undefined;
-    public metallicMap: Texture | undefined;
+    public readonly albedoMapID: number | undefined;
+    public readonly emissiveMapID: number| undefined;
+    public readonly roughnessMapID: number| undefined;
+    public readonly metallicMapID: number| undefined;
 
     public writeToArray(target: ArrayBuffer, offset: number, m?: MaterialMap) {
         const baseColorArrayF32: Float32Array = new Float32Array(target, offset, 3);
@@ -64,8 +73,6 @@ class Material {
         if (m) mapsI32.set([m.albedoMapIdx, m.emissiveMapIdx, m.roughnessMapIdx, m.metallicMapIdx]);
         else mapsI32.set([-1, -1, -1, -1]);
     }
-
-    private static _id: number = 0;
 }
 
 export { Material };

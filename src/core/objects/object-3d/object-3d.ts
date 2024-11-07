@@ -36,7 +36,7 @@ abstract class Object3D {
     }
 
     public get invTransform(): Readonly<THREE.Matrix4> {
-        if(this.m_isInvTransformUpdated) {
+        if(!this.m_isInvTransformUpdated) {
             this.m_invTransform = this.m_transform.clone().invert();
             this.m_isInvTransformUpdated = true;
         }
